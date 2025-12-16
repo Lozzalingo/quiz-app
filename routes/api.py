@@ -1228,13 +1228,15 @@ def admin_update_team_name(team_id):
     team.name = new_name
     db.session.commit()
 
-    # Emit Socket.IO event
+    # Emit Socket.IO event to both admin spreadsheet and player game rooms
     try:
         from app import socketio
-        socketio.emit('team_updated', {
+        event_data = {
             'team_id': team.id,
             'name': team.name
-        }, room=f'spreadsheet_{team.game_id}')
+        }
+        socketio.emit('team_updated', event_data, room=f'spreadsheet_{team.game_id}')
+        socketio.emit('team_updated', event_data, room=f'game_{team.game_id}')
     except Exception:
         pass
 

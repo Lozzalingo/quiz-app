@@ -388,6 +388,7 @@
 <script>
 const gameId = {{ game.id }};
 const gameCode = '{{ game.code }}';
+const teamId = {{ team.id }};
 const socket = io();
 
 socket.on('connect', function() {
@@ -398,6 +399,16 @@ socket.on('connect', function() {
 if (socket.connected) {
     socket.emit('join_game', { game_id: gameId });
 }
+
+// Listen for team name updates from admin
+socket.on('team_updated', function(data) {
+    if (data.team_id === teamId) {
+        // Update displayed team name
+        document.querySelector('.team-name-display').textContent = data.name;
+        document.querySelector('.team-avatar').textContent = data.name[0].toUpperCase();
+        document.getElementById('team-name').value = data.name;
+    }
+});
 
 function showMessage(type, text) {
     const successEl = document.getElementById('success-message');

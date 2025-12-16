@@ -101,6 +101,18 @@ def player_login(game_code=None):
             try:
                 db.session.add(new_team)
                 db.session.commit()
+
+                # Emit socket event to notify admin of new team
+                try:
+                    from app import socketio
+                    socketio.emit('team_joined', {
+                        'team_id': new_team.id,
+                        'team_name': new_team.name,
+                        'game_id': game.id
+                    }, room=f'game_{game.id}')
+                except Exception as e:
+                    print(f'[Auth] Error emitting team_joined: {e}')
+
                 login_user(new_team, remember=True)
                 flash(f'Team "{team_name}" created! Welcome to the quiz.', 'success')
                 # Redirect new teams to instructions first

@@ -942,8 +942,8 @@ body {
             </div>
         </div>
 
-        {% if teams %}
         <div class="teams-list" id="teams-list">
+            {% if teams %}
             {% for team in teams %}
             <div class="team-item" id="team-{{ team.id }}">
                 <span class="team-name" id="team-name-{{ team.id }}" onclick="editTeamName({{ team.id }}, '{{ team.name | e }}')" title="Click to edit">{{ team.name }}</span>
@@ -964,10 +964,10 @@ body {
                 </div>
             </div>
             {% endfor %}
+            {% else %}
+            <p class="empty-state">No teams have joined yet. Share the QR code or game code to let players join.</p>
+            {% endif %}
         </div>
-        {% else %}
-        <p class="empty-state">No teams have joined yet. Share the QR code or game code to let players join.</p>
-        {% endif %}
     </div>
 
     <details class="danger-zone">
@@ -1886,6 +1886,60 @@ socket.on('submission_update', (data) => {
     console.log('[Admin] Submission update:', data);
     fetchTeamScores();
 });
+
+// Listen for new teams joining
+socket.on('team_joined', (data) => {
+    console.log('[Admin] Team joined:', data);
+    addTeamToList(data.team_id, data.team_name);
+});
+
+function addTeamToList(teamId, teamName) {
+    const teamsList = document.getElementById('teams-list');
+    if (!teamsList) return;
+
+    // Remove empty state message if present
+    const emptyState = teamsList.querySelector('.empty-state');
+    if (emptyState) {
+        emptyState.remove();
+    }
+
+    // Check if team already exists
+    if (document.getElementById('team-' + teamId)) {
+        return;
+    }
+
+    // Create new team item
+    const teamItem = document.createElement('div');
+    teamItem.className = 'team-item';
+    teamItem.id = 'team-' + teamId;
+    teamItem.innerHTML = `
+        <span class="team-name" id="team-name-${teamId}" onclick="editTeamName(${teamId}, '${teamName.replace(/'/g, "\\'")}')" title="Click to edit">${teamName}</span>
+        <div class="team-score" id="team-score-${teamId}">
+            0 pts
+        </div>
+        <div class="team-tab-penalty" id="team-penalty-${teamId}" data-team-id="${teamId}" data-seconds="0" onclick="editTabPenalty(${teamId})" title="Click to edit">
+            <span class="stopwatch-icon">⏱️</span>
+            <span class="timer-display" id="penalty-time-${teamId}">0:00</span>
+        </div>
+        <div class="team-actions">
+            <button type="button" class="icon-btn danger" title="Delete team" onclick="deleteTeam(${teamId}, '${teamName.replace(/'/g, "\\'")}')">🗑</button>
+        </div>
+    `;
+
+    teamsList.appendChild(teamItem);
+
+    // Update team count in header
+    updateTeamCount();
+}
+
+function updateTeamCount() {
+    const teamsList = document.getElementById('teams-list');
+    const countSpan = document.querySelector('.section-card .section-header span[style*="font-size: 12px"]');
+    if (teamsList && countSpan) {
+        const teamCount = teamsList.querySelectorAll('.team-item').length;
+        countSpan.textContent = teamCount + ' team' + (teamCount !== 1 ? 's' : '');
+    }
+}
 
 function fetchTeamScores() {
     fetch(`/api/game/${gameId}/answers`)

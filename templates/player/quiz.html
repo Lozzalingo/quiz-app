@@ -460,6 +460,7 @@ body.timer-active {
 {% block extra_js %}
 <script>
 const gameId = {{ game.id }};
+const teamId = {{ team.id }};
 let isReloading = false;
 
 function safeReload() {
@@ -485,6 +486,16 @@ if (socket.connected) {
 // Confirm room join
 socket.on('joined_game', function(data) {
     console.log('[Player] Successfully joined game room:', data.game_id);
+});
+
+// Listen for team name updates from admin
+socket.on('team_updated', function(data) {
+    if (data.team_id === teamId) {
+        const teamNameEl = document.querySelector('.stat-badge.team .stat-value');
+        if (teamNameEl) {
+            teamNameEl.textContent = data.name;
+        }
+    }
 });
 
 socket.on('round_status_changed', function(data) {

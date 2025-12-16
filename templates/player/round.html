@@ -923,6 +923,7 @@ body.timer-active {
 const gameId = {{ game.id }};
 const roundId = {{ round.id }};
 const gameCode = '{{ game.code }}';
+const teamId = {{ team.id }};
 const isPotentialFinal = {{ 'true' if is_potential_final else 'false' }};
 let hasSubmitted = false;
 
@@ -936,6 +937,16 @@ socket.on('connect', function() {
 if (socket.connected) {
     socket.emit('join_game', { game_id: gameId });
 }
+
+// Listen for team name updates from admin
+socket.on('team_updated', function(data) {
+    if (data.team_id === teamId) {
+        const teamNameEl = document.querySelector('.team-name');
+        if (teamNameEl) {
+            teamNameEl.textContent = data.name;
+        }
+    }
+});
 
 socket.on('round_ending', function(data) {
     if (data.round_id === roundId) {
