@@ -486,20 +486,30 @@ def get_leaderboard(game_id):
     if game.is_finished:
         scores_hidden = False
     elif requesting_team_id:
-        # Check if this team has submitted answers to any closed round
-        # Scores are hidden if team has submitted to at least one closed round
-        closed_rounds = Round.query.filter_by(game_id=game.id, is_open=False).all()
-        closed_round_ids = [r.id for r in closed_rounds]
+        # Check if this team has submitted answers to the FINAL round
+        # Scores are hidden only when team has submitted to the last round (by order)
 
-        if closed_round_ids:
-            # Check if team has submitted to any closed round
-            submitted_to_closed = Answer.query.filter(
-                Answer.team_id == requesting_team_id,
-                Answer.round_id.in_(closed_round_ids)
+        # Get the final round (last by order, excluding parent rounds with children)
+        all_rounds = Round.query.filter_by(game_id=game.id).order_by(Round.order.desc()).all()
+
+        # Find the final "leaf" round (one that has no children)
+        final_round = None
+        for r in all_rounds:
+            # Check if this round has children (is a parent)
+            has_children = Round.query.filter_by(parent_id=r.id).first() is not None
+            if not has_children:
+                final_round = r
+                break
+
+        if final_round and not final_round.is_open:
+            # Final round exists and is closed - check if team submitted to it
+            submitted_to_final = Answer.query.filter_by(
+                team_id=requesting_team_id,
+                round_id=final_round.id
             ).first()
-            scores_hidden = submitted_to_closed is not None
+            scores_hidden = submitted_to_final is not None
         else:
-            # No closed rounds, show scores
+            # No final round or final round is still open - show scores
             scores_hidden = False
     else:
         # No team_id provided (admin view) - show scores
