@@ -10,10 +10,10 @@
 
 ## Phase 1: Dockerize (Local)
 
-- [ ] Create Dockerfile
-- [ ] Create docker-compose.yml (Flask + PostgreSQL + Nginx)
-- [ ] Create .dockerignore
-- [ ] Create production environment config
+- [x] Create Dockerfile
+- [x] Create docker-compose.yml (Flask + PostgreSQL + Nginx)
+- [x] Create .dockerignore
+- [x] Create production environment config
 - [ ] Test Docker build locally
 - [ ] Test docker-compose up locally
 
@@ -21,11 +21,11 @@
 
 ## Phase 2: GitHub
 
-- [ ] Initialize git repository
-- [ ] Add .gitignore (ensure .env excluded)
-- [ ] Create GitHub repo: `quiz-app`
-- [ ] Push code to GitHub
-- [ ] Verify sensitive data not committed
+- [x] Initialize git repository
+- [x] Add .gitignore (ensure .env excluded)
+- [x] Create GitHub repo: `quiz-app`
+- [x] Push code to GitHub
+- [x] Verify sensitive data not committed
 
 ---
 
@@ -124,8 +124,8 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 | Phase | Status |
 |-------|--------|
-| Dockerize | Pending |
-| GitHub | Pending |
-| Droplet Setup | Pending |
+| Dockerize | ✅ Done |
+| GitHub | ✅ Done |
+| Droplet Setup | ⏳ Waiting for droplet access |
 | Data Transfer | Pending |
 | Production Config | Pending |
