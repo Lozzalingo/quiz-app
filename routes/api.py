@@ -1160,6 +1160,29 @@ def reset_all_tab_penalties(game_id):
     })
 
 
+@bp.route('/game/<int:game_id>/name', methods=['PUT'])
+@admin_required_api
+def update_game_name(game_id):
+    """Update game name (admin only)."""
+    game = Game.query.get_or_404(game_id)
+    data = request.get_json()
+
+    if not data or 'name' not in data:
+        return jsonify({'success': False, 'error': 'Name is required'}), 400
+
+    new_name = data['name'].strip()
+    if not new_name:
+        return jsonify({'success': False, 'error': 'Name cannot be empty'}), 400
+
+    game.name = new_name
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'name': game.name
+    })
+
+
 @bp.route('/game/<int:game_id>/pause', methods=['PUT'])
 @admin_required_api
 def set_game_pause(game_id):

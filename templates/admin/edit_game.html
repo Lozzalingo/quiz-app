@@ -35,6 +35,23 @@ body {
     font-weight: 400;
     margin: 0 0 8px 0;
     color: #202124;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-left: -8px;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.game-info h1:hover {
+    background: #f1f3f4;
+    border-color: #dadce0;
+}
+
+.game-info h1.editing {
+    border: 2px solid #673ab7 !important;
+    background: white;
+    outline: none;
 }
 
 .game-code {
@@ -980,7 +997,7 @@ body {
 <div class="game-page">
     <div class="game-header">
         <div class="game-info">
-            <h1>{{ game.name }}</h1>
+            <h1 id="game-name" onclick="editGameName('{{ game.name | e }}')" title="Click to edit">{{ game.name }}</h1>
             <div class="game-code">{{ game.code }}</div>
             <div class="join-link-row">
                 <a href="{{ url_for('player.join_game', game_code=game.code, _external=True) }}" class="join-link" id="join-link" target="_blank">
@@ -1311,6 +1328,70 @@ function toggleRound(roundId) {
     })
     .finally(() => {
         btn.disabled = false;
+    });
+}
+
+function editGameName(currentName) {
+    const el = document.getElementById('game-name');
+    if (!el || el.contentEditable === 'true') return;
+
+    el.contentEditable = 'true';
+    el.classList.add('editing');
+    el.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    let saved = false;
+    const saveGameName = async () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+
+        const newName = el.textContent.trim();
+        if (!newName) {
+            el.textContent = currentName;
+            return;
+        }
+
+        if (newName !== currentName) {
+            try {
+                const response = await fetch('/api/game/' + gameId + '/name', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Update the onclick handler with new name
+                    el.onclick = () => editGameName(newName);
+                } else {
+                    el.textContent = currentName;
+                    showError('Failed to update: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                el.textContent = currentName;
+                showError('Failed to update name');
+            }
+        }
+    };
+
+    el.addEventListener('blur', saveGameName, { once: true });
+    el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            el.blur();
+        } else if (e.key === 'Escape') {
+            saved = true;
+            el.contentEditable = 'false';
+            el.classList.remove('editing');
+            el.textContent = currentName;
+        }
     });
 }
 
