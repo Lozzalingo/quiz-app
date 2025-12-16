@@ -998,6 +998,15 @@ socket.on('game_finalising', function(data) {
     document.getElementById('round-closed-overlay').classList.add('show');
 });
 
+// Listen for game pause - redirect to questions page which will show pause screen
+socket.on('game_pause_changed', function(data) {
+    console.log('[Player] game_pause_changed on round page:', data);
+    if (data.pause_mode) {
+        // Game is now paused - redirect to questions page
+        window.location.href = "{{ url_for('player.next_questions', game_code=game.code) }}";
+    }
+});
+
 socket.on('timer_started', function(data) {
     if (data.round_id === roundId) {
         startClientTimer(data.seconds);
