@@ -1906,19 +1906,6 @@ function updatePauseUI(mode) {
     }
 }
 
-// Listen for pause changes from other admin tabs
-socket.on('game_pause_changed', function(data) {
-    console.log('[Admin] game_pause_changed:', data);
-    updatePauseUI(data.pause_mode);
-    // Also update tab penalty UI if it changed
-    if (data.tab_penalty_enabled !== undefined) {
-        const startBtn = document.getElementById('tab-penalty-start');
-        const pauseBtn = document.getElementById('tab-penalty-pause');
-        if (startBtn) startBtn.classList.toggle('active', data.tab_penalty_enabled);
-        if (pauseBtn) pauseBtn.classList.toggle('active', !data.tab_penalty_enabled);
-    }
-});
-
 // Tab Penalty Functions
 async function setTabPenaltyState(enabled) {
     console.log('[Admin] setTabPenaltyState called with:', enabled);
@@ -2254,6 +2241,19 @@ socket.on('tab_penalty_reset', (data) => {
 socket.on('submission_update', (data) => {
     console.log('[Admin] Submission update:', data);
     fetchTeamScores();
+});
+
+// Listen for pause changes from other admin tabs
+socket.on('game_pause_changed', function(data) {
+    console.log('[Admin] game_pause_changed:', data);
+    updatePauseUI(data.pause_mode);
+    // Also update tab penalty UI if it changed
+    if (data.tab_penalty_enabled !== undefined) {
+        const startBtn = document.getElementById('tab-penalty-start');
+        const pauseBtn = document.getElementById('tab-penalty-pause');
+        if (startBtn) startBtn.classList.toggle('active', data.tab_penalty_enabled);
+        if (pauseBtn) pauseBtn.classList.toggle('active', !data.tab_penalty_enabled);
+    }
 });
 
 // Listen for new teams joining
