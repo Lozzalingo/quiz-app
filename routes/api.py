@@ -472,13 +472,40 @@ def get_game_teams(game_id):
 def get_leaderboard(game_id):
     """Get leaderboard for a game (public endpoint).
 
-    Scores are hidden until admin clicks 'Finish Game'.
+    Scores are hidden per-team when they have submitted answers to a closed round.
+    Once game.is_finished is True, scores are revealed for everyone.
     """
     game = Game.query.get_or_404(game_id)
     teams = Team.query.filter_by(game_id=game.id).all()
 
-    # If game is not finished, return hidden scores
-    if not game.is_finished:
+    # Check if scores should be hidden for the requesting team
+    # Get team_id from query param (for team-specific hiding)
+    requesting_team_id = request.args.get('team_id', type=int)
+
+    # If game is finished, always show scores
+    if game.is_finished:
+        scores_hidden = False
+    elif requesting_team_id:
+        # Check if this team has submitted answers to any closed round
+        # Scores are hidden if team has submitted to at least one closed round
+        closed_rounds = Round.query.filter_by(game_id=game.id, is_open=False).all()
+        closed_round_ids = [r.id for r in closed_rounds]
+
+        if closed_round_ids:
+            # Check if team has submitted to any closed round
+            submitted_to_closed = Answer.query.filter(
+                Answer.team_id == requesting_team_id,
+                Answer.round_id.in_(closed_round_ids)
+            ).first()
+            scores_hidden = submitted_to_closed is not None
+        else:
+            # No closed rounds, show scores
+            scores_hidden = False
+    else:
+        # No team_id provided (admin view) - show scores
+        scores_hidden = False
+
+    if scores_hidden:
         return jsonify({
             'success': True,
             'leaderboard': [],

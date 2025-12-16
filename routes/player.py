@@ -19,19 +19,39 @@ def scoreboard(game_code):
     """
     Public scoreboard view for players.
 
-    Hides scores when all rounds are completed (host reveals live).
+    Scores are hidden per-team when they have submitted answers to a closed round.
+    Once game.is_finished is True, scores are revealed for everyone.
     """
     game = Game.query.filter_by(code=game_code.upper()).first_or_404()
 
-    # Check if all rounds are closed (quiz finished)
-    rounds = Round.query.filter_by(game_id=game.id).all()
-    all_closed = len(rounds) > 0 and all(not r.is_open for r in rounds)
+    # Check if logged-in team should see hidden scores
+    team_id = None
+    if current_user.is_authenticated and current_user.get_id().startswith('team_'):
+        team_id = int(current_user.get_id().split('_')[1])
 
-    if all_closed:
-        # Quiz is finished - don't show scores to players
-        return render_template('player/scores_hidden.html', game=game)
+    # If game is finished, always show scores
+    if game.is_finished:
+        return render_template('scoreboard.html', game=game, is_admin=False, team_id=team_id)
 
-    return render_template('scoreboard.html', game=game, is_admin=False)
+    # Check if scores should be hidden for this team
+    if team_id:
+        # Get closed rounds
+        closed_rounds = Round.query.filter_by(game_id=game.id, is_open=False).all()
+        closed_round_ids = [r.id for r in closed_rounds]
+
+        if closed_round_ids:
+            # Check if team has submitted to any closed round
+            submitted_to_closed = Answer.query.filter(
+                Answer.team_id == team_id,
+                Answer.round_id.in_(closed_round_ids)
+            ).first()
+
+            if submitted_to_closed:
+                # Team has submitted to a closed round - hide scores
+                return render_template('player/scores_hidden.html', game=game)
+
+    # Show scores
+    return render_template('scoreboard.html', game=game, is_admin=False, team_id=team_id)
 
 
 def team_required(f):

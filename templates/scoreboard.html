@@ -448,6 +448,7 @@
     <script>
         const gameId = {{ game.id }};
         const isAdmin = {{ 'true' if is_admin else 'false' }};
+        const teamId = {{ team_id|default('null') }};
         let isGameFinished = false;
 
         // Create floating particles
@@ -479,7 +480,11 @@
 
             try {
                 // Admin uses answers API (always shows scores), players use leaderboard API
-                const apiUrl = isAdmin ? `/api/game/${gameId}/answers` : `/api/game/${gameId}/leaderboard`;
+                let apiUrl = isAdmin ? `/api/game/${gameId}/answers` : `/api/game/${gameId}/leaderboard`;
+                // Add team_id for per-team score visibility check
+                if (!isAdmin && teamId) {
+                    apiUrl += `?team_id=${teamId}`;
+                }
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
