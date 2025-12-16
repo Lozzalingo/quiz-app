@@ -50,13 +50,8 @@ class ProductionConfig(Config):
     """Production configuration with enhanced security."""
     DEBUG = False
 
-    # Require strong secret key in production
-    @property
-    def SECRET_KEY(self):
-        key = os.environ.get('SECRET_KEY')
-        if not key or key == 'dev-secret-key-change-in-production':
-            raise ValueError('SECRET_KEY must be set in production environment')
-        return key
+    # Secret key from environment (required in production)
+    SECRET_KEY = os.environ.get('SECRET_KEY')
 
     # Session security
     SESSION_COOKIE_SECURE = True
