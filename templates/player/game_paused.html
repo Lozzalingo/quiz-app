@@ -1,0 +1,221 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}{% if pause_mode == 'starting' %}Game Starting Soon{% else %}Half Time{% endif %} - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.paused-page {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.paused-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+}
+
+.paused-icon {
+    width: 100px;
+    height: 100px;
+    background: {% if pause_mode == 'starting' %}linear-gradient(135deg, #ff9800, #f57c00){% else %}linear-gradient(135deg, #2196f3, #1976d2){% endif %};
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 50px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.paused-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 12px;
+}
+
+.paused-subtitle {
+    font-size: 16px;
+    color: #5f6368;
+    margin: 0 0 32px;
+    line-height: 1.6;
+}
+
+.waiting-animation {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 32px 0;
+}
+
+.waiting-dot {
+    width: 12px;
+    height: 12px;
+    background: {% if pause_mode == 'starting' %}#ff9800{% else %}#2196f3{% endif %};
+    border-radius: 50%;
+    animation: bounce 1.4s ease-in-out infinite;
+}
+
+.waiting-dot:nth-child(1) { animation-delay: 0s; }
+.waiting-dot:nth-child(2) { animation-delay: 0.2s; }
+.waiting-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.hint-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.hint-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.hint-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hint-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #673ab7;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+    border: 1px solid #e0e0e0;
+}
+
+.hint-link:hover {
+    background: #f5f0ff;
+    border-color: #673ab7;
+}
+
+.fun-message {
+    margin-top: 32px;
+    padding: 16px;
+    background: {% if pause_mode == 'starting' %}#fff3e0{% else %}#e3f2fd{% endif %};
+    border-radius: 12px;
+    font-size: 14px;
+    color: {% if pause_mode == 'starting' %}#e65100{% else %}#1565c0{% endif %};
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="paused-page">
+        <div class="paused-card">
+            {% if pause_mode == 'starting' %}
+            <div class="paused-icon">🎬</div>
+            <h1 class="paused-title">Game Starting Soon!</h1>
+            <p class="paused-subtitle">
+                Get ready! The quiz is about to begin.<br>
+                The host will start the first round shortly.
+            </p>
+            {% else %}
+            <div class="paused-icon">🍺</div>
+            <h1 class="paused-title">Half Time!</h1>
+            <p class="paused-subtitle">
+                Time for a quick break!<br>
+                Grab a drink and catch your breath.
+            </p>
+            {% endif %}
+
+            <div class="waiting-animation">
+                <div class="waiting-dot"></div>
+                <div class="waiting-dot"></div>
+                <div class="waiting-dot"></div>
+            </div>
+
+            <div class="hint-section">
+                <div class="hint-title">While you wait</div>
+                <div class="hint-links">
+                    <a href="{{ url_for('player.scoreboard', game_code=game.code) }}" class="hint-link">
+                        📊 View Scoreboard
+                    </a>
+                    <a href="{{ url_for('player.team_details', game_code=game.code) }}" class="hint-link">
+                        👤 View Team Details
+                    </a>
+                    <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="hint-link">
+                        📋 View Previous Answers
+                    </a>
+                </div>
+            </div>
+
+            {% if pause_mode == 'halftime' %}
+            <div class="fun-message">
+                🎯 Tip: This is a great time to discuss strategy with your team!
+            </div>
+            {% else %}
+            <div class="fun-message">
+                💡 Tip: Make sure everyone on your team can see the screen!
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+const socket = io();
+
+socket.on('connect', function() {
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    socket.emit('join_game', { game_id: gameId });
+}
+
+// When game pause state changes, reload the page
+socket.on('game_pause_changed', function(data) {
+    console.log('[Player] game_pause_changed:', data);
+    if (!data.pause_mode) {
+        // Game resumed - go to rounds page
+        window.location.href = "{{ url_for('player.quiz', game_code=game.code) }}";
+    } else if (data.pause_mode !== '{{ pause_mode }}') {
+        // Pause mode changed (e.g., from starting to halftime) - reload
+        window.location.reload();
+    }
+});
+
+// Also listen for round status changes to redirect when a round opens
+socket.on('round_status_changed', function(data) {
+    if (data.is_open) {
+        // A round opened - check if game is still paused by reloading
+        window.location.reload();
+    }
+});
+</script>
+{% endblock %}

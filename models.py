@@ -64,6 +64,7 @@ class Game(db.Model):
     is_finished = db.Column(db.Boolean, default=False)  # Game completed, show final scores
     custom_columns_json = db.Column(db.Text, nullable=False, default='[]')
     tab_penalty_enabled = db.Column(db.Boolean, default=True)  # Toggle tab penalty tracking
+    pause_mode = db.Column(db.String(20), nullable=True)  # null=playing, 'starting'=game starting soon, 'halftime'=half time break
 
     # Relationships
     rounds = db.relationship('Round', backref='game', lazy='dynamic',

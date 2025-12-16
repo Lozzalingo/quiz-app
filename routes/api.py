@@ -1160,6 +1160,63 @@ def reset_all_tab_penalties(game_id):
     })
 
 
+@bp.route('/game/<int:game_id>/pause', methods=['PUT'])
+@admin_required_api
+def set_game_pause(game_id):
+    """Set game pause mode (admin only).
+
+    pause_mode can be:
+    - null/None: Game is playing normally
+    - 'starting': Game starting soon (pre-game pause)
+    - 'halftime': Half time break
+    """
+    game = Game.query.get_or_404(game_id)
+    data = request.get_json()
+
+    pause_mode = data.get('pause_mode') if data else None
+
+    # Validate pause_mode
+    if pause_mode is not None and pause_mode not in ['starting', 'halftime']:
+        return jsonify({'success': False, 'error': 'Invalid pause mode'}), 400
+
+    # When pausing, also pause tab penalty tracking
+    # When resuming, restore tab penalty tracking
+    was_paused = game.pause_mode is not None
+    will_be_paused = pause_mode is not None
+
+    game.pause_mode = pause_mode
+
+    # Auto-pause tab penalty when game is paused
+    if will_be_paused and not was_paused:
+        # Store current state and pause
+        game.tab_penalty_enabled = False
+    elif not will_be_paused and was_paused:
+        # Resume - admin can manually re-enable tab penalty if desired
+        pass
+
+    db.session.commit()
+
+    # Emit Socket.IO event to notify players
+    try:
+        from app import socketio
+        socketio.emit('game_pause_changed', {
+            'pause_mode': game.pause_mode,
+            'tab_penalty_enabled': game.tab_penalty_enabled
+        }, room=f'game_{game_id}')
+        # Also notify admin views
+        socketio.emit('game_pause_changed', {
+            'pause_mode': game.pause_mode,
+            'tab_penalty_enabled': game.tab_penalty_enabled
+        }, room=f'spreadsheet_{game_id}')
+    except Exception as e:
+        print(f'[API] Error emitting game_pause_changed: {e}')
+
+    return jsonify({
+        'success': True,
+        'pause_mode': game.pause_mode
+    })
+
+
 @bp.route('/game/<int:game_id>/finish', methods=['POST'])
 @admin_required_api
 def finish_game(game_id):

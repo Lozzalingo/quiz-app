@@ -743,6 +743,136 @@ body {
     color: #5f6368;
 }
 
+/* Game pause controls */
+.pause-controls {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-left: 4px solid #ff9800;
+}
+
+.pause-controls.is-paused {
+    border-left-color: #c5221f;
+    background: #fff5f5;
+}
+
+.pause-controls-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.pause-controls-header h3 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pause-status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.pause-status-badge.playing {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.pause-status-badge.paused {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.pause-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pause-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+    background: white;
+    color: #5f6368;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pause-btn:hover {
+    background: #f8f9fa;
+}
+
+.pause-btn.starting {
+    border-color: #ff9800;
+    color: #e65100;
+}
+
+.pause-btn.starting:hover {
+    background: #fff3e0;
+}
+
+.pause-btn.starting.active {
+    background: #ff9800;
+    color: white;
+    border-color: #ff9800;
+}
+
+.pause-btn.halftime {
+    border-color: #2196f3;
+    color: #1565c0;
+}
+
+.pause-btn.halftime:hover {
+    background: #e3f2fd;
+}
+
+.pause-btn.halftime.active {
+    background: #2196f3;
+    color: white;
+    border-color: #2196f3;
+}
+
+.pause-btn.resume {
+    border-color: #137333;
+    color: #137333;
+}
+
+.pause-btn.resume:hover {
+    background: #e6f4ea;
+}
+
+.pause-message {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #fef7e0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #e65100;
+    display: none;
+}
+
+.pause-message.show {
+    display: block;
+}
+
 /* Custom Modal */
 .modal-overlay {
     display: none;
@@ -882,6 +1012,35 @@ body {
             <small>Scan to join</small>
         </div>
         {% endif %}
+    </div>
+
+    <div class="pause-controls {{ 'is-paused' if game.pause_mode else '' }}" id="pause-controls">
+        <div class="pause-controls-header">
+            <h3>
+                ⏸️ Game Pause
+                <span class="pause-status-badge {{ 'paused' if game.pause_mode else 'playing' }}" id="pause-status">
+                    {{ 'PAUSED' if game.pause_mode else 'PLAYING' }}
+                </span>
+            </h3>
+        </div>
+        <div class="pause-buttons">
+            <button type="button" class="pause-btn starting {{ 'active' if game.pause_mode == 'starting' else '' }}" id="pause-starting-btn" onclick="setGamePause('starting')">
+                🎬 Starting Soon
+            </button>
+            <button type="button" class="pause-btn halftime {{ 'active' if game.pause_mode == 'halftime' else '' }}" id="pause-halftime-btn" onclick="setGamePause('halftime')">
+                🍺 Half Time
+            </button>
+            <button type="button" class="pause-btn resume" id="pause-resume-btn" onclick="setGamePause(null)" style="{{ '' if game.pause_mode else 'display: none;' }}">
+                ▶️ Resume Game
+            </button>
+        </div>
+        <div class="pause-message {{ 'show' if game.pause_mode else '' }}" id="pause-message">
+            {% if game.pause_mode == 'starting' %}
+            Players see "Game Starting Soon" screen. They can view scores and team details but cannot answer questions.
+            {% elif game.pause_mode == 'halftime' %}
+            Players see "Half Time - Grab a drink!" screen. They can view scores and team details but cannot answer questions.
+            {% endif %}
+        </div>
     </div>
 
     <div class="action-bar">
@@ -1605,6 +1764,79 @@ function updateOrderNumbers() {
         }
     });
 }
+
+// Game Pause Functions
+async function setGamePause(mode) {
+    console.log('[Admin] setGamePause called with:', mode);
+    try {
+        const response = await fetch(`/api/game/${gameId}/pause`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pause_mode: mode })
+        });
+        const data = await response.json();
+        console.log('[Admin] setGamePause response:', data);
+        if (data.success) {
+            updatePauseUI(mode);
+        } else {
+            showError('Failed to update pause state: ' + (data.error || 'Unknown'));
+        }
+    } catch (e) {
+        console.error('[Admin] setGamePause error:', e);
+        showError('Failed to update pause state');
+    }
+}
+
+function updatePauseUI(mode) {
+    const container = document.getElementById('pause-controls');
+    const status = document.getElementById('pause-status');
+    const startingBtn = document.getElementById('pause-starting-btn');
+    const halftimeBtn = document.getElementById('pause-halftime-btn');
+    const resumeBtn = document.getElementById('pause-resume-btn');
+    const message = document.getElementById('pause-message');
+
+    // Update container class
+    container.classList.toggle('is-paused', mode !== null);
+
+    // Update status badge
+    status.textContent = mode ? 'PAUSED' : 'PLAYING';
+    status.classList.toggle('paused', mode !== null);
+    status.classList.toggle('playing', mode === null);
+
+    // Update button states
+    startingBtn.classList.toggle('active', mode === 'starting');
+    halftimeBtn.classList.toggle('active', mode === 'halftime');
+    resumeBtn.style.display = mode ? '' : 'none';
+
+    // Update message
+    message.classList.toggle('show', mode !== null);
+    if (mode === 'starting') {
+        message.textContent = 'Players see "Game Starting Soon" screen. They can view scores and team details but cannot answer questions.';
+    } else if (mode === 'halftime') {
+        message.textContent = 'Players see "Half Time - Grab a drink!" screen. They can view scores and team details but cannot answer questions.';
+    }
+
+    // If paused, also update tab penalty buttons to show paused state
+    if (mode) {
+        const tabPauseBtn = document.getElementById('tab-penalty-pause');
+        const tabStartBtn = document.getElementById('tab-penalty-start');
+        if (tabPauseBtn) tabPauseBtn.classList.add('active');
+        if (tabStartBtn) tabStartBtn.classList.remove('active');
+    }
+}
+
+// Listen for pause changes from other admin tabs
+socket.on('game_pause_changed', function(data) {
+    console.log('[Admin] game_pause_changed:', data);
+    updatePauseUI(data.pause_mode);
+    // Also update tab penalty UI if it changed
+    if (data.tab_penalty_enabled !== undefined) {
+        const startBtn = document.getElementById('tab-penalty-start');
+        const pauseBtn = document.getElementById('tab-penalty-pause');
+        if (startBtn) startBtn.classList.toggle('active', data.tab_penalty_enabled);
+        if (pauseBtn) pauseBtn.classList.toggle('active', !data.tab_penalty_enabled);
+    }
+});
 
 // Tab Penalty Functions
 async function setTabPenaltyState(enabled) {

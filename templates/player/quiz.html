@@ -311,6 +311,47 @@ body.timer-active {
     font-size: 14px;
 }
 
+/* Pause banner */
+.pause-banner {
+    background: {% if pause_mode == 'starting' %}linear-gradient(135deg, #ff9800, #f57c00){% else %}linear-gradient(135deg, #2196f3, #1976d2){% endif %};
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    text-align: center;
+    box-shadow: 0 4px 12px {% if pause_mode == 'starting' %}rgba(255, 152, 0, 0.3){% else %}rgba(33, 150, 243, 0.3){% endif %};
+    animation: pausePulse 2s ease-in-out infinite;
+}
+
+@keyframes pausePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.01); }
+}
+
+.pause-banner-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.pause-banner-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px;
+}
+
+.pause-banner-subtitle {
+    font-size: 13px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.round-action.round-action-paused {
+    background: #f5f5f5;
+    color: #9e9e9e;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .round-timer {
     display: none;
     background: linear-gradient(135deg, #673ab7, #9c27b0);
@@ -368,6 +409,14 @@ body.timer-active {
             </div>
         </div>
 
+    {% if pause_mode %}
+    <div class="pause-banner" id="pause-banner">
+        <div class="pause-banner-icon">{% if pause_mode == 'starting' %}🎬{% else %}🍺{% endif %}</div>
+        <h3 class="pause-banner-title">{% if pause_mode == 'starting' %}Game Starting Soon{% else %}Half Time{% endif %}</h3>
+        <p class="pause-banner-subtitle">{% if pause_mode == 'starting' %}The quiz will begin shortly{% else %}Grab a drink and relax{% endif %}</p>
+    </div>
+    {% endif %}
+
     <div class="rounds-section">
         <h2 class="section-title">Rounds</h2>
 
@@ -413,6 +462,8 @@ body.timer-active {
                     <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-edit">Edit</a>
                 {% elif round.id in submitted_rounds %}
                     <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-view">See Answers</a>
+                {% elif round.is_open and pause_mode %}
+                    <span class="round-action round-action-paused">Paused</span>
                 {% elif round.is_open %}
                     <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action">Answer</a>
                 {% else %}
@@ -440,6 +491,8 @@ body.timer-active {
                     <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-edit">Edit</a>
                 {% elif child.id in submitted_rounds %}
                     <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-view">See Answers</a>
+                {% elif child.is_open and pause_mode %}
+                    <span class="round-action round-action-paused">Paused</span>
                 {% elif child.is_open %}
                     <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action">Answer</a>
                 {% else %}
@@ -529,6 +582,13 @@ socket.on('submission_cleared', function(data) {
 socket.on('game_finalising', function(data) {
     // Redirect to game over page when all rounds close
     window.location.href = "{{ url_for('player.game_over', game_code=game.code) }}";
+});
+
+// Listen for game pause state changes
+socket.on('game_pause_changed', function(data) {
+    console.log('[Player] game_pause_changed:', data);
+    // Reload page to reflect new pause state
+    safeReload();
 });
 
 // Round-specific timers

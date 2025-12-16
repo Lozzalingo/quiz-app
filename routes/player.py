@@ -124,6 +124,14 @@ def next_questions(game_code):
         flash('You are not registered for this game.', 'danger')
         return redirect(url_for('auth.player_login', game_code=game_code))
 
+    # If game is paused, show pause screen
+    if game.pause_mode:
+        return render_template('player/game_paused.html',
+                              game=game,
+                              team=team,
+                              pause_mode=game.pause_mode,
+                              active_nav='questions')
+
     # Get all rounds ordered
     rounds = Round.query.filter_by(game_id=game.id).order_by(Round.order).all()
 
@@ -227,6 +235,7 @@ def quiz(game_code):
                           submitted_rounds=submitted_rounds,
                           resubmit_rounds=resubmit_rounds,
                           team_score=int(team_score),
+                          pause_mode=game.pause_mode,
                           active_nav='rounds')
 
 
@@ -245,13 +254,23 @@ def view_round(round_id):
         flash('You are not registered for this game.', 'danger')
         return redirect(url_for('index'))
 
+    # Check if game is paused - if so, show pause screen for answering new questions
+    # But allow viewing previous answers (read_only mode)
+    existing_answers = Answer.query.filter_by(team_id=team.id, round_id=round_obj.id).all()
+    if game.pause_mode and not existing_answers:
+        # Game is paused and no previous answers to view - show pause screen
+        return render_template('player/game_paused.html',
+                              game=game,
+                              team=team,
+                              pause_mode=game.pause_mode,
+                              active_nav='questions')
+
     # If this round has sub-rounds, redirect to next available question
     children = round_obj.get_children()
     if children:
         return redirect(url_for('player.next_questions', game_code=game.code))
 
-    # Check if already submitted
-    existing_answers = Answer.query.filter_by(team_id=team.id, round_id=round_obj.id).all()
+    # existing_answers already queried above for pause check
 
     # Check for resubmit permission
     can_resubmit = ResubmitPermission.query.filter_by(
