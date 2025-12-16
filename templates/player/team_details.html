@@ -1,0 +1,509 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}Team Details - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.team-header {
+    text-align: center;
+    padding: 24px 20px;
+}
+
+.team-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 16px;
+    box-shadow: 0 4px 12px rgba(103, 58, 183, 0.3);
+}
+
+.team-name-display {
+    font-size: 24px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 4px;
+}
+
+.game-name-display {
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    background: #f9f5ff;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #673ab7;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-section {
+    margin-top: 8px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-icon {
+    font-size: 20px;
+    margin-right: 14px;
+    width: 24px;
+    text-align: center;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #5f6368;
+    margin-bottom: 2px;
+}
+
+.info-value {
+    font-size: 15px;
+    color: #202124;
+    font-weight: 500;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.action-btn-primary {
+    background: #673ab7;
+    color: white;
+}
+
+.action-btn-primary:hover {
+    background: #5e35a1;
+}
+
+.action-btn-secondary {
+    background: #f8f9fa;
+    color: #202124;
+    border: 1px solid #dadce0;
+}
+
+.action-btn-secondary:hover {
+    background: #e8eaed;
+    border-color: #c5c5c5;
+}
+
+.action-btn-outline {
+    background: white;
+    color: #c5221f;
+    border: 1px solid #c5221f;
+}
+
+.action-btn-outline:hover {
+    background: #fce8e6;
+}
+
+.member-list {
+    margin-top: 16px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.member-avatar {
+    width: 36px;
+    height: 36px;
+    background: #673ab7;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.member-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+}
+
+/* Edit section styles */
+.edit-section {
+    margin-top: 8px;
+}
+
+.edit-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #673ab7;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.edit-form {
+    margin-bottom: 20px;
+}
+
+.edit-form:last-child {
+    margin-bottom: 0;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    color: #5f6368;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    color: #202124;
+    background: white;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #673ab7;
+    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1);
+}
+
+.save-btn {
+    width: 100%;
+    padding: 12px;
+    background: #673ab7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.save-btn:hover {
+    background: #5e35a1;
+}
+
+.form-divider {
+    height: 1px;
+    background: #e8e8e8;
+    margin: 20px 0;
+}
+
+.success-message {
+    background: #e6f4ea;
+    color: #137333;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.success-message.show {
+    display: block;
+}
+
+.error-message {
+    background: #fce8e6;
+    color: #c5221f;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="card">
+        <div class="team-header">
+            <div class="team-avatar">{{ team.name[0].upper() }}</div>
+            <h1 class="team-name-display">{{ team.name }}</h1>
+            <p class="game-name-display">{{ game.name }}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_points }}</div>
+                <div class="stat-label">Total Points</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ rounds_completed }}/{{ total_rounds }}</div>
+                <div class="stat-label">Rounds Done</div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-item">
+                <span class="info-icon">🎮</span>
+                <div class="info-content">
+                    <div class="info-label">Game Code</div>
+                    <div class="info-value">{{ game.code }}</div>
+                </div>
+            </div>
+            <div class="info-item">
+                <span class="info-icon">📍</span>
+                <div class="info-content">
+                    <div class="info-label">Position</div>
+                    <div class="info-value">{{ position }}{{ position_suffix }} place</div>
+                </div>
+            </div>
+            <div class="info-item">
+                <span class="info-icon">🕐</span>
+                <div class="info-content">
+                    <div class="info-label">Joined</div>
+                    <div class="info-value">{{ team.created_at.strftime('%d %b %Y, %H:%M') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card edit-section">
+        <div class="edit-section-title">Edit Team</div>
+
+        <div id="success-message" class="success-message"></div>
+        <div id="error-message" class="error-message"></div>
+
+        <form id="name-form" class="edit-form">
+            <div class="form-group">
+                <label class="form-label">Team Name</label>
+                <input type="text" id="team-name" class="form-input" value="{{ team.name }}" required>
+            </div>
+            <button type="submit" class="save-btn">Update Name</button>
+        </form>
+
+        <div class="form-divider"></div>
+
+        <form id="password-form" class="edit-form">
+            <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" id="current-password" class="form-input" placeholder="Enter current password" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" id="new-password" class="form-input" placeholder="Enter new password" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" id="confirm-password" class="form-input" placeholder="Confirm new password" required>
+            </div>
+            <button type="submit" class="save-btn">Update Password</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="action-buttons">
+            <button onclick="showSwapPhonePopup()" class="action-btn action-btn-secondary">
+                <span>📱 Swap Phone</span>
+            </button>
+            <a href="{{ url_for('player.instructions', game_code=game.code) }}" class="action-btn action-btn-primary">
+                <span>View Instructions</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="action-btn action-btn-outline">
+                <span>Sign Out</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+const gameCode = '{{ game.code }}';
+const socket = io();
+
+socket.on('connect', function() {
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    socket.emit('join_game', { game_id: gameId });
+}
+
+function showMessage(type, text) {
+    const successEl = document.getElementById('success-message');
+    const errorEl = document.getElementById('error-message');
+
+    successEl.classList.remove('show');
+    errorEl.classList.remove('show');
+
+    if (type === 'success') {
+        successEl.textContent = text;
+        successEl.classList.add('show');
+    } else {
+        errorEl.textContent = text;
+        errorEl.classList.add('show');
+    }
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        successEl.classList.remove('show');
+        errorEl.classList.remove('show');
+    }, 5000);
+}
+
+// Handle name update
+document.getElementById('name-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const newName = document.getElementById('team-name').value.trim();
+    if (!newName) {
+        showMessage('error', 'Team name cannot be empty');
+        return;
+    }
+
+    fetch('/api/team/update-name', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newName }),
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('success', 'Team name updated successfully!');
+            // Update displayed name
+            document.querySelector('.team-name-display').textContent = newName;
+            document.querySelector('.team-avatar').textContent = newName[0].toUpperCase();
+        } else {
+            showMessage('error', data.error || 'Failed to update team name');
+        }
+    })
+    .catch(error => {
+        showMessage('error', 'An error occurred. Please try again.');
+    });
+});
+
+// Handle password update
+document.getElementById('password-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showMessage('error', 'All password fields are required');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showMessage('error', 'New passwords do not match');
+        return;
+    }
+
+    if (newPassword.length < 1) {
+        showMessage('error', 'Password cannot be empty');
+        return;
+    }
+
+    fetch('/api/team/update-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword
+        }),
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('success', 'Password updated successfully!');
+            // Clear the form
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        } else {
+            showMessage('error', data.error || 'Failed to update password');
+        }
+    })
+    .catch(error => {
+        showMessage('error', 'An error occurred. Please try again.');
+    });
+});
+</script>
+{% endblock %}

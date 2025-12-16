@@ -1,0 +1,35 @@
+# Flask and core extensions
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+Flask-Migrate
+Flask-SocketIO
+
+# SocketIO dependencies
+python-socketio
+python-engineio
+
+# Database
+SQLAlchemy
+psycopg2-binary
+
+# Password hashing (included in Werkzeug which Flask depends on)
+
+# QR code generation
+qrcode
+Pillow
+
+# Environment variables
+python-dotenv
+
+# Form validation
+WTForms
+email-validator
+
+# Production server
+gunicorn
+eventlet
+
+# Security
+Flask-Limiter

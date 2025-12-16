@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fat Big Quiz{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+
+    <!-- Social Share Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}Fat Big Quiz{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Join the ultimate pub quiz experience!{% endblock %}">
+    <meta property="og:image" content="{{ url_for('static', filename='images/og-image.png', _external=True) }}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Fat Big Quiz">
+    <meta name="twitter:description" content="Join the ultimate pub quiz experience!">
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/og-image.png', _external=True) }}">
+
+    <!-- Pico CSS for minimal styling -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* Global nav styling */
+        nav.site-nav {
+            background: linear-gradient(135deg, #673ab7, #512da8);
+            padding: 12px 24px;
+            box-shadow: 0 2px 8px rgba(103, 58, 183, 0.3);
+        }
+        nav.site-nav ul {
+            margin: 0;
+            padding: 0;
+        }
+        nav.site-nav a {
+            color: white !important;
+            text-decoration: none;
+        }
+        nav.site-nav a:hover {
+            color: rgba(255,255,255,0.8) !important;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-logo img {
+            height: 36px;
+            width: auto;
+        }
+        .nav-logo span {
+            font-weight: 600;
+            font-size: 18px;
+            color: white;
+        }
+        nav.site-nav .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        nav.site-nav .nav-links a {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        nav.site-nav .nav-links a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        nav.site-nav .nav-links a.nav-btn {
+            background: rgba(255,255,255,0.2);
+        }
+        nav.site-nav .nav-links a.nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Footer styling */
+        footer.site-footer {
+            text-align: center;
+            padding: 24px 0;
+            margin-top: 40px;
+            color: #9e9e9e;
+            font-size: 13px;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="container-fluid site-nav">
+        <ul>
+            <li>
+                <a href="{{ url_for('index') }}" class="nav-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                    <span>Fat Big Quiz</span>
+                </a>
+            </li>
+        </ul>
+        <ul class="nav-links">
+            {% if current_user.is_authenticated %}
+                {% if current_user.get_id().startswith('admin_') %}
+                    <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('player.quiz', game_code=current_user.game.code) }}">My Quiz</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('auth.logout') }}" class="nav-btn">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.player_login') }}">Join Game</a></li>
+                <li><a href="{{ url_for('auth.admin_login') }}" class="nav-btn">Admin</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main class="container">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <article class="{% if category == 'danger' %}pico-background-red{% elif category == 'success' %}pico-background-green{% else %}pico-background-blue{% endif %}">
+                        {{ message }}
+                    </article>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container site-footer">
+        Fat Big Quiz
+    </footer>
+
+    <!-- Socket.IO client -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- Custom scripts -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

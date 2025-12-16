@@ -1,0 +1,1713 @@
+{% extends "base.html" %}
+
+{% block title %}Spreadsheet - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_simple.min.css" rel="stylesheet">
+<style>
+/* Google Sheets-like styling */
+:root {
+    --sheet-border: #e0e0e0;
+    --sheet-header-bg: #f8f9fa;
+    --sheet-select: #e8f0fe;
+    --sheet-select-border: #1a73e8;
+}
+
+body {
+    background: #f8f9fa;
+}
+
+.sheet-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    margin: 0;
+    padding: 0;
+    padding-bottom: 20px;
+    overflow: hidden;
+    width: 100%;
+    min-width: 100%;
+}
+
+.sheet-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--sheet-border);
+    background: white;
+    font-size: 13px;
+}
+
+.sheet-toolbar button {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid #dadce0;
+    background: #f8f9fa;
+    color: #202124;
+    cursor: pointer;
+    margin: 0;
+}
+
+.sheet-toolbar button:hover {
+    background: #e8eaed;
+    border-color: #c6c6c6;
+}
+
+.sheet-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #202124;
+    margin-right: auto;
+}
+
+#spreadsheet-table {
+    font-family: 'Google Sans', Roboto, Arial, sans-serif;
+    width: 100% !important;
+    min-width: 100%;
+}
+
+#spreadsheet-table .tabulator-tableholder {
+    overflow-x: auto !important;
+    padding-bottom: 10px;
+}
+
+#spreadsheet-table .tabulator-header {
+    width: 100%;
+}
+
+/* Tabulator Google Sheets overrides */
+.tabulator {
+    border: none;
+    font-size: 13px;
+    width: 100% !important;
+}
+
+.tabulator-header {
+    background: var(--sheet-header-bg);
+    border-bottom: 1px solid var(--sheet-border);
+}
+
+.tabulator-header .tabulator-col {
+    background: var(--sheet-header-bg);
+    border-right: 1px solid var(--sheet-border);
+    border-bottom: none;
+}
+
+.tabulator-header .tabulator-col-content {
+    padding: 0 8px;
+}
+
+.tabulator-header .tabulator-col-title {
+    font-weight: 500;
+    color: #5f6368;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tabulator-tableholder {
+    background: white;
+}
+
+.tabulator-row {
+    border-bottom: 1px solid var(--sheet-border);
+    min-height: 24px;
+}
+
+.tabulator-row:hover {
+    background: #f8f9fa;
+}
+
+.tabulator-row.tabulator-selected {
+    background: var(--sheet-select);
+}
+
+.tabulator-cell {
+    border-right: 1px solid var(--sheet-border);
+    padding: 4px 8px;
+    font-size: 13px;
+    color: #202124;
+}
+
+.tabulator-cell:focus {
+    outline: 2px solid var(--sheet-select-border);
+    outline-offset: -2px;
+}
+
+.tabulator-cell.tabulator-editing {
+    padding: 0;
+}
+
+.tabulator-cell.tabulator-editing input {
+    font-size: 13px;
+    padding: 4px 8px;
+    border: 2px solid var(--sheet-select-border);
+    border-radius: 0;
+    height: 100%;
+}
+
+/* Column styling */
+.col-position {
+    background: var(--sheet-header-bg) !important;
+    font-weight: 500;
+    color: #5f6368;
+    text-align: center;
+}
+
+.col-team {
+    font-weight: 500;
+}
+
+.col-total {
+    background: #e6f4ea !important;
+    font-weight: 600;
+    color: #137333;
+}
+
+.col-points {
+    text-align: center;
+    color: #5f6368;
+}
+
+.col-round-total {
+    background: #fef7e0 !important;
+    font-weight: 500;
+    text-align: center;
+}
+
+.col-answer {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.col-custom {
+    background: #e8f0fe !important;
+    font-weight: 500;
+    color: #1a73e8;
+}
+
+.col-tab-penalty {
+    background: #fce8e6 !important;
+    font-weight: 500;
+    color: #c5221f;
+}
+
+.tabulator-col-title[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+}
+
+.tabulator-col-title:empty::before {
+    content: "✓";
+    color: #999;
+}
+
+.tabulator-col-title {
+    min-height: 1em;
+    display: inline-block;
+}
+
+/* Highlight for linked question/answer pairs */
+.highlight-pair {
+    box-shadow: inset 0 0 0 2px rgba(220, 53, 69, 0.5) !important;
+    background-color: rgba(220, 53, 69, 0.08) !important;
+}
+
+/* Highlight for round groups */
+.highlight-round {
+    box-shadow: inset 0 0 0 2px rgba(128, 0, 128, 0.5) !important;
+    background-color: rgba(128, 0, 128, 0.08) !important;
+}
+
+/* Row number column */
+.tabulator-row .tabulator-cell:first-child {
+    background: var(--sheet-header-bg);
+}
+
+/* Footer */
+.tabulator-footer {
+    background: var(--sheet-header-bg);
+    border-top: 1px solid var(--sheet-border);
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.tabulator-paginator {
+    color: #5f6368;
+}
+
+/* Resize handle */
+.tabulator-col-resize-handle {
+    width: 6px;
+    right: -3px;
+}
+
+/* Frozen columns */
+.tabulator-frozen {
+    border-right: 2px solid #dadce0 !important;
+}
+
+/* Selected column headers */
+.tabulator-col.col-selected {
+    background: #c8e6c9 !important;
+    border-bottom: 3px solid #4caf50 !important;
+}
+
+.tabulator-col.col-selected .tabulator-col-title {
+    color: #2e7d32 !important;
+    font-weight: 600;
+}
+
+/* Floating selection indicator */
+.selection-float {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #323232;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 1000;
+    align-items: center;
+    gap: 16px;
+    animation: slideUp 0.2s ease;
+}
+
+.selection-float.show {
+    display: flex;
+}
+
+@keyframes slideUp {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+.selection-float-count {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.selection-float-btn {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0;
+}
+
+.selection-float-btn:hover {
+    background: #43a047;
+}
+
+.selection-float-btn.secondary {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.selection-float-btn.secondary:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Move handle for draggable columns */
+.tabulator-col.tabulator-sortable .tabulator-col-title {
+    cursor: grab;
+}
+
+.tabulator-col.tabulator-sortable:active .tabulator-col-title {
+    cursor: grabbing;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-icon {
+    width: 48px;
+    height: 48px;
+    background: #fce8e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #202124;
+    text-align: center;
+    margin: 0 0 8px;
+}
+
+.modal-message {
+    font-size: 14px;
+    color: #5f6368;
+    text-align: center;
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.modal-btn-cancel {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.modal-btn-cancel:hover {
+    background: #e8e8e8;
+}
+
+.modal-btn-danger {
+    background: #c5221f;
+    color: white;
+}
+
+.modal-btn-danger:hover {
+    background: #a31b18;
+}
+
+.modal-btn-primary {
+    background: #673ab7;
+    color: white;
+}
+
+.modal-btn-primary:hover {
+    background: #5e35a1;
+}
+
+/* Betting side panel */
+.betting-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: white;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    z-index: 1001;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.betting-panel.show {
+    right: 0;
+}
+
+.betting-panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #673ab7;
+    color: white;
+}
+
+.betting-panel-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.betting-panel-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.betting-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.betting-round {
+    margin-bottom: 20px;
+}
+
+.betting-round-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.betting-question-card {
+    background: #f9f5ff;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #e0d6f0;
+}
+
+.betting-question-text {
+    font-size: 13px;
+    color: #202124;
+    margin: 0 0 12px 0;
+}
+
+.betting-place-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.betting-place-label {
+    font-size: 12px;
+    color: #5f6368;
+    min-width: 60px;
+}
+
+.betting-place-select {
+    flex: 1;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    margin: 0 !important;
+}
+
+.betting-multiplier-label {
+    font-size: 11px;
+    color: #673ab7;
+    min-width: 35px;
+    text-align: right;
+}
+
+.betting-save-btn {
+    width: 100%;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    background: #673ab7 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    margin-top: 8px !important;
+}
+
+.betting-save-btn:hover {
+    background: #5e35a1 !important;
+}
+
+.betting-status {
+    font-size: 12px;
+    text-align: center;
+    margin-top: 8px;
+    color: #137333;
+}
+
+.betting-status.error {
+    color: #c5221f;
+}
+
+.betting-empty {
+    text-align: center;
+    color: #5f6368;
+    padding: 40px 20px;
+    font-size: 14px;
+}
+
+.betting-toggle-btn {
+    background: linear-gradient(135deg, #673ab7, #9c27b0) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.betting-toggle-btn:hover {
+    background: linear-gradient(135deg, #5e35a1, #7b1fa2) !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Override Pico CSS container constraints */
+    main.container {
+        max-width: none !important;
+        width: 100% !important;
+        padding: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
+    }
+    body {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    body > main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    nav.container-fluid {
+        margin-bottom: 0 !important;
+    }
+    footer.container {
+        display: none;
+    }
+    .sheet-container {
+        border-radius: 0 !important;
+    }
+</style>
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-content">
+        <div class="modal-icon" id="modal-icon">🗑</div>
+        <h3 class="modal-title" id="modal-title">Confirm</h3>
+        <p class="modal-message" id="modal-message">Are you sure?</p>
+        <div class="modal-actions" id="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-danger" id="modal-confirm-btn" onclick="confirmModalAction()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div class="sheet-container">
+    <div class="sheet-toolbar">
+        <span class="sheet-title">{{ game.name }}</span>
+        <button onclick="addCustomColumn()">+ Add Column</button>
+        <button onclick="setSelectedColumnsWidth()">Set Width</button>
+        <button onclick="resetColumnWidths()">Reset Widths</button>
+        <button class="betting-toggle-btn" onclick="toggleBettingPanel()">🎰 Betting</button>
+        <button onclick="loadData()">↻ Refresh</button>
+        <button onclick="exportData()">↓ Export CSV</button>
+        <a href="{{ url_for('admin.admin_scores', game_id=game.id) }}" target="_blank"><button>📊 Live Scores</button></a>
+        <a href="{{ url_for('admin.live_control', game_id=game.id) }}"><button>Live Control</button></a>
+        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}"><button>← Back</button></a>
+    </div>
+    <div id="spreadsheet-table"></div>
+</div>
+
+<!-- Floating selection indicator -->
+<div id="selection-indicator" class="selection-float">
+    <span class="selection-float-count"><span id="selection-count">0</span> columns selected</span>
+    <button class="selection-float-btn" onclick="setSelectedColumnsWidth()">Set Width</button>
+    <button class="selection-float-btn secondary" onclick="clearColumnSelection()">Clear</button>
+</div>
+
+<!-- Betting side panel -->
+<div id="betting-panel" class="betting-panel">
+    <div class="betting-panel-header">
+        <h3 class="betting-panel-title">🎰 Betting Results</h3>
+        <button class="betting-panel-close" onclick="toggleBettingPanel()">×</button>
+    </div>
+    <div class="betting-panel-content" id="betting-panel-content">
+        <p class="betting-empty">Loading betting questions...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+<script>
+const gameId = {{ game.id }};
+let table = null;
+let columnsConfig = null;
+let customColumnsConfig = null;
+let isLocalUpdate = false;
+let pendingModalAction = null;
+let selectedColumns = new Set(); // Track selected column fields
+
+// Modal functions
+function showModal(icon, title, message, confirmText, confirmClass, onConfirm) {
+    document.getElementById('modal-icon').textContent = icon;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-message').textContent = message;
+
+    const actionsEl = document.getElementById('modal-actions');
+    actionsEl.innerHTML = `
+        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="modal-btn ${confirmClass}" id="modal-confirm-btn" onclick="confirmModalAction()">${confirmText}</button>
+    `;
+
+    pendingModalAction = onConfirm;
+    document.getElementById('modal').classList.add('show');
+}
+
+function showError(message) {
+    document.getElementById('modal-icon').textContent = '⚠️';
+    document.getElementById('modal-title').textContent = 'Error';
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('modal-actions').innerHTML = '<button class="modal-btn modal-btn-primary" onclick="closeModal()">OK</button>';
+    pendingModalAction = null;
+    document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('show');
+    pendingModalAction = null;
+}
+
+function confirmModalAction() {
+    if (pendingModalAction) {
+        pendingModalAction();
+    }
+    closeModal();
+}
+
+// Close modal on overlay click
+document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+
+// Column width persistence
+const COLUMN_WIDTHS_KEY = `spreadsheet_widths_${gameId}`;
+
+function saveColumnWidths() {
+    if (!table) return;
+    const widths = {};
+    table.getColumns().forEach(col => {
+        const field = col.getField();
+        if (field) {
+            widths[field] = col.getWidth();
+        }
+    });
+    console.log("Saving column widths:", widths);
+    localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(widths));
+    console.log("Saved to localStorage key:", COLUMN_WIDTHS_KEY);
+}
+
+function getSavedColumnWidths() {
+    try {
+        const saved = localStorage.getItem(COLUMN_WIDTHS_KEY);
+        return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+// Socket.IO for real-time sync
+const socket = io();
+
+socket.on('connect', () => {
+    socket.emit('join_spreadsheet', { game_id: gameId });
+});
+
+socket.on('score_updated', (data) => {
+    if (!isLocalUpdate) loadDataPreserveScroll();
+});
+
+socket.on('submission_update', () => loadDataPreserveScroll());
+
+socket.on('columns_updated', () => {
+    // Rebuild table when columns change
+    if (table) {
+        table.destroy();
+        table = null;
+    }
+    loadData();
+});
+
+socket.on('tab_penalty_updated', (data) => {
+    // Refresh data when tab penalty changes
+    if (!isLocalUpdate) loadDataPreserveScroll();
+});
+
+async function loadData() {
+    try {
+        const response = await fetch(`/api/game/${gameId}/answers`);
+        const data = await response.json();
+        if (!data.success) return showError('Error loading data');
+
+        columnsConfig = data.columns;
+        customColumnsConfig = data.custom_columns || [];
+        const tableData = transformData(data.teams, data.columns, customColumnsConfig);
+
+        if (table) {
+            table.destroy();
+            table = null;
+        }
+        {
+            table = new Tabulator("#spreadsheet-table", {
+                data: tableData,
+                layout: "fitData",
+                maxHeight: "calc(100vh - 120px)",
+                movableColumns: true,
+                resizableColumns: true,
+                resizableRows: false,
+                selectableRows: 1,
+                clipboard: true,
+                clipboardCopyRowRange: "selected",
+                pagination: false,
+                frozenRows: 0,
+                columnDefaults: {
+                    resizable: true,
+                    headerSort: true,
+                    minWidth: 40,
+                },
+                columns: buildColumns(data.columns, customColumnsConfig),
+                initialSort: [{column: "position", dir: "asc"}],
+                rowFormatter: function(row) {
+                    // Alternating row colors like sheets
+                    if (row.getPosition() % 2 === 0) {
+                        row.getElement().style.backgroundColor = "#fff";
+                    }
+                },
+            });
+
+            // Set up column resize event listener
+            table.on("columnResized", function(column) {
+                console.log("Column resized:", column.getField(), column.getWidth());
+                saveColumnWidths();
+            });
+
+            // Apply saved widths after table is built (fitData may have overridden them)
+            setTimeout(() => {
+                console.log("Applying saved widths:", getSavedColumnWidths());
+                applySavedColumnWidths();
+            }, 100);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Load data while preserving scroll position (for cell edits)
+async function loadDataPreserveScroll() {
+    const holder = document.querySelector('.tabulator-tableholder');
+    const scrollLeft = holder?.scrollLeft || 0;
+    const scrollTop = holder?.scrollTop || 0;
+
+    await loadData();
+
+    // Restore scroll position after render
+    setTimeout(() => {
+        const newHolder = document.querySelector('.tabulator-tableholder');
+        if (newHolder) {
+            newHolder.scrollLeft = scrollLeft;
+            newHolder.scrollTop = scrollTop;
+        }
+    }, 120);
+}
+
+function applySavedColumnWidths() {
+    if (!table) {
+        console.log("applySavedColumnWidths: no table");
+        return;
+    }
+    const savedWidths = getSavedColumnWidths();
+    console.log("applySavedColumnWidths: savedWidths =", savedWidths);
+    if (Object.keys(savedWidths).length === 0) {
+        console.log("applySavedColumnWidths: no saved widths");
+        return;
+    }
+
+    table.getColumns().forEach(col => {
+        const field = col.getField();
+        if (field && savedWidths[field]) {
+            console.log(`Setting ${field} width to ${savedWidths[field]}`);
+            col.setWidth(savedWidths[field]);
+        }
+    });
+}
+
+function buildColumns(config, customCols = []) {
+    const savedWidths = getSavedColumnWidths();
+
+    const cols = [
+        {
+            title: "",
+            field: "position",
+            width: savedWidths["position"] || 50,
+            minWidth: 50,
+            frozen: true,
+            headerSort: false,
+            cssClass: "col-position",
+            hozAlign: "center"
+        },
+        {
+            title: "Team",
+            field: "team_name",
+            width: savedWidths["team_name"] || 180,
+            minWidth: 120,
+            frozen: true,
+            cssClass: "col-team",
+            editor: "input",
+            cellEdited: function(cell) {
+                const row = cell.getRow().getData();
+                isLocalUpdate = true;
+                updateTeamName(row.team_id, cell.getValue())
+                    .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+            }
+        },
+        {
+            title: "Score",
+            field: "total_score",
+            width: savedWidths["total_score"] || 80,
+            minWidth: 60,
+            cssClass: "col-total",
+            hozAlign: "center"
+        },
+        {
+            title: "Tab Penalty",
+            field: "tab_away_seconds",
+            width: savedWidths["tab_away_seconds"] || 100,
+            minWidth: 80,
+            cssClass: "col-tab-penalty",
+            hozAlign: "center",
+            headerTooltip: "Time away from tab (click to edit). 1 point penalty per 10 seconds.",
+            formatter: function(cell) {
+                const seconds = cell.getValue() || 0;
+                return formatTabTime(seconds);
+            },
+            editor: "input",
+            cellEdited: function(cell) {
+                const row = cell.getRow().getData();
+                const inputVal = cell.getValue();
+                const newSeconds = parseTabTime(String(inputVal));
+                isLocalUpdate = true;
+                updateTabAwaySeconds(row.team_id, newSeconds)
+                    .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+            }
+        },
+    ];
+
+    // Add custom columns after Score
+    for (const col of customCols) {
+        const fieldName = `custom_${col.id}`;
+        cols.push({
+            title: col.name,
+            field: fieldName,
+            width: savedWidths[fieldName] || Math.max(100, col.name.length * 9),
+            minWidth: 80,
+            hozAlign: "center",
+            cssClass: "col-custom",
+            editor: "number",
+            editorParams: { min: 0 },
+            headerClick: function(e, column) {
+                makeHeaderEditable(column, col.id);
+            },
+            headerContext: function(e, column) {
+                e.preventDefault();
+                showModal(
+                    '🗑',
+                    'Delete Column?',
+                    `Delete "${col.name}"? This will remove all scores in this column.`,
+                    'Delete',
+                    'modal-btn-danger',
+                    function() { deleteCustomColumn(col.id); }
+                );
+            },
+            cellEdited: function(cell) {
+                const row = cell.getRow().getData();
+                isLocalUpdate = true;
+                updateCustomScore(row.team_id, col.id, cell.getValue())
+                    .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+            }
+        });
+    }
+
+    // Identify which rounds are parents (have children)
+    const parentIds = new Set();
+    for (const round of config) {
+        if (round.parent_id) {
+            parentIds.add(round.parent_id);
+        }
+    }
+
+    // Track deferred parent totals: when we finish all children of a parent, add the parent total
+    const deferredParentTotals = [];
+    let currentParentId = null;
+
+    for (let i = 0; i < config.length; i++) {
+        const round = config[i];
+        const nextRound = config[i + 1];
+        const isParent = parentIds.has(round.round_id);
+        const isChild = round.parent_id !== null && round.parent_id !== undefined;
+
+        // Add questions for this round
+        for (const q of round.questions) {
+            // Answer column
+            const answerField = `r${round.round_id}_q${q.id}_text`;
+            cols.push({
+                title: q.text,
+                field: answerField,
+                width: savedWidths[answerField] || Math.max(200, q.text.length * 8),
+                minWidth: 150,
+                cssClass: "col-answer",
+                headerTooltip: q.text,
+                editor: "input",
+                headerClick: function(e, column) {
+                    makeQuestionHeaderEditable(column, round.round_id, q.id, q.text);
+                },
+                cellEdited: function(cell) {
+                    const row = cell.getRow().getData();
+                    const aid = row[`r${round.round_id}_q${q.id}_answer_id`];
+                    isLocalUpdate = true;
+                    if (aid) {
+                        updateAnswerText(aid, cell.getValue())
+                            .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                    } else {
+                        // Create new answer
+                        createAnswer(row.team_id, round.round_id, q.id, cell.getValue())
+                            .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                    }
+                }
+            });
+
+            // Points column
+            const pointsField = `r${round.round_id}_q${q.id}_points`;
+            const validationText = q.validation || q.correct_answer || "✓";
+            cols.push({
+                title: validationText,
+                field: pointsField,
+                width: savedWidths[pointsField] || Math.max(80, validationText.length * 8),
+                minWidth: 60,
+                hozAlign: "center",
+                cssClass: "col-points",
+                editor: "number",
+                editorParams: { min: 0 },
+                headerTooltip: q.type === 'radio' ? `Correct: ${q.correct_answer || 'not set'}` : `Pattern: ${q.validation || 'not set'}`,
+                headerClick: function(e, column) {
+                    const currentVal = q.type === 'radio' ? (q.correct_answer || '') : (q.validation || '');
+                    const label = q.type === 'radio' ? 'correct answer' : 'validation pattern';
+                    makeValidationHeaderEditable(column, round.round_id, q.id, q.type, currentVal);
+                },
+                cellEdited: function(cell) {
+                    const row = cell.getRow().getData();
+                    const aid = row[`r${round.round_id}_q${q.id}_answer_id`];
+                    if (aid) {
+                        isLocalUpdate = true;
+                        updateScore(aid, { points: cell.getValue() })
+                            .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                    }
+                }
+            });
+        }
+
+        // If this is a parent round, defer its total until after all children
+        if (isParent) {
+            currentParentId = round.round_id;
+            deferredParentTotals.push({
+                round_id: round.round_id,
+                round_name: round.round_name
+            });
+        } else {
+            // Add round total immediately for non-parent rounds
+            const roundTotalField = `round_${round.round_id}_total`;
+            cols.push({
+                title: round.round_name,
+                field: roundTotalField,
+                width: savedWidths[roundTotalField] || Math.max(80, round.round_name.length * 9),
+                minWidth: 60,
+                hozAlign: "center",
+                cssClass: "col-round-total",
+                headerSort: true
+            });
+
+            // Check if this is the last child of a parent - if so, add the parent total
+            if (isChild && currentParentId === round.parent_id) {
+                const nextIsChildOfSameParent = nextRound && nextRound.parent_id === currentParentId;
+                if (!nextIsChildOfSameParent) {
+                    // Add the deferred parent total
+                    const parentTotal = deferredParentTotals.find(p => p.round_id === currentParentId);
+                    if (parentTotal) {
+                        const parentTotalField = `round_${parentTotal.round_id}_total`;
+                        cols.push({
+                            title: parentTotal.round_name,
+                            field: parentTotalField,
+                            width: savedWidths[parentTotalField] || Math.max(80, parentTotal.round_name.length * 9),
+                            minWidth: 60,
+                            hozAlign: "center",
+                            cssClass: "col-round-total",
+                            headerSort: true
+                        });
+                        // Remove from deferred list
+                        const idx = deferredParentTotals.findIndex(p => p.round_id === currentParentId);
+                        if (idx !== -1) deferredParentTotals.splice(idx, 1);
+                    }
+                    currentParentId = null;
+                }
+            }
+        }
+    }
+
+    // Add any remaining deferred parent totals (parent rounds with no children, edge case)
+    for (const parentTotal of deferredParentTotals) {
+        const parentTotalField = `round_${parentTotal.round_id}_total`;
+        cols.push({
+            title: parentTotal.round_name,
+            field: parentTotalField,
+            width: savedWidths[parentTotalField] || Math.max(80, parentTotal.round_name.length * 9),
+            minWidth: 60,
+            hozAlign: "center",
+            cssClass: "col-round-total",
+            headerSort: true
+        });
+    }
+
+    return cols;
+}
+
+function transformData(teams, config, customCols = []) {
+    return teams.map(team => {
+        const row = {
+            position: team.position,
+            team_id: team.team_id,
+            team_name: team.team_name,
+            total_score: team.total_score,
+            tab_away_seconds: team.tab_away_seconds || 0,
+            tab_penalty_points: team.tab_penalty_points || 0,
+        };
+
+        // Add custom column values
+        const customScores = team.custom_scores || {};
+        for (const col of customCols) {
+            row[`custom_${col.id}`] = customScores[col.id] || 0;
+        }
+
+        for (const round of config) {
+            const rd = team.rounds[round.round_id] || { answers: {}, round_points: 0 };
+            for (const q of round.questions) {
+                const a = rd.answers[q.id] || { text: '', points: 0, answer_id: null };
+                row[`r${round.round_id}_q${q.id}_text`] = a.text;
+                row[`r${round.round_id}_q${q.id}_points`] = a.points;
+                row[`r${round.round_id}_q${q.id}_answer_id`] = a.answer_id;
+            }
+            row[`round_${round.round_id}_total`] = rd.round_points;
+        }
+        return row;
+    });
+}
+
+async function updateScore(answerId, updates) {
+    const response = await fetch(`/api/answer/${answerId}/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+    });
+    return response.json();
+}
+
+async function updateAnswerText(answerId, newText) {
+    const response = await fetch(`/api/answer/${answerId}/text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: newText })
+    });
+    return response.json();
+}
+
+async function updateTeamName(teamId, newName) {
+    const response = await fetch(`/api/team/${teamId}/name`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+    });
+    const data = await response.json();
+    if (!data.success) {
+        showError('Error updating team name: ' + (data.error || 'Unknown error'));
+    }
+    return data;
+}
+
+async function createAnswer(teamId, roundId, questionId, text) {
+    const response = await fetch('/api/answer/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            team_id: teamId,
+            round_id: roundId,
+            question_id: questionId,
+            text: text
+        })
+    });
+    return response.json();
+}
+
+function exportData() {
+    if (table) table.download("csv", "{{ game.name }}_results.csv");
+}
+
+// Column selection functions
+function setupColumnSelection() {
+    console.log("setupColumnSelection called, table:", !!table);
+    if (!table) return;
+
+    const tableEl = document.querySelector('#spreadsheet-table');
+    console.log("tableEl found:", !!tableEl);
+    if (!tableEl) return;
+
+    // Add a global click listener to debug
+    tableEl.addEventListener('mousedown', (e) => {
+        console.log("mousedown on spreadsheet, shiftKey:", e.shiftKey, "target:", e.target.tagName, e.target.className);
+
+        // Check if Shift is held
+        if (!e.shiftKey) return;
+
+        console.log("Shift+Click detected!");
+
+        // Find the column header
+        const header = e.target.closest('.tabulator-col');
+        console.log("header found:", !!header, header);
+        if (!header) return;
+
+        const field = header.getAttribute('tabulator-field');
+        console.log("field:", field);
+        if (!field || field === 'position') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        toggleColumnSelection(field, header);
+    }, true);
+
+    console.log("Column selection setup complete - Shift+Click to select columns");
+}
+
+function toggleColumnSelection(field, headerEl) {
+    if (selectedColumns.has(field)) {
+        selectedColumns.delete(field);
+        headerEl.classList.remove('col-selected');
+    } else {
+        selectedColumns.add(field);
+        headerEl.classList.add('col-selected');
+    }
+    updateSelectionIndicator();
+}
+
+function updateSelectionIndicator() {
+    const indicator = document.getElementById('selection-indicator');
+    const countEl = document.getElementById('selection-count');
+
+    if (selectedColumns.size > 0) {
+        indicator.classList.add('show');
+        countEl.textContent = selectedColumns.size;
+    } else {
+        indicator.classList.remove('show');
+    }
+}
+
+function clearColumnSelection() {
+    selectedColumns.clear();
+    document.querySelectorAll('.tabulator-col.col-selected').forEach(el => {
+        el.classList.remove('col-selected');
+    });
+    updateSelectionIndicator();
+}
+
+function setSelectedColumnsWidth() {
+    const count = selectedColumns.size;
+    const promptMsg = count > 0
+        ? `Enter width in pixels for ${count} selected column(s):`
+        : "No columns selected. Enter width for ALL answer columns:";
+
+    const width = prompt(promptMsg, "150");
+    if (!width) return;
+
+    const widthNum = parseInt(width);
+    if (isNaN(widthNum) || widthNum < 50) {
+        showError("Please enter a valid width (minimum 50px)");
+        return;
+    }
+
+    if (!table) return;
+
+    if (count > 0) {
+        // Resize only selected columns
+        table.getColumns().forEach(col => {
+            const field = col.getField();
+            if (field && selectedColumns.has(field)) {
+                col.setWidth(widthNum);
+            }
+        });
+        clearColumnSelection();
+    } else {
+        // Resize all answer/points columns
+        table.getColumns().forEach(col => {
+            const field = col.getField();
+            if (field && (field.includes('_text') || field.includes('_points'))) {
+                col.setWidth(widthNum);
+            }
+        });
+    }
+    saveColumnWidths();
+}
+
+function resetColumnWidths() {
+    localStorage.removeItem(COLUMN_WIDTHS_KEY);
+    console.log("Cleared saved widths");
+    clearColumnSelection();
+    // Reload to get default widths
+    if (table) {
+        table.destroy();
+        table = null;
+    }
+    loadData();
+}
+
+async function addCustomColumn() {
+    const response = await fetch(`/api/game/${gameId}/custom_columns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'New Column' })
+    });
+    const data = await response.json();
+    if (data.success) {
+        // Rebuild table with new column
+        if (table) {
+            table.destroy();
+            table = null;
+        }
+        loadData();
+    } else {
+        showError('Error adding column: ' + data.error);
+    }
+}
+
+function createHeaderInput(titleEl, currentText, onSave) {
+    if (titleEl.contentEditable === 'true') return;
+
+    titleEl.textContent = currentText;
+    titleEl.contentEditable = 'true';
+    titleEl.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(titleEl);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    let saved = false;
+    const saveTitle = async () => {
+        if (saved) return;
+        saved = true;
+        titleEl.contentEditable = 'false';
+        const newName = titleEl.textContent.trim() || currentText;
+        titleEl.textContent = newName.length > 25 ? newName.substring(0, 25) + '…' : newName;
+        if (newName !== currentText) {
+            await onSave(newName);
+        }
+    };
+
+    titleEl.addEventListener('blur', saveTitle, { once: true });
+    titleEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            titleEl.blur();
+        } else if (e.key === 'Escape') {
+            saved = true;
+            titleEl.contentEditable = 'false';
+            titleEl.textContent = currentText.length > 25 ? currentText.substring(0, 25) + '…' : currentText;
+        }
+    });
+}
+
+function makeHeaderEditable(column, colId) {
+    const header = column.getElement();
+    const titleEl = header.querySelector('.tabulator-col-title');
+    if (!titleEl) return;
+
+    const col = customColumnsConfig.find(c => c.id === colId);
+    const currentText = col ? col.name : titleEl.textContent;
+
+    createHeaderInput(titleEl, currentText, (newName) => renameCustomColumn(colId, newName));
+}
+
+function makeQuestionHeaderEditable(column, roundId, questionId, fullText) {
+    const header = column.getElement();
+    const titleEl = header.querySelector('.tabulator-col-title');
+    if (!titleEl) return;
+
+    createHeaderInput(titleEl, fullText, (newName) => updateQuestionText(roundId, questionId, newName));
+}
+
+function makeValidationHeaderEditable(column, roundId, questionId, qType, currentVal) {
+    const header = column.getElement();
+    const titleEl = header.querySelector('.tabulator-col-title');
+    if (!titleEl) return;
+
+    createHeaderInput(titleEl, currentVal || '', (newVal) => updateQuestionValidation(roundId, questionId, qType, newVal));
+}
+
+async function renameCustomColumn(colId, newName) {
+    const response = await fetch(`/api/game/${gameId}/custom_columns/${colId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+    });
+    return response.json();
+}
+
+async function updateQuestionText(roundId, questionId, newText) {
+    const response = await fetch(`/api/round/${roundId}/question/${questionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: newText })
+    });
+    const data = await response.json();
+    if (data.success) {
+        loadDataPreserveScroll();
+    }
+    return data;
+}
+
+async function updateQuestionValidation(roundId, questionId, qType, newVal) {
+    const body = qType === 'radio' ? { correct_answer: newVal } : { validation: newVal };
+    const response = await fetch(`/api/round/${roundId}/question/${questionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    if (data.success) {
+        loadDataPreserveScroll();
+    }
+    return data;
+}
+
+async function deleteCustomColumn(colId) {
+    const response = await fetch(`/api/game/${gameId}/custom_columns/${colId}`, {
+        method: 'DELETE'
+    });
+    const data = await response.json();
+    if (data.success) {
+        // Rebuild table without the column
+        if (table) {
+            table.destroy();
+            table = null;
+        }
+        loadData();
+    }
+}
+
+async function updateCustomScore(teamId, columnId, value) {
+    const response = await fetch(`/api/team/${teamId}/custom_score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ column_id: columnId, value: value })
+    });
+    return response.json();
+}
+
+function formatTabTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
+}
+
+function parseTabTime(timeStr) {
+    if (timeStr.includes(':')) {
+        const parts = timeStr.split(':');
+        return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+    return parseInt(timeStr) || 0;
+}
+
+async function updateTabAwaySeconds(teamId, seconds) {
+    const response = await fetch(`/api/team/${teamId}/tab-away-seconds`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seconds: seconds })
+    });
+    return response.json();
+}
+
+// Add hover highlighting for related columns
+function setupColumnHighlighting() {
+    if (!table) return;
+
+    const tableEl = document.querySelector('#spreadsheet-table');
+    if (!tableEl) return;
+
+    // Get all column headers
+    const headers = tableEl.querySelectorAll('.tabulator-col');
+
+    headers.forEach(header => {
+        const field = header.getAttribute('tabulator-field');
+        if (!field) return;
+
+        header.addEventListener('mouseenter', () => {
+            // Check if it's a question or points column (linked pair)
+            const pairMatch = field.match(/^r(\d+)_q([^_]+)_(text|points)$/);
+            if (pairMatch) {
+                const roundId = pairMatch[1];
+                const qId = pairMatch[2];
+                // Highlight both the text and points columns
+                highlightColumns([`r${roundId}_q${qId}_text`, `r${roundId}_q${qId}_points`], 'highlight-pair');
+            }
+
+            // Check if it's a round total column
+            const roundMatch = field.match(/^round_(\d+)_total$/);
+            if (roundMatch) {
+                const roundId = roundMatch[1];
+                // Find all columns for this round
+                const roundCols = [];
+                headers.forEach(h => {
+                    const f = h.getAttribute('tabulator-field');
+                    if (f && f.startsWith(`r${roundId}_q`)) {
+                        roundCols.push(f);
+                    }
+                });
+                roundCols.push(field); // Include the total itself
+                highlightColumns(roundCols, 'highlight-round');
+            }
+        });
+
+        header.addEventListener('mouseleave', () => {
+            clearHighlights();
+        });
+    });
+}
+
+function highlightColumns(fields, className) {
+    const tableEl = document.querySelector('#spreadsheet-table');
+    if (!tableEl) return;
+
+    fields.forEach(field => {
+        // Highlight header
+        const header = tableEl.querySelector(`.tabulator-col[tabulator-field="${field}"]`);
+        if (header) header.classList.add(className);
+
+        // Highlight cells
+        const cells = tableEl.querySelectorAll(`.tabulator-cell[tabulator-field="${field}"]`);
+        cells.forEach(cell => cell.classList.add(className));
+    });
+}
+
+function clearHighlights() {
+    const tableEl = document.querySelector('#spreadsheet-table');
+    if (!tableEl) return;
+
+    tableEl.querySelectorAll('.highlight-pair, .highlight-round').forEach(el => {
+        el.classList.remove('highlight-pair', 'highlight-round');
+    });
+}
+
+// Re-setup highlighting and selection after table rebuild
+const originalLoadData = loadData;
+loadData = async function() {
+    await originalLoadData();
+    setTimeout(() => {
+        try {
+            console.log("Setting up highlighting...");
+            setupColumnHighlighting();
+            console.log("Highlighting done, setting up selection...");
+            setupColumnSelection();
+            console.log("Selection setup done");
+        } catch (err) {
+            console.error("Error in setup:", err);
+        }
+    }, 150);
+};
+
+// Betting panel functions
+function toggleBettingPanel() {
+    const panel = document.getElementById('betting-panel');
+    const isOpen = panel.classList.contains('show');
+
+    if (isOpen) {
+        panel.classList.remove('show');
+    } else {
+        panel.classList.add('show');
+        loadAllBettingQuestions();
+    }
+}
+
+async function loadAllBettingQuestions() {
+    const content = document.getElementById('betting-panel-content');
+
+    try {
+        // Get all rounds for this game
+        const response = await fetch(`/api/game/${gameId}/answers`);
+        const data = await response.json();
+
+        if (!data.success) {
+            content.innerHTML = '<p class="betting-empty">Error loading data</p>';
+            return;
+        }
+
+        // Get betting questions for each round
+        const bettingByRound = {};
+
+        for (const roundInfo of data.columns) {
+            const roundResponse = await fetch(`/api/round/${roundInfo.round_id}/betting-questions`);
+            const roundData = await roundResponse.json();
+
+            if (roundData.success && roundData.betting_questions.length > 0) {
+                bettingByRound[roundInfo.round_id] = {
+                    name: roundInfo.round_name,
+                    questions: roundData.betting_questions
+                };
+            }
+        }
+
+        if (Object.keys(bettingByRound).length === 0) {
+            content.innerHTML = '<p class="betting-empty">No betting questions found in this game.</p>';
+            return;
+        }
+
+        // Render the betting UI
+        const ordinal = (n) => {
+            const s = ['th', 'st', 'nd', 'rd'];
+            const v = n % 100;
+            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        };
+
+        let html = '';
+        for (const [roundId, roundData] of Object.entries(bettingByRound)) {
+            html += `<div class="betting-round">
+                <h4 class="betting-round-title">${roundData.name}</h4>`;
+
+            for (const q of roundData.questions) {
+                let placesHtml = '';
+                for (let i = 0; i < q.num_places; i++) {
+                    const currentResult = q.results[i] || '';
+                    const multiplier = q.multipliers[i] || 1;
+                    placesHtml += `
+                        <div class="betting-place-row">
+                            <span class="betting-place-label">${ordinal(i + 1)} place:</span>
+                            <select class="betting-place-select" id="bp-${roundId}-${q.id}-${i}">
+                                <option value="">Select winner...</option>
+                                ${q.choices.map(c => `<option value="${c}" ${c === currentResult ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                            <span class="betting-multiplier-label">×${multiplier}</span>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="betting-question-card">
+                        <p class="betting-question-text">${q.text || 'Betting Question'}</p>
+                        ${placesHtml}
+                        <button class="betting-save-btn" onclick="saveBettingResultsSpreadsheet(${roundId}, '${q.id}', ${q.num_places})">
+                            Save Results
+                        </button>
+                        <div class="betting-status" id="bp-status-${roundId}-${q.id}"></div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+        }
+
+        content.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading betting questions:', error);
+        content.innerHTML = '<p class="betting-empty">Error loading betting questions.</p>';
+    }
+}
+
+async function saveBettingResultsSpreadsheet(roundId, questionId, numPlaces) {
+    const results = [];
+    for (let i = 0; i < numPlaces; i++) {
+        const select = document.getElementById(`bp-${roundId}-${questionId}-${i}`);
+        if (select && select.value) {
+            results.push(select.value);
+        }
+    }
+
+    const statusEl = document.getElementById(`bp-status-${roundId}-${questionId}`);
+
+    try {
+        const response = await fetch(`/api/round/${roundId}/question/${questionId}/betting-results`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ results })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (statusEl) {
+                statusEl.textContent = `✓ Saved! ${data.updated_count} team scores updated`;
+                statusEl.className = 'betting-status';
+                setTimeout(() => { statusEl.textContent = ''; }, 3000);
+            }
+            // Refresh the spreadsheet data while preserving scroll position
+            await loadDataPreserveScroll();
+        } else {
+            if (statusEl) {
+                statusEl.textContent = '✗ ' + (data.error || 'Failed to save');
+                statusEl.className = 'betting-status error';
+            }
+        }
+    } catch (error) {
+        if (statusEl) {
+            statusEl.textContent = '✗ Error: ' + error.message;
+            statusEl.className = 'betting-status error';
+        }
+    }
+}
+
+// Initial load - must be after wrapper is set up
+loadData();
+</script>
+{% endblock %}

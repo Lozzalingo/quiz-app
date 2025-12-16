@@ -1,0 +1,494 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}How to Play - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.instructions-header {
+    text-align: center;
+    padding: 24px 20px 16px;
+}
+
+.instructions-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 8px;
+}
+
+.instructions-header p {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0;
+}
+
+.instruction-step {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.instruction-step:last-child {
+    border-bottom: none;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    background: #673ab7;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.step-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 4px;
+}
+
+.step-content p {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.tutorial-section {
+    margin-top: 8px;
+}
+
+.tutorial-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #673ab7;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.menu-preview {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.preview-nav {
+    display: flex;
+    justify-content: space-around;
+    background: white;
+    padding: 12px 0 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.preview-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 10px;
+    color: #5f6368;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.preview-item .icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.preview-item.highlighted {
+    background: rgba(103, 58, 183, 0.15);
+    color: #673ab7;
+    transform: scale(1.1);
+}
+
+.preview-item.highlighted::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 8px;
+    background: #673ab7;
+    border-radius: 50%;
+    animation: bounce 0.5s ease-in-out infinite;
+}
+
+.menu-description {
+    text-align: center;
+    padding: 12px;
+    background: #e8f0fe;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1a73e8;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tutorial-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.tutorial-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tutorial-btn-prev {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.tutorial-btn-prev:hover {
+    background: #e8e8e8;
+}
+
+.tutorial-btn-next {
+    background: #673ab7;
+    color: white;
+}
+
+.tutorial-btn-next:hover {
+    background: #5e35a1;
+}
+
+.tutorial-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.tutorial-dot {
+    width: 8px;
+    height: 8px;
+    background: #dadce0;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.tutorial-dot.active {
+    background: #673ab7;
+    transform: scale(1.2);
+}
+
+.ready-section {
+    text-align: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    border-radius: 12px;
+    margin-top: 8px;
+}
+
+.ready-section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 8px;
+}
+
+.ready-section p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.9);
+    margin: 0 0 20px;
+}
+
+.ready-btn {
+    display: inline-block;
+    padding: 14px 32px;
+    background: white;
+    color: #673ab7;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.ready-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+.tips-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.tip-item:last-child {
+    border-bottom: none;
+}
+
+.tip-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.tip-text {
+    font-size: 14px;
+    color: #5f6368;
+    line-height: 1.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="card">
+        <div class="instructions-header">
+            <h1>How to Play</h1>
+            <p>Everything you need to know about {{ game.name }}</p>
+        </div>
+
+        <div class="instruction-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Wait for the Host</h3>
+                <p>Play along with the quiz master. They will guide you through the rounds when it's time to answer, and display the correct round on screen.</p>
+            </div>
+        </div>
+
+        <div class="instruction-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Answer Questions</h3>
+                <p>Tap on an open round to see the questions. Question types vary. You should see an explanation in the app, and from the host of how to submit.</p>
+            </div>
+        </div>
+
+        <div class="instruction-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Don't Take Too Long!</h3>
+                <p>When the host starts a timer, you'll see it counting down. Your answers will auto-submit when time expires.</p>
+            </div>
+        </div>
+
+        <div class="instruction-step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>Check Your Score</h3>
+                <p>Visit the scoreboard anytime to see how your team is doing against the competition!</p>
+            </div>
+        </div>
+
+        <div class="instruction-step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+                <h3>Stay on the App</h3>
+                <p>Don't switch to other apps or tabs during the quiz! We track when you leave, and you'll lose 1 point for every 10 seconds away. No cheating! You can see how long you've been off the app using the penalty timer in the bottom right of your screen.</p>
+            </div>
+        </div>
+
+        <div class="instruction-step">
+            <div class="step-number">6</div>
+            <div class="step-content">
+                <h3>Swapping Phones</h3>
+                <p>If you need to swap your device because your phone battery is getting low, log out of the app. Scan the QR code on the new phone and enter your team name and password. You will be logged back into your team.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card tutorial-section">
+        <div class="tutorial-title">Navigation Tutorial</div>
+
+        <div class="menu-preview">
+            <div class="preview-nav">
+                <div class="preview-item" data-step="0">
+                    <span class="icon">📝</span>
+                    <span>Questions</span>
+                </div>
+                <div class="preview-item" data-step="1">
+                    <span class="icon">📋</span>
+                    <span>Rounds</span>
+                </div>
+                <div class="preview-item" data-step="2">
+                    <span class="icon">🏆</span>
+                    <span>Scores</span>
+                </div>
+                <div class="preview-item" data-step="3">
+                    <span class="icon">👥</span>
+                    <span>Team</span>
+                </div>
+                <div class="preview-item" data-step="4">
+                    <span class="icon">❓</span>
+                    <span>Help</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-description" id="menu-description">
+            Tap the buttons below to learn what each menu does
+        </div>
+
+        <div class="tutorial-dots">
+            <div class="tutorial-dot" data-step="0"></div>
+            <div class="tutorial-dot" data-step="1"></div>
+            <div class="tutorial-dot" data-step="2"></div>
+            <div class="tutorial-dot" data-step="3"></div>
+            <div class="tutorial-dot" data-step="4"></div>
+        </div>
+
+        <div class="tutorial-controls">
+            <button class="tutorial-btn tutorial-btn-prev" id="prev-btn">Previous</button>
+            <button class="tutorial-btn tutorial-btn-next" id="next-btn">Next</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="tutorial-title">Quick Tips</div>
+        <ul class="tips-list">
+            <li class="tip-item">
+                <span class="tip-icon">💡</span>
+                <span class="tip-text">You can leave a question blank if you're not sure.</span>
+            </li>
+            <li class="tip-item">
+                <span class="tip-icon">🔄</span>
+                <span class="tip-text">If the host allows, you may be able to edit your answers after submitting.</span>
+            </li>
+            <li class="tip-item">
+                <span class="tip-icon">📱</span>
+                <span class="tip-text">Keep this tab open and active during the quiz for real-time updates.</span>
+            </li>
+            <li class="tip-item">
+                <span class="tip-icon">⚠️</span>
+                <span class="tip-text"><strong>Important:</strong> Switching apps or tabs will cost you points! Stay focused on the quiz.</span>
+            </li>
+        </ul>
+    </div>
+
+    {% if show_ready_button %}
+    <div class="ready-section">
+        <h2>You're All Set!</h2>
+        <p>Click below when the quiz master starts the game</p>
+        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="ready-btn">Start Playing</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+const socket = io();
+
+socket.on('connect', function() {
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    socket.emit('join_game', { game_id: gameId });
+}
+
+// Tutorial navigation
+const menuDescriptions = [
+    "📝 <strong>Questions</strong> - Go to the current round's questions to answer",
+    "📋 <strong>Rounds</strong> - See all available rounds and select one to answer",
+    "🏆 <strong>Scores</strong> - Check the live scoreboard and see team rankings",
+    "👥 <strong>Team</strong> - View your team details, stats, and progress",
+    "❓ <strong>Help</strong> - You're here! Instructions and tips for playing"
+];
+
+let currentStep = -1;
+const previewItems = document.querySelectorAll('.preview-item');
+const dots = document.querySelectorAll('.tutorial-dot');
+const descriptionEl = document.getElementById('menu-description');
+
+function highlightStep(step) {
+    // Remove all highlights
+    previewItems.forEach(item => item.classList.remove('highlighted'));
+    dots.forEach(dot => dot.classList.remove('active'));
+
+    if (step >= 0 && step < menuDescriptions.length) {
+        currentStep = step;
+        previewItems[step].classList.add('highlighted');
+        dots[step].classList.add('active');
+        descriptionEl.innerHTML = menuDescriptions[step];
+
+        // Also highlight the actual nav item
+        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+        navItems.forEach(item => item.classList.remove('highlight'));
+        if (navItems[step]) {
+            navItems[step].classList.add('highlight');
+        }
+    } else {
+        currentStep = -1;
+        descriptionEl.textContent = 'Tap the buttons below to learn what each menu does';
+        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+        navItems.forEach(item => item.classList.remove('highlight'));
+    }
+}
+
+// Click handlers for preview items
+previewItems.forEach((item, index) => {
+    item.addEventListener('click', () => highlightStep(index));
+});
+
+// Navigation buttons
+document.getElementById('next-btn').addEventListener('click', function() {
+    if (currentStep < menuDescriptions.length - 1) {
+        highlightStep(currentStep + 1);
+    } else {
+        highlightStep(0);
+    }
+});
+
+document.getElementById('prev-btn').addEventListener('click', function() {
+    if (currentStep > 0) {
+        highlightStep(currentStep - 1);
+    } else {
+        highlightStep(menuDescriptions.length - 1);
+    }
+});
+
+// Auto-play tutorial on page load
+let autoPlayIndex = 0;
+function autoPlayTutorial() {
+    highlightStep(autoPlayIndex);
+    autoPlayIndex++;
+    if (autoPlayIndex < menuDescriptions.length) {
+        setTimeout(autoPlayTutorial, 2000);
+    }
+}
+
+// Start auto-play after a short delay
+setTimeout(autoPlayTutorial, 1000);
+</script>
+{% endblock %}

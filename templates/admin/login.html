@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Quiz App{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h2>Admin Login</h2>
+    </header>
+
+    <form method="POST" action="{{ url_for('auth.admin_login') }}">
+        {{ form.hidden_tag() }}
+
+        <label for="username">
+            {{ form.username.label.text }}
+            {{ form.username(class="") }}
+            {% for error in form.username.errors %}
+                <small class="error">{{ error }}</small>
+            {% endfor %}
+        </label>
+
+        <label for="password">
+            {{ form.password.label.text }}
+            {{ form.password(class="") }}
+            {% for error in form.password.errors %}
+                <small class="error">{{ error }}</small>
+            {% endfor %}
+        </label>
+
+        {{ form.submit(class="") }}
+    </form>
+
+    <footer>
+        <small><a href="{{ url_for('index') }}">Back to Home</a></small>
+    </footer>
+</article>
+{% endblock %}

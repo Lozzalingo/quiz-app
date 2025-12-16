@@ -1,0 +1,1613 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Questions - {{ round.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Google Forms-like styling */
+body {
+    background: #f0ebf8;
+}
+
+/* Override Pico CSS defaults */
+.form-builder input,
+.form-builder select {
+    margin-bottom: 0 !important;
+}
+
+.form-builder input[type="text"],
+.form-builder input[type="number"] {
+    height: auto !important;
+}
+
+.form-builder {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.form-header {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 10px solid #673ab7;
+}
+
+.form-header h1 {
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0 0 4px 0;
+    color: #202124;
+}
+
+.form-header h1.editable {
+    cursor: pointer;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.form-header h1.editable:hover {
+    background: #f1f3f4;
+    border-color: #dadce0;
+}
+
+.form-header h1.editing {
+    border: 2px solid #673ab7 !important;
+    background: white;
+    outline: none;
+}
+
+.form-header p {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0;
+}
+
+.question-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    border-left: 4px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.question-card:hover {
+    border-left-color: #673ab7;
+}
+
+.question-card.focused {
+    border-left-color: #673ab7;
+}
+
+.question-row {
+    display: block;
+}
+
+.question-input {
+    width: 100% !important;
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 8px 0 !important;
+    font-size: 16px !important;
+    outline: none !important;
+    background: transparent !important;
+    color: #202124 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.question-input:focus {
+    border-bottom-color: #673ab7 !important;
+    border-bottom-width: 2px !important;
+}
+
+.question-input::placeholder {
+    color: #80868b;
+}
+
+.type-row {
+    margin-top: 12px;
+}
+
+.type-select {
+    padding: 6px 10px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    background: white !important;
+    color: #202124 !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.type-select:focus {
+    outline: none !important;
+    border-color: #673ab7 !important;
+}
+
+.field-group {
+    margin-top: 16px;
+}
+
+.field-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.field-row > div {
+    flex: 1;
+}
+
+.field-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.field-input {
+    width: 100% !important;
+    padding: 8px 12px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    color: #202124 !important;
+    box-sizing: border-box !important;
+    background: white !important;
+}
+
+.field-input:focus {
+    outline: none !important;
+    border-color: #673ab7 !important;
+}
+
+.field-hint {
+    font-size: 11px;
+    color: #80868b;
+    margin-top: 4px;
+}
+
+.points-input {
+    width: 50px !important;
+    text-align: center !important;
+    padding: 4px 6px !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    background: white !important;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6368;
+    font-size: 18px;
+    padding: 0;
+    margin: 0;
+}
+
+.icon-btn:hover {
+    background: #f1f3f4;
+}
+
+.icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.icon-btn:disabled:hover {
+    background: transparent;
+}
+
+.add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: white;
+    border: 2px dashed #dadce0;
+    border-radius: 8px;
+    padding: 16px;
+    width: 100%;
+    cursor: pointer;
+    color: #673ab7;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+
+.add-btn:hover {
+    border-color: #673ab7;
+    background: #f9f5ff;
+}
+
+.save-bar {
+    position: sticky;
+    bottom: 16px;
+    background: white;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.save-bar a {
+    color: #5f6368;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.save-bar a:hover {
+    color: #202124;
+}
+
+.save-btn {
+    background: #673ab7;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.save-btn:hover {
+    background: #5e35a1;
+}
+
+.radio-options {
+    margin-top: 12px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.radio-circle {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #dadce0;
+    border-radius: 50%;
+}
+
+.radio-option input {
+    flex: 1;
+    border: none;
+    border-bottom: 1px dotted #dadce0;
+    padding: 4px 0;
+    font-size: 13px;
+    outline: none;
+}
+
+.radio-option input:focus {
+    border-bottom-color: #673ab7;
+}
+
+.correct-marker {
+    font-size: 11px;
+    color: #0d904f;
+    background: #e6f4ea;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.option-delete-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #5f6368;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.option-delete-btn:hover {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #5f6368;
+}
+
+.empty-state p {
+    margin-bottom: 16px;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-icon {
+    width: 48px;
+    height: 48px;
+    background: #fce8e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+}
+
+.modal-icon.error {
+    background: #fce8e6;
+}
+
+.modal-icon.warning {
+    background: #fff3e0;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #202124;
+    text-align: center;
+    margin: 0 0 8px;
+}
+
+.modal-message {
+    font-size: 14px;
+    color: #5f6368;
+    text-align: center;
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.modal-btn-cancel {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.modal-btn-cancel:hover {
+    background: #e8e8e8;
+}
+
+.modal-btn-danger {
+    background: #c5221f;
+    color: white;
+}
+
+.modal-btn-danger:hover {
+    background: #a31b18;
+}
+
+.modal-btn-primary {
+    background: #673ab7;
+    color: white;
+}
+
+.modal-btn-primary:hover {
+    background: #5e35a1;
+}
+
+/* Image upload styles */
+.image-section {
+    margin-bottom: 12px;
+}
+
+.image-preview {
+    position: relative;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.image-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+.image-preview .remove-image {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview .remove-image:hover {
+    background: rgba(0,0,0,0.8);
+}
+
+.image-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    background: #f1f3f4 !important;
+    border: 1px dashed #dadce0 !important;
+    border-radius: 4px !important;
+    color: #5f6368 !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.image-upload-btn:hover {
+    background: #e8eaed !important;
+    border-color: #673ab7 !important;
+    color: #673ab7 !important;
+}
+
+.image-upload-btn input[type="file"] {
+    display: none;
+}
+
+/* Betting question styles */
+.betting-config {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.betting-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.betting-row > div {
+    flex: 1;
+}
+
+.betting-choices {
+    margin-top: 12px;
+}
+
+.betting-choice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.betting-choice-num {
+    width: 24px;
+    height: 24px;
+    background: #673ab7;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.betting-choice input {
+    flex: 1;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    outline: none !important;
+    background: white !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+.betting-choice input:focus {
+    border-color: #673ab7 !important;
+    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1) !important;
+}
+
+.multipliers-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.multiplier-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.multiplier-label {
+    min-width: 60px;
+    font-size: 13px;
+    color: #5f6368;
+}
+
+.multiplier-input {
+    width: 80px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    text-align: center !important;
+}
+
+.multiplier-hint {
+    font-size: 11px;
+    color: #80868b;
+}
+
+/* Ordering question styles */
+.ordering-config {
+    margin-top: 16px;
+    padding: 16px;
+    background: #e8f5e9;
+    border-radius: 8px;
+}
+
+.ordering-items {
+    margin-bottom: 16px;
+}
+
+.ordering-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #c8e6c9;
+}
+
+.ordering-item-num {
+    width: 28px;
+    height: 28px;
+    background: #4caf50;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.ordering-item input {
+    flex: 1;
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 6px 0 !important;
+    font-size: 14px !important;
+    outline: none !important;
+    background: transparent !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.ordering-item input:focus {
+    border-bottom-color: #4caf50 !important;
+}
+
+.ordering-item-actions {
+    display: flex;
+    gap: 2px;
+}
+
+.ordering-item-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #5f6368;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.ordering-item-btn:hover {
+    background: #f1f3f4;
+}
+
+.ordering-item-btn.delete:hover {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.ordering-add-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 2px dashed #a5d6a7;
+    border-radius: 6px;
+}
+
+.ordering-add-item input {
+    flex: 1;
+    border: none !important;
+    padding: 6px 0 !important;
+    font-size: 14px !important;
+    outline: none !important;
+    background: transparent !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+.ordering-points-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #c8e6c9;
+}
+
+.ordering-points-row > div {
+    flex: 1;
+}
+
+.ordering-hint {
+    font-size: 12px;
+    color: #2e7d32;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 4px;
+}
+
+/* Estimate question styles */
+.estimate-config {
+    margin-top: 16px;
+    padding: 16px;
+    background: #e3f2fd;
+    border-radius: 8px;
+}
+
+.estimate-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.estimate-row > div {
+    flex: 1;
+}
+
+.estimate-ranges {
+    margin-top: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #bbdefb;
+}
+
+.estimate-range-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.estimate-range-label {
+    min-width: 80px;
+    color: #1565c0;
+}
+
+.estimate-range-points {
+    width: 60px !important;
+    padding: 4px 8px !important;
+    font-size: 13px !important;
+    text-align: center !important;
+}
+
+.estimate-range-desc {
+    color: #5f6368;
+    font-size: 12px;
+}
+
+.estimate-hint {
+    font-size: 12px;
+    color: #1565c0;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(21, 101, 192, 0.1);
+    border-radius: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-content">
+        <div class="modal-icon" id="modal-icon">🗑</div>
+        <h3 class="modal-title" id="modal-title">Delete?</h3>
+        <p class="modal-message" id="modal-message">This action cannot be undone.</p>
+        <div class="modal-actions" id="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-danger" id="modal-confirm-btn" onclick="confirmAction()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div class="form-builder">
+    <div class="form-header">
+        <h1 class="editable" id="round-name" onclick="editRoundName()" title="Click to edit">{{ round.name }}</h1>
+        <p>{{ game.name }}</p>
+    </div>
+
+    <div id="questions-container">
+        <!-- Questions rendered here -->
+    </div>
+
+    <button type="button" class="add-btn" onclick="addQuestion()">
+        <span style="font-size: 20px;">+</span> Add question
+    </button>
+
+    <div class="save-bar">
+        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}">← Back to Game</a>
+        <button type="button" class="save-btn" onclick="saveQuestions()">Save</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const roundId = {{ round.id }};
+let questions = {{ round.get_questions()|tojson|safe }};
+let pendingAction = null;
+
+// Modal functions
+function showModal(icon, title, message, confirmText, confirmClass, onConfirm) {
+    document.getElementById('modal-icon').textContent = icon;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-message').textContent = message;
+
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    confirmBtn.textContent = confirmText;
+    confirmBtn.className = 'modal-btn ' + confirmClass;
+
+    pendingAction = onConfirm;
+    document.getElementById('modal').classList.add('show');
+}
+
+function showError(message) {
+    document.getElementById('modal-icon').textContent = '⚠️';
+    document.getElementById('modal-icon').className = 'modal-icon error';
+    document.getElementById('modal-title').textContent = 'Error';
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('modal-actions').innerHTML = '<button class="modal-btn modal-btn-primary" onclick="closeModal()">OK</button>';
+    document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('show');
+    pendingAction = null;
+    // Reset modal actions
+    document.getElementById('modal-actions').innerHTML = `
+        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="modal-btn modal-btn-danger" id="modal-confirm-btn" onclick="confirmAction()">Delete</button>
+    `;
+}
+
+function confirmAction() {
+    if (pendingAction) {
+        pendingAction();
+    }
+    closeModal();
+}
+
+// Close modal on overlay click
+document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+
+// Edit round name
+function editRoundName() {
+    const el = document.getElementById('round-name');
+    if (el.contentEditable === 'true') return;
+
+    const originalName = el.textContent;
+    el.contentEditable = 'true';
+    el.classList.add('editing');
+    el.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    let saved = false;
+    const saveRoundName = async () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+
+        const newName = el.textContent.trim();
+        if (!newName) {
+            el.textContent = originalName;
+            return;
+        }
+
+        if (newName !== originalName) {
+            try {
+                const response = await fetch(`/api/round/${roundId}/name`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    el.textContent = originalName;
+                    showError('Failed to update name: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                el.textContent = originalName;
+                showError('Failed to update name: ' + error.message);
+            }
+        }
+    };
+
+    el.addEventListener('blur', saveRoundName, { once: true });
+    el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            el.blur();
+        } else if (e.key === 'Escape') {
+            saved = true;
+            el.contentEditable = 'false';
+            el.classList.remove('editing');
+            el.textContent = originalName;
+        }
+    });
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questions-container');
+    container.innerHTML = '';
+
+    if (questions.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No questions yet</p></div>';
+        return;
+    }
+
+    questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.className = 'question-card';
+        div.innerHTML = `
+            <div class="image-section">
+                ${q.image ? `
+                    <div class="image-preview">
+                        <img src="${q.image}" alt="Question image">
+                        <button type="button" class="remove-image" onclick="removeImage(${index})">×</button>
+                    </div>
+                ` : ''}
+                <label class="image-upload-btn">
+                    <span>🖼</span> ${q.image ? 'Change image' : 'Add image'}
+                    <input type="file" accept="image/*" onchange="uploadImage(${index}, this)">
+                </label>
+            </div>
+            <div class="question-row">
+                <input type="text" class="question-input"
+                       value="${escapeHtml(q.text || '')}"
+                       onchange="updateQuestion(${index}, 'text', this.value)"
+                       placeholder="Question ${index + 1}">
+            </div>
+            <div class="type-row">
+                <select class="type-select" onchange="updateQuestion(${index}, 'type', this.value); renderQuestions();">
+                    <option value="text" ${q.type === 'text' ? 'selected' : ''}>Short answer</option>
+                    <option value="number" ${q.type === 'number' ? 'selected' : ''}>Number</option>
+                    <option value="radio" ${q.type === 'radio' ? 'selected' : ''}>Multiple choice</option>
+                    <option value="betting" ${q.type === 'betting' ? 'selected' : ''}>Betting</option>
+                    <option value="ordering" ${q.type === 'ordering' ? 'selected' : ''}>Ordering</option>
+                    <option value="estimate" ${q.type === 'estimate' ? 'selected' : ''}>Estimate</option>
+                </select>
+            </div>
+
+            ${q.type === 'radio' ? renderRadioOptions(q, index) : q.type === 'betting' ? renderBettingOptions(q, index) : q.type === 'ordering' ? renderOrderingOptions(q, index) : q.type === 'estimate' ? renderEstimateOptions(q, index) : renderValidation(q, index)}
+
+            <div class="card-actions">
+                ${(q.type !== 'betting' && q.type !== 'ordering' && q.type !== 'estimate') ? `
+                <div style="margin-right: auto; display: flex; align-items: center; gap: 6px;">
+                    <span class="field-label" style="margin: 0;">Pts:</span>
+                    <input type="number" class="points-input"
+                           value="${q.points || 1}"
+                           onchange="updateQuestion(${index}, 'points', parseFloat(this.value))"
+                           min="0" step="0.5">
+                </div>
+                ` : '<div style="margin-right: auto;"></div>'}
+                <button type="button" class="icon-btn" onclick="duplicateQuestion(${index})" title="Duplicate">⧉</button>
+                <button type="button" class="icon-btn" onclick="moveQuestion(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="Move up">↑</button>
+                <button type="button" class="icon-btn" onclick="moveQuestion(${index}, 1)" ${index === questions.length - 1 ? 'disabled' : ''} title="Move down">↓</button>
+                <button type="button" class="icon-btn" onclick="removeQuestion(${index})" title="Delete">🗑</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function renderRadioOptions(q, index) {
+    const options = (q.options || '').split(',').map(o => o.trim()).filter(o => o);
+    const correctAnswer = q.correct_answer || '';
+
+    let html = '<div class="radio-options">';
+    options.forEach((opt, optIndex) => {
+        const isCorrect = opt.toLowerCase() === correctAnswer.toLowerCase();
+        html += `
+            <div class="radio-option">
+                <div class="radio-circle" style="${isCorrect ? 'border-color: #0d904f; background: #0d904f;' : ''}"></div>
+                <input type="text" value="${escapeHtml(opt)}"
+                       onchange="updateRadioOption(${index}, ${optIndex}, this.value)"
+                       placeholder="Option ${optIndex + 1}">
+                <span class="correct-marker" onclick="setCorrectAnswerByIndex(${index}, ${optIndex})"
+                      style="${isCorrect ? '' : 'opacity: 0.5;'}">${isCorrect ? '✓ Correct' : 'Set correct'}</span>
+                <button type="button" class="option-delete-btn" onclick="removeRadioOption(${index}, ${optIndex})" title="Remove option">×</button>
+            </div>
+        `;
+    });
+    html += `
+        <div class="radio-option">
+            <div class="radio-circle"></div>
+            <input type="text" placeholder="Add option"
+                   onchange="addRadioOption(${index}, this.value); this.value = '';">
+        </div>
+    </div>`;
+    return html;
+}
+
+function renderValidation(q, index) {
+    const isNumber = q.type === 'number';
+    return `
+        <div class="field-group">
+            <div class="field-label">${isNumber ? 'Score Formula' : 'Validation Pattern'}</div>
+            <input type="text" class="field-input"
+                   value="${escapeHtml(q.validation || '')}"
+                   onchange="updateQuestion(${index}, 'validation', this.value)"
+                   placeholder="${isNumber ? 'answer * 4' : 'Paris | London'}">
+            <div class="field-hint">${isNumber ? 'Use "answer" as the variable. E.g., answer * 2 + 10' : 'Use | for OR, + for AND. E.g., Paris + France | London + UK'}</div>
+        </div>
+    `;
+}
+
+function renderBettingOptions(q, index) {
+    // Initialize betting config if not present
+    if (!q.betting) {
+        q.betting = {
+            max_bet: 3,
+            choices: [],
+            num_places: 1,
+            multipliers: [3]
+        };
+    }
+
+    const choices = q.betting.choices || [];
+    const numPlaces = q.betting.num_places || 1;
+    const multipliers = q.betting.multipliers || [3];
+
+    // Ordinal suffixes
+    const ordinal = (n) => {
+        const s = ['th', 'st', 'nd', 'rd'];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+
+    let choicesHtml = '';
+    choices.forEach((choice, i) => {
+        choicesHtml += `
+            <div class="betting-choice">
+                <span class="betting-choice-num">${i + 1}</span>
+                <input type="text" value="${escapeHtml(choice)}"
+                       onchange="updateBettingChoice(${index}, ${i}, this.value)"
+                       placeholder="Choice ${i + 1}">
+                <button type="button" class="option-delete-btn" onclick="removeBettingChoice(${index}, ${i})" title="Remove">×</button>
+            </div>
+        `;
+    });
+
+    let multipliersHtml = '';
+    for (let i = 0; i < numPlaces; i++) {
+        multipliersHtml += `
+            <div class="multiplier-row">
+                <span class="multiplier-label">${ordinal(i + 1)} place:</span>
+                <input type="number" class="field-input multiplier-input"
+                       value="${multipliers[i] || 1}"
+                       onchange="updateBettingMultiplier(${index}, ${i}, this.value)"
+                       min="1" step="0.5">
+                <span class="multiplier-hint">× bet amount</span>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="betting-config">
+            <div class="betting-row">
+                <div>
+                    <div class="field-label">Max Bet (points)</div>
+                    <input type="number" class="field-input"
+                           value="${q.betting.max_bet || 3}"
+                           onchange="updateBettingConfig(${index}, 'max_bet', parseInt(this.value))"
+                           min="1" max="10">
+                </div>
+                <div>
+                    <div class="field-label">Number of Winners</div>
+                    <select class="field-input" onchange="updateBettingConfig(${index}, 'num_places', parseInt(this.value)); renderQuestions();">
+                        <option value="1" ${numPlaces === 1 ? 'selected' : ''}>1 (winner only)</option>
+                        <option value="2" ${numPlaces === 2 ? 'selected' : ''}>2 (1st & 2nd)</option>
+                        <option value="3" ${numPlaces === 3 ? 'selected' : ''}>3 (1st, 2nd & 3rd)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="betting-choices">
+                <div class="field-label">Choices (e.g., horse names)</div>
+                ${choicesHtml}
+                <div class="betting-choice">
+                    <span class="betting-choice-num" style="background: #dadce0; color: #5f6368;">+</span>
+                    <input type="text" placeholder="Add choice"
+                           onchange="addBettingChoice(${index}, this.value); this.value = '';">
+                </div>
+            </div>
+
+            <div class="multipliers-section">
+                <div class="field-label">Payout Multipliers</div>
+                ${multipliersHtml}
+                <div class="field-hint">If a player bets 2 points and wins 1st place with a 3× multiplier, they get 2 × 3 = 6 points</div>
+            </div>
+        </div>
+    `;
+}
+
+function updateBettingConfig(index, field, value) {
+    if (!questions[index].betting) {
+        questions[index].betting = { max_bet: 3, choices: [], num_places: 1, multipliers: [3] };
+    }
+    questions[index].betting[field] = value;
+
+    // Adjust multipliers array if num_places changed
+    if (field === 'num_places') {
+        const multipliers = questions[index].betting.multipliers || [];
+        while (multipliers.length < value) {
+            multipliers.push(1);
+        }
+        questions[index].betting.multipliers = multipliers.slice(0, value);
+    }
+}
+
+function updateBettingChoice(index, choiceIndex, value) {
+    if (!questions[index].betting) {
+        questions[index].betting = { max_bet: 3, choices: [], num_places: 1, multipliers: [3] };
+    }
+    questions[index].betting.choices[choiceIndex] = value;
+}
+
+function addBettingChoice(index, value) {
+    if (!value.trim()) return;
+    if (!questions[index].betting) {
+        questions[index].betting = { max_bet: 3, choices: [], num_places: 1, multipliers: [3] };
+    }
+    questions[index].betting.choices.push(value.trim());
+    renderQuestions();
+}
+
+function removeBettingChoice(index, choiceIndex) {
+    if (!questions[index].betting) return;
+    questions[index].betting.choices.splice(choiceIndex, 1);
+    renderQuestions();
+}
+
+function updateBettingMultiplier(index, placeIndex, value) {
+    if (!questions[index].betting) {
+        questions[index].betting = { max_bet: 3, choices: [], num_places: 1, multipliers: [3] };
+    }
+    if (!questions[index].betting.multipliers) {
+        questions[index].betting.multipliers = [];
+    }
+    questions[index].betting.multipliers[placeIndex] = parseFloat(value) || 1;
+}
+
+function renderOrderingOptions(q, index) {
+    // Initialize ordering config if not present
+    if (!q.ordering) {
+        q.ordering = {
+            items: [],
+            points_exact: 2,
+            points_adjacent: 1
+        };
+    }
+
+    const items = q.ordering.items || [];
+
+    let itemsHtml = '';
+    items.forEach((item, i) => {
+        itemsHtml += `
+            <div class="ordering-item">
+                <span class="ordering-item-num">${i + 1}</span>
+                <input type="text" value="${escapeHtml(item)}"
+                       onchange="updateOrderingItem(${index}, ${i}, this.value)"
+                       placeholder="Item ${i + 1}">
+                <div class="ordering-item-actions">
+                    <button type="button" class="ordering-item-btn" onclick="moveOrderingItem(${index}, ${i}, -1)" ${i === 0 ? 'disabled' : ''} title="Move up">↑</button>
+                    <button type="button" class="ordering-item-btn" onclick="moveOrderingItem(${index}, ${i}, 1)" ${i === items.length - 1 ? 'disabled' : ''} title="Move down">↓</button>
+                    <button type="button" class="ordering-item-btn delete" onclick="removeOrderingItem(${index}, ${i})" title="Remove">×</button>
+                </div>
+            </div>
+        `;
+    });
+
+    return `
+        <div class="ordering-config">
+            <div class="field-label">Items (in correct order)</div>
+            <div class="ordering-items">
+                ${itemsHtml}
+                <div class="ordering-add-item">
+                    <span class="ordering-item-num" style="background: #a5d6a7; color: #2e7d32;">+</span>
+                    <input type="text" placeholder="Add item..."
+                           onkeydown="if(event.key==='Enter'){addOrderingItem(${index}, this.value); this.value=''; event.preventDefault();}"
+                           onblur="if(this.value.trim()){addOrderingItem(${index}, this.value); this.value='';}">
+                </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <div class="field-label">Start/End Labels (shown above first and below last item)</div>
+                <div style="display: flex; gap: 12px;">
+                    <input type="text" class="field-input" style="flex: 1;"
+                           value="${escapeHtml(q.ordering.start_label || '')}"
+                           onchange="updateOrderingConfig(${index}, 'start_label', this.value)"
+                           placeholder="e.g. Oldest">
+                    <input type="text" class="field-input" style="flex: 1;"
+                           value="${escapeHtml(q.ordering.end_label || '')}"
+                           onchange="updateOrderingConfig(${index}, 'end_label', this.value)"
+                           placeholder="e.g. Most recent">
+                </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <div class="field-label">Header Instruction (shown in header, optional)</div>
+                <input type="text" class="field-input"
+                       value="${escapeHtml(q.ordering.instruction || '')}"
+                       onchange="updateOrderingConfig(${index}, 'instruction', this.value)"
+                       placeholder="e.g. 1 = oldest, 10 = newest">
+            </div>
+
+            <div class="ordering-points-row">
+                <div>
+                    <div class="field-label">Exact Position Points</div>
+                    <input type="number" class="field-input"
+                           value="${q.ordering.points_exact || 2}"
+                           onchange="updateOrderingConfig(${index}, 'points_exact', parseFloat(this.value))"
+                           min="0" step="0.5">
+                </div>
+                <div>
+                    <div class="field-label">Adjacent Position Points</div>
+                    <input type="number" class="field-input"
+                           value="${q.ordering.points_adjacent || 1}"
+                           onchange="updateOrderingConfig(${index}, 'points_adjacent', parseFloat(this.value))"
+                           min="0" step="0.5">
+                </div>
+            </div>
+
+            <div class="ordering-hint">
+                Players will see items in random order and must arrange them.
+                Exact position = ${q.ordering.points_exact || 2} pts,
+                off by one = ${q.ordering.points_adjacent || 1} pt,
+                off by more = 0 pts.
+            </div>
+        </div>
+    `;
+}
+
+function updateOrderingConfig(index, field, value) {
+    if (!questions[index].ordering) {
+        questions[index].ordering = { items: [], points_exact: 2, points_adjacent: 1 };
+    }
+    questions[index].ordering[field] = value;
+    renderQuestions();
+}
+
+function updateOrderingItem(index, itemIndex, value) {
+    if (!questions[index].ordering) {
+        questions[index].ordering = { items: [], points_exact: 2, points_adjacent: 1 };
+    }
+    questions[index].ordering.items[itemIndex] = value;
+}
+
+function addOrderingItem(index, value) {
+    if (!value.trim()) return;
+    if (!questions[index].ordering) {
+        questions[index].ordering = { items: [], points_exact: 2, points_adjacent: 1 };
+    }
+    questions[index].ordering.items.push(value.trim());
+    renderQuestions();
+}
+
+function removeOrderingItem(index, itemIndex) {
+    if (!questions[index].ordering) return;
+    questions[index].ordering.items.splice(itemIndex, 1);
+    renderQuestions();
+}
+
+function moveOrderingItem(index, itemIndex, direction) {
+    if (!questions[index].ordering) return;
+    const items = questions[index].ordering.items;
+    const newIndex = itemIndex + direction;
+    if (newIndex >= 0 && newIndex < items.length) {
+        [items[itemIndex], items[newIndex]] = [items[newIndex], items[itemIndex]];
+        renderQuestions();
+    }
+}
+
+function renderEstimateOptions(q, index) {
+    // Initialize estimate config if not present
+    if (!q.estimate) {
+        q.estimate = {
+            correct_answer: '',
+            points_exact: 4,
+            points_10: 3,
+            points_20: 2,
+            points_30: 1
+        };
+    }
+
+    const est = q.estimate;
+
+    return `
+        <div class="estimate-config">
+            <div class="estimate-row">
+                <div>
+                    <div class="field-label">Correct Answer</div>
+                    <input type="number" class="field-input"
+                           value="${est.correct_answer || ''}"
+                           onchange="updateEstimateConfig(${index}, 'correct_answer', parseFloat(this.value))"
+                           placeholder="e.g. 100"
+                           step="any">
+                </div>
+            </div>
+
+            <div class="estimate-ranges">
+                <div class="field-label" style="margin-bottom: 8px;">Points by Accuracy</div>
+
+                <div class="estimate-range-row">
+                    <span class="estimate-range-label">Exact:</span>
+                    <input type="number" class="field-input estimate-range-points"
+                           value="${est.points_exact || 4}"
+                           onchange="updateEstimateConfig(${index}, 'points_exact', parseFloat(this.value))"
+                           min="0" step="0.5">
+                    <span class="estimate-range-desc">pts</span>
+                </div>
+
+                <div class="estimate-range-row">
+                    <span class="estimate-range-label">Within 10%:</span>
+                    <input type="number" class="field-input estimate-range-points"
+                           value="${est.points_10 || 3}"
+                           onchange="updateEstimateConfig(${index}, 'points_10', parseFloat(this.value))"
+                           min="0" step="0.5">
+                    <span class="estimate-range-desc">pts (e.g. ${est.correct_answer ? Math.round(est.correct_answer * 0.9) + '-' + Math.round(est.correct_answer * 1.1) : '90-110'})</span>
+                </div>
+
+                <div class="estimate-range-row">
+                    <span class="estimate-range-label">Within 20%:</span>
+                    <input type="number" class="field-input estimate-range-points"
+                           value="${est.points_20 || 2}"
+                           onchange="updateEstimateConfig(${index}, 'points_20', parseFloat(this.value))"
+                           min="0" step="0.5">
+                    <span class="estimate-range-desc">pts (e.g. ${est.correct_answer ? Math.round(est.correct_answer * 0.8) + '-' + Math.round(est.correct_answer * 1.2) : '80-120'})</span>
+                </div>
+
+                <div class="estimate-range-row">
+                    <span class="estimate-range-label">Within 30%:</span>
+                    <input type="number" class="field-input estimate-range-points"
+                           value="${est.points_30 || 1}"
+                           onchange="updateEstimateConfig(${index}, 'points_30', parseFloat(this.value))"
+                           min="0" step="0.5">
+                    <span class="estimate-range-desc">pts (e.g. ${est.correct_answer ? Math.round(est.correct_answer * 0.7) + '-' + Math.round(est.correct_answer * 1.3) : '70-130'})</span>
+                </div>
+            </div>
+
+            <div class="estimate-hint">
+                Players enter a number guess. Points awarded based on how close they are to ${est.correct_answer || 'the correct answer'}.
+            </div>
+        </div>
+    `;
+}
+
+function updateEstimateConfig(index, field, value) {
+    if (!questions[index].estimate) {
+        questions[index].estimate = {
+            correct_answer: '',
+            points_exact: 4,
+            points_10: 3,
+            points_20: 2,
+            points_30: 1
+        };
+    }
+    questions[index].estimate[field] = value;
+    // Re-render to update the example ranges
+    if (field === 'correct_answer') {
+        renderQuestions();
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML.replace(/"/g, '&quot;');
+}
+
+function addQuestion() {
+    questions.push({
+        id: 'q' + Date.now(),
+        text: '',
+        type: 'text',
+        validation: '',
+        points: 1
+    });
+    renderQuestions();
+    // Focus the new question
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('.question-input');
+        if (inputs.length > 0) {
+            inputs[inputs.length - 1].focus();
+        }
+    }, 100);
+}
+
+function duplicateQuestion(index) {
+    const copy = { ...questions[index], id: 'q' + Date.now() };
+    questions.splice(index + 1, 0, copy);
+    renderQuestions();
+}
+
+function removeQuestion(index) {
+    if (questions.length === 1) {
+        // Last question - just remove it
+        questions.splice(index, 1);
+        renderQuestions();
+    } else {
+        // Show confirmation modal
+        showModal(
+            '🗑',
+            'Remove Question?',
+            'This will delete this question. You can undo by not saving.',
+            'Remove',
+            'modal-btn-danger',
+            function() {
+                questions.splice(index, 1);
+                renderQuestions();
+            }
+        );
+    }
+}
+
+function moveQuestion(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < questions.length) {
+        [questions[index], questions[newIndex]] = [questions[newIndex], questions[index]];
+        renderQuestions();
+    }
+}
+
+function updateQuestion(index, field, value) {
+    questions[index][field] = value;
+    // Re-render if type changed (to show correct fields)
+    if (field === 'type') {
+        renderQuestions();
+    }
+}
+
+function updateRadioOption(qIndex, optIndex, value) {
+    const options = (questions[qIndex].options || '').split(',').map(o => o.trim()).filter(o => o);
+    options[optIndex] = value;
+    questions[qIndex].options = options.join(', ');
+    // Update correct answer if it was this option
+    renderQuestions();
+}
+
+function addRadioOption(qIndex, value) {
+    if (!value.trim()) return;
+    const options = (questions[qIndex].options || '').split(',').map(o => o.trim()).filter(o => o);
+    options.push(value.trim());
+    questions[qIndex].options = options.join(', ');
+    renderQuestions();
+}
+
+function removeRadioOption(qIndex, optIndex) {
+    const options = (questions[qIndex].options || '').split(',').map(o => o.trim()).filter(o => o);
+    const removedOption = options[optIndex];
+    options.splice(optIndex, 1);
+    questions[qIndex].options = options.join(', ');
+
+    // If the removed option was the correct answer, clear it
+    if (questions[qIndex].correct_answer &&
+        questions[qIndex].correct_answer.toLowerCase() === removedOption.toLowerCase()) {
+        questions[qIndex].correct_answer = '';
+    }
+
+    renderQuestions();
+}
+
+function setCorrectAnswer(qIndex, answer) {
+    questions[qIndex].correct_answer = answer;
+    renderQuestions();
+}
+
+function setCorrectAnswerByIndex(qIndex, optIndex) {
+    const options = (questions[qIndex].options || '').split(',').map(o => o.trim()).filter(o => o);
+    if (optIndex >= 0 && optIndex < options.length) {
+        questions[qIndex].correct_answer = options[optIndex];
+        renderQuestions();
+    }
+}
+
+async function uploadImage(index, input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const response = await fetch('/api/upload/image', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            questions[index].image = data.url;
+            renderQuestions();
+        } else {
+            showError('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Upload failed: ' + error.message);
+    }
+}
+
+function removeImage(index) {
+    delete questions[index].image;
+    renderQuestions();
+}
+
+async function saveQuestions() {
+    try {
+        const response = await fetch(`/api/round/${roundId}/questions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questions: questions })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            // Brief visual feedback
+            const btn = document.querySelector('.save-btn');
+            btn.textContent = 'Saved!';
+            btn.style.background = '#0d904f';
+            setTimeout(() => {
+                btn.textContent = 'Save';
+                btn.style.background = '#673ab7';
+            }, 1500);
+        } else {
+            showError('Save failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Save failed: ' + error.message);
+    }
+}
+
+// Initialize
+renderQuestions();
+</script>
+{% endblock %}

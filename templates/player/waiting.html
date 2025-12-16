@@ -1,0 +1,347 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}Waiting - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.waiting-page {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.waiting-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #34a853, #137333);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 40px;
+    color: white;
+}
+
+.waiting-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 8px;
+}
+
+.waiting-subtitle {
+    font-size: 15px;
+    color: #5f6368;
+    margin: 0 0 32px;
+    line-height: 1.5;
+}
+
+.progress-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.progress-label {
+    font-size: 13px;
+    color: #5f6368;
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #673ab7, #9c27b0);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.rounds-completed {
+    font-size: 14px;
+    font-weight: 500;
+    color: #673ab7;
+    margin-top: 12px;
+}
+
+.waiting-animation {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 24px 0;
+}
+
+.waiting-dot {
+    width: 12px;
+    height: 12px;
+    background: #673ab7;
+    border-radius: 50%;
+    animation: bounce 1.4s ease-in-out infinite;
+}
+
+.waiting-dot:nth-child(1) { animation-delay: 0s; }
+.waiting-dot:nth-child(2) { animation-delay: 0.2s; }
+.waiting-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.timer-section {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    padding: 16px 24px;
+    box-shadow: 0 4px 20px rgba(103, 58, 183, 0.4);
+    text-align: center;
+    display: none;
+    z-index: 1000;
+}
+
+.timer-section.active {
+    display: block;
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.timer-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.timer-display {
+    font-size: 48px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.timer-display.danger {
+    color: #ff5252;
+    animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+body.timer-active {
+    padding-top: 100px;
+}
+
+.timer-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(103, 58, 183, 0.3);
+    z-index: 999;
+    pointer-events: none;
+    animation: flash 0.6s ease-out forwards;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.hint-text {
+    font-size: 13px;
+    color: #5f6368;
+    margin-top: 16px;
+}
+
+.hint-text a {
+    color: #673ab7;
+    text-decoration: none;
+    font-weight: 500;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="waiting-page">
+        <div class="waiting-card">
+            <div class="success-icon">✓</div>
+            {% if rounds_completed >= total_rounds and total_rounds > 0 %}
+            <h1 class="waiting-title">All Rounds Complete!</h1>
+            <p class="waiting-subtitle">
+                Amazing work! You've answered all the questions.
+                Wait for the host to finalize the scores.
+            </p>
+            {% else %}
+            <h1 class="waiting-title">Answers Submitted!</h1>
+            <p class="waiting-subtitle">
+                Great job! Your answers for <strong>{{ last_round_name }}</strong> have been recorded.
+                Wait for the host to open the next round.
+            </p>
+            {% endif %}
+
+            <div class="timer-section" id="timer-section">
+                <div class="timer-label">Time Remaining</div>
+                <div class="timer-display" id="timer-display">--:--</div>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-label">Your Progress</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (rounds_completed / total_rounds * 100) if total_rounds > 0 else 0 }}%"></div>
+                </div>
+                <div class="rounds-completed">{{ rounds_completed }} of {{ total_rounds }} rounds completed</div>
+            </div>
+
+            <div class="waiting-animation">
+                <div class="waiting-dot"></div>
+                <div class="waiting-dot"></div>
+                <div class="waiting-dot"></div>
+            </div>
+
+            {% if rounds_completed < total_rounds or total_rounds == 0 %}
+            <p class="hint-text">
+                Check the <a href="{{ url_for('player.scoreboard', game_code=game.code) }}">scoreboard</a>
+                to see how you're doing!
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+const socket = io();
+
+socket.on('connect', function() {
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    socket.emit('join_game', { game_id: gameId });
+}
+
+// When a new round opens, redirect to the rounds page
+socket.on('round_status_changed', function(data) {
+    if (data.is_open) {
+        window.location.href = "{{ url_for('player.quiz', game_code=game.code) }}";
+    }
+});
+
+// Handle timer
+socket.on('timer_started', function(data) {
+    startClientTimer(data.seconds);
+});
+
+socket.on('timer_stopped', function(data) {
+    stopClientTimer();
+});
+
+// Handle game over
+socket.on('game_finalising', function(data) {
+    window.location.href = "{{ url_for('player.game_over', game_code=game.code) }}";
+});
+
+let timerInterval = null;
+let timerSeconds = 0;
+
+function startClientTimer(seconds) {
+    stopClientTimer();
+    timerSeconds = seconds;
+    const section = document.getElementById('timer-section');
+
+    section.classList.add('active');
+    document.body.classList.add('timer-active');
+
+    // Flash overlay
+    const flash = document.createElement('div');
+    flash.className = 'timer-flash';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+
+    // Sound
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.3);
+    } catch (e) {}
+
+    // Vibrate
+    if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    updateTimerDisplay();
+
+    timerInterval = setInterval(function() {
+        timerSeconds--;
+        updateTimerDisplay();
+        if (timerSeconds <= 0) {
+            stopClientTimer();
+        }
+    }, 1000);
+}
+
+function stopClientTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    const section = document.getElementById('timer-section');
+    section.classList.remove('active');
+    document.body.classList.remove('timer-active');
+}
+
+function updateTimerDisplay() {
+    const display = document.getElementById('timer-display');
+    const minutes = Math.floor(timerSeconds / 60);
+    const secs = timerSeconds % 60;
+    display.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+
+    display.classList.remove('danger');
+    if (timerSeconds <= 10) {
+        display.classList.add('danger');
+    }
+}
+</script>
+{% endblock %}

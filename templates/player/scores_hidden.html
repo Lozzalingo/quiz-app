@@ -1,0 +1,93 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}Scores Hidden - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.hidden-page {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.hidden-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.hidden-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 40px;
+}
+
+.hidden-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 12px;
+}
+
+.hidden-subtitle {
+    font-size: 15px;
+    color: #5f6368;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.suspense-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 32px;
+}
+
+.suspense-dot {
+    width: 12px;
+    height: 12px;
+    background: #673ab7;
+    border-radius: 50%;
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+.suspense-dot:nth-child(1) { animation-delay: 0s; }
+.suspense-dot:nth-child(2) { animation-delay: 0.2s; }
+.suspense-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="hidden-page">
+        <div class="hidden-card">
+            <div class="hidden-icon">🤫</div>
+            <h1 class="hidden-title">Scores Are Hidden</h1>
+            <p class="hidden-subtitle">
+                The quiz has finished and scores are being kept secret!
+                <br><br>
+                Your host will reveal the final standings live.
+                Stay tuned for the big reveal!
+            </p>
+            <div class="suspense-dots">
+                <div class="suspense-dot"></div>
+                <div class="suspense-dot"></div>
+                <div class="suspense-dot"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

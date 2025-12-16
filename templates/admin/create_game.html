@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Create Game - Quiz App{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h2>Create New Game</h2>
+    </header>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <label for="name">
+            {{ form.name.label.text }}
+            {{ form.name(placeholder="e.g., Friday Night Quiz") }}
+            {% for error in form.name.errors %}
+                <small class="error">{{ error }}</small>
+            {% endfor %}
+        </label>
+
+        {{ form.submit(class="") }}
+    </form>
+
+    <footer>
+        <a href="{{ url_for('admin.dashboard') }}">Cancel</a>
+    </footer>
+</article>
+{% endblock %}

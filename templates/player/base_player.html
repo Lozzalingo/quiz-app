@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Fat Big Quiz{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0ebf8;
+            min-height: 100vh;
+            padding-bottom: 80px; /* Space for nav */
+        }
+
+        .page-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #5f6368;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            color: #673ab7;
+        }
+
+        .nav-item.active {
+            color: #673ab7;
+        }
+
+        .nav-item .nav-icon {
+            font-size: 24px;
+            margin-bottom: 2px;
+        }
+
+        .nav-item.active .nav-icon {
+            transform: scale(1.1);
+        }
+
+        /* Tutorial highlight */
+        .nav-item.highlight {
+            animation: pulse-highlight 1.5s ease-in-out infinite;
+            position: relative;
+        }
+
+        .nav-item.highlight::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: #673ab7;
+            border-radius: 50%;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-highlight {
+            0%, 100% { background: rgba(103, 58, 183, 0.1); }
+            50% { background: rgba(103, 58, 183, 0.2); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-4px); }
+        }
+
+        /* Common card styles */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            border-top: 8px solid #673ab7;
+            border-radius: 12px 12px 0 0;
+            margin: -20px -20px 20px;
+            padding: 20px 20px 0;
+        }
+
+        .card h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #202124;
+            margin: 0;
+        }
+
+        .card .subtitle {
+            font-size: 13px;
+            color: #5f6368;
+            margin-top: 4px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #673ab7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #5e35a1;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #673ab7;
+            border: 1px solid #673ab7;
+        }
+
+        .btn-outline:hover {
+            background: #f9f5ff;
+        }
+
+        /* Floating away timer - always red penalty style */
+        .away-timer {
+            position: fixed;
+            bottom: 90px;
+            right: 16px;
+            background: #fce8e6;
+            color: #c5221f;
+            padding: 8px 11px;
+            border-radius: 11px;
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            box-shadow: 0 2px 6px rgba(197, 34, 31, 0.25);
+            z-index: 99;
+            border: 1px solid #f5c6c4;
+            min-width: 64px;
+        }
+
+        .away-timer.hidden {
+            display: none;
+        }
+
+        .away-timer.is-away {
+            background: #c5221f;
+            color: white;
+            border-color: #c5221f;
+            box-shadow: 0 2px 6px rgba(197, 34, 31, 0.4);
+            animation: pulse-timer 1.5s ease-in-out infinite;
+        }
+
+        .away-timer .penalty-label {
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            opacity: 0.85;
+            margin-bottom: 1px;
+        }
+
+        .away-timer .penalty-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .away-timer .timer-icon {
+            font-size: 11px;
+        }
+
+        .away-timer .timer-value {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .away-timer .penalty-points {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            background: rgba(26, 26, 46, 0.85);
+            color: #ffd700;
+            padding: 3px 10px;
+            border-radius: 8px;
+            margin-top: 3px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .away-timer .penalty-points .points-icon {
+            font-size: 10px;
+        }
+
+        .away-timer.is-away .penalty-points {
+            background: rgba(26, 26, 46, 0.85);
+            color: #ffd700;
+        }
+
+        @keyframes pulse-timer {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Low Battery Popup */
+        .battery-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .battery-popup-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .battery-popup {
+            background: white;
+            border-radius: 20px;
+            max-width: 340px;
+            width: 100%;
+            overflow: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .battery-popup-overlay.show .battery-popup {
+            transform: scale(1) translateY(0);
+        }
+
+        .battery-popup-header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 24px 20px;
+            text-align: center;
+            transition: background 0.3s;
+        }
+
+        .battery-popup-header.swap-mode {
+            background: linear-gradient(135deg, #673ab7, #9c27b0);
+        }
+
+        .battery-popup-header .battery-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+            display: block;
+            animation: battery-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes battery-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .battery-popup-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .battery-popup-header .battery-level {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .battery-popup-content {
+            padding: 20px;
+        }
+
+        .battery-popup-content h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #202124;
+            margin: 0 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .swap-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .swap-steps li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #5f6368;
+            line-height: 1.4;
+        }
+
+        .swap-steps li:last-child {
+            border-bottom: none;
+        }
+
+        .swap-steps .step-num {
+            width: 24px;
+            height: 24px;
+            background: #673ab7;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .battery-popup-actions {
+            padding: 0 20px 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .battery-popup-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .battery-popup-btn.dismiss {
+            background: #f1f3f4;
+            color: #5f6368;
+        }
+
+        .battery-popup-btn.dismiss:hover {
+            background: #e8e8e8;
+        }
+
+        .battery-popup-btn.logout {
+            background: #673ab7;
+            color: white;
+        }
+
+        .battery-popup-btn.logout:hover {
+            background: #5e35a1;
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    {% block content %}{% endblock %}
+
+    <!-- Floating Away Timer (Stopwatch) - Penalty Timer -->
+    <div class="away-timer" id="away-timer">
+        <div class="penalty-label">Penalty</div>
+        <div class="penalty-content">
+            <span class="timer-icon">⏱️</span>
+            <span class="timer-value" id="away-timer-value">0:00</span>
+        </div>
+        <div class="penalty-points"><span class="points-icon">💸</span> <span id="penalty-points">-0 pts</span></div>
+    </div>
+
+    <!-- Low Battery / Swap Phone Popup -->
+    <div class="battery-popup-overlay" id="battery-popup">
+        <div class="battery-popup">
+            <div class="battery-popup-header" id="popup-header">
+                <span class="battery-icon" id="popup-icon">🪫</span>
+                <h2 id="popup-title">Low Battery Warning!</h2>
+                <div class="battery-level" id="battery-level-text">Battery at 15%</div>
+            </div>
+            <div class="battery-popup-content">
+                <h3>📱 Need to Swap Phones?</h3>
+                <ol class="swap-steps">
+                    <li>
+                        <span class="step-num">1</span>
+                        <span>Log out using the button below or from Team page</span>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <span>Scan the QR code on your new phone</span>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <span>Enter your team name and password to log back in</span>
+                    </li>
+                </ol>
+            </div>
+            <div class="battery-popup-actions">
+                <button class="battery-popup-btn dismiss" onclick="dismissBatteryPopup()">Dismiss</button>
+                <a href="{{ url_for('auth.logout') }}" class="battery-popup-btn logout">Log Out</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    {% if show_nav is not defined or show_nav %}
+    <nav class="bottom-nav" id="bottom-nav">
+        <a href="{{ url_for('player.next_questions', game_code=game.code) }}" class="nav-item {% if active_nav == 'questions' %}active{% endif %}" data-nav="questions">
+            <span class="nav-icon">📝</span>
+            <span>Questions</span>
+        </a>
+        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="nav-item {% if active_nav == 'rounds' %}active{% endif %}" data-nav="rounds">
+            <span class="nav-icon">📋</span>
+            <span>Rounds</span>
+        </a>
+        <a href="{{ url_for('player.scoreboard', game_code=game.code) }}" class="nav-item {% if active_nav == 'scoreboard' %}active{% endif %}" data-nav="scoreboard">
+            <span class="nav-icon">🏆</span>
+            <span>Scores</span>
+        </a>
+        <a href="{{ url_for('player.team_details', game_code=game.code) }}" class="nav-item {% if active_nav == 'team' %}active{% endif %}" data-nav="team">
+            <span class="nav-icon">👥</span>
+            <span>Team</span>
+        </a>
+        <a href="{{ url_for('player.instructions', game_code=game.code) }}" class="nav-item {% if active_nav == 'help' %}active{% endif %}" data-nav="help">
+            <span class="nav-icon">❓</span>
+            <span>Help</span>
+        </a>
+    </nav>
+    {% endif %}
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- Tab Visibility Tracking (Anti-Cheat) -->
+    <script>
+    (function() {
+        // Backend is the single source of truth
+        let displaySeconds = 0;
+        let isAway = false;
+        let tickInterval = null;
+        let checkAwayTimeout = null;
+        let trackingEnabled = true; // Will be updated from server
+        const TICK_INTERVAL = 1000; // Check/tick every second
+        const DEBOUNCE_MS = 200; // Debounce visibility changes
+
+        const socket = io();
+        const gameId = {{ game.id }};
+        const teamId = {{ current_user.get_id().split('_')[1] if current_user.is_authenticated and current_user.get_id().startswith('team_') else 'null' }};
+
+        const awayTimer = document.getElementById('away-timer');
+        const awayTimerValue = document.getElementById('away-timer-value');
+        const penaltyPointsEl = document.getElementById('penalty-points');
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+
+        function calculatePenaltyPoints(seconds) {
+            // 1 point for every 10 seconds
+            return Math.floor(seconds / 10);
+        }
+
+        function updateDisplay(seconds) {
+            displaySeconds = seconds;
+            if (awayTimerValue) {
+                awayTimerValue.textContent = formatTime(seconds);
+            }
+            if (penaltyPointsEl) {
+                const points = calculatePenaltyPoints(seconds);
+                penaltyPointsEl.textContent = '-' + points + ' pts';
+            }
+        }
+
+        function hideTimer() {
+            if (awayTimer) awayTimer.classList.add('hidden');
+        }
+
+        function showTimer() {
+            if (awayTimer) awayTimer.classList.remove('hidden');
+        }
+
+        function setAwayStyle(away) {
+            if (awayTimer) awayTimer.classList.toggle('is-away', away);
+        }
+
+        // Tick function - called every second while away
+        // Backend decides whether to add time (based on start/pause state)
+        function tick() {
+            // Don't check away state here - let the debounced checkAwayState handle it
+            // Just call the backend if we're supposed to be ticking
+            if (!isAway) {
+                stopTicking();
+                return;
+            }
+
+            // Still away - call backend
+            fetch('/api/team/tick-away-time', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Time was added
+                    updateDisplay(data.total_away_seconds);
+                    setAwayStyle(true);
+                } else if (data.tracking_disabled || data.game_finished) {
+                    // Tracking paused or game finished - keep ticking but don't show as "away"
+                    // This way we'll detect when tracking is re-enabled
+                    setAwayStyle(false);
+                }
+            })
+            .catch(err => console.log('[TabTracker] Tick failed:', err));
+        }
+
+        function startTicking() {
+            if (tickInterval) return; // Already ticking
+            console.log('[TabTracker] Starting tick interval');
+            tick(); // Tick immediately
+            tickInterval = setInterval(tick, TICK_INTERVAL);
+        }
+
+        function stopTicking() {
+            if (tickInterval) {
+                console.log('[TabTracker] Stopping tick interval');
+                clearInterval(tickInterval);
+                tickInterval = null;
+            }
+        }
+
+        // Debounced check - waits for state to settle before acting
+        function checkAwayState() {
+            // Clear any pending check
+            if (checkAwayTimeout) {
+                clearTimeout(checkAwayTimeout);
+            }
+
+            // Debounce - wait for state to settle
+            checkAwayTimeout = setTimeout(function() {
+                const away = document.hidden || !document.hasFocus();
+                console.log('[TabTracker] checkAwayState (debounced):', away, 'trackingEnabled:', trackingEnabled);
+
+                // Only track if tracking is enabled
+                if (!trackingEnabled) {
+                    if (isAway) {
+                        isAway = false;
+                        stopTicking();
+                        setAwayStyle(false);
+                    }
+                    return;
+                }
+
+                if (away && !isAway) {
+                    // Just went away - start ticking
+                    isAway = true;
+                    setAwayStyle(true);
+                    startTicking();
+                } else if (!away && isAway) {
+                    // Came back - stop ticking
+                    isAway = false;
+                    stopTicking();
+                    setAwayStyle(false);
+                }
+            }, DEBOUNCE_MS);
+        }
+
+        // Fetch initial time from server
+        function fetchInitialTime() {
+            fetch('/api/team/get-away-time', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                console.log('[TabTracker] Initial time:', data);
+                if (data.success) {
+                    updateDisplay(data.total_away_seconds || 0);
+                    // Update tracking enabled state
+                    if (data.tracking_enabled !== undefined) {
+                        trackingEnabled = data.tracking_enabled;
+                        console.log('[TabTracker] Tracking enabled:', trackingEnabled);
+                    }
+                }
+                showTimer();
+            })
+            .catch(err => {
+                console.log('[TabTracker] Failed to fetch initial time:', err);
+                showTimer();
+            });
+        }
+
+        // Only initialize if logged in as a team
+        if (teamId) {
+            // Socket connection - join game room (same pattern as admin)
+            socket.on('connect', () => {
+                console.log('[TabTracker] Socket connected, joining game', gameId);
+                socket.emit('join_game', { game_id: gameId });
+            });
+
+            // If socket already connected, join now
+            if (socket.connected) {
+                console.log('[TabTracker] Socket already connected, joining game', gameId);
+                socket.emit('join_game', { game_id: gameId });
+            }
+
+            // Listen for time updates from backend
+            socket.on('tab_time_updated', (data) => {
+                if (data.team_id == teamId) {
+                    updateDisplay(data.total_away_seconds);
+                }
+            });
+
+            // Listen for reset from admin - same pattern as Start button
+            socket.on('tab_penalty_reset', (data) => {
+                console.log('[TabTracker] Reset received - fetching fresh time');
+                fetchInitialTime();
+            });
+
+            // Listen for tracking enabled/disabled (Start/Pause button)
+            socket.on('tab_penalty_tracking_changed', (data) => {
+                console.log('[TabTracker] Tracking changed:', data.enabled);
+
+                // Update local tracking state
+                trackingEnabled = data.enabled;
+
+                // Always fetch fresh time from server when tracking state changes
+                fetchInitialTime();
+
+                if (data.enabled) {
+                    // Tracking just enabled - check if we're currently away
+                    const currentlyAway = document.hidden || !document.hasFocus();
+                    console.log('[TabTracker] Currently away?', currentlyAway);
+                    if (currentlyAway && !isAway) {
+                        // We're away but not ticking - start ticking
+                        isAway = true;
+                        setAwayStyle(true);
+                        startTicking();
+                    }
+                } else {
+                    // Tracking disabled - stop ticking and remove away style
+                    isAway = false;
+                    stopTicking();
+                    setAwayStyle(false);
+                }
+            });
+
+            // Listen for visibility/focus changes
+            document.addEventListener('visibilitychange', checkAwayState);
+            window.addEventListener('blur', checkAwayState);
+            window.addEventListener('focus', checkAwayState);
+
+            // Initialize
+            fetchInitialTime();
+            setTimeout(checkAwayState, 100);
+        } else {
+            hideTimer();
+        }
+    })();
+
+    // Battery detection for phone swap reminder
+    (function() {
+        const LOW_BATTERY_THRESHOLD = 0.20; // 20%
+        let batteryPopupShown = false;
+        let batteryPopupDismissed = sessionStorage.getItem('batteryPopupDismissed') === 'true';
+
+        const batteryPopup = document.getElementById('battery-popup');
+        const batteryLevelText = document.getElementById('battery-level-text');
+
+        window.dismissBatteryPopup = function() {
+            if (batteryPopup) {
+                batteryPopup.classList.remove('show');
+                batteryPopupDismissed = true;
+                sessionStorage.setItem('batteryPopupDismissed', 'true');
+            }
+        };
+
+        const popupHeader = document.getElementById('popup-header');
+        const popupIcon = document.getElementById('popup-icon');
+        const popupTitle = document.getElementById('popup-title');
+
+        window.showBatteryPopup = function(level, force = false) {
+            if (batteryPopup && (force || !batteryPopupDismissed)) {
+                const percentage = level ? Math.round(level * 100) : null;
+
+                // Set battery mode content
+                if (popupHeader) popupHeader.classList.remove('swap-mode');
+                if (popupIcon) popupIcon.textContent = '🪫';
+                if (popupTitle) popupTitle.textContent = 'Low Battery Warning!';
+                if (batteryLevelText) {
+                    batteryLevelText.textContent = `Battery at ${percentage}%`;
+                    batteryLevelText.style.display = 'block';
+                }
+
+                batteryPopup.classList.add('show');
+                batteryPopupShown = true;
+            }
+        };
+
+        // Manual trigger function for swap phone popup
+        window.showSwapPhonePopup = function() {
+            if (batteryPopup) {
+                // Set swap mode content
+                if (popupHeader) popupHeader.classList.add('swap-mode');
+                if (popupIcon) popupIcon.textContent = '📱';
+                if (popupTitle) popupTitle.textContent = 'Swap Your Phone';
+                if (batteryLevelText) batteryLevelText.style.display = 'none';
+
+                batteryPopup.classList.add('show');
+                batteryPopupShown = true;
+            }
+        };
+
+        // Close popup when clicking overlay
+        if (batteryPopup) {
+            batteryPopup.addEventListener('click', function(e) {
+                if (e.target === batteryPopup) {
+                    dismissBatteryPopup();
+                }
+            });
+        }
+
+        // Check battery status
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(function(battery) {
+                function checkBattery() {
+                    console.log('[Battery] Level:', Math.round(battery.level * 100) + '%', 'Charging:', battery.charging);
+                    if (battery.level <= LOW_BATTERY_THRESHOLD && !battery.charging && !batteryPopupDismissed) {
+                        showBatteryPopup(battery.level);
+                    }
+                }
+
+                // Check immediately
+                checkBattery();
+
+                // Listen for changes
+                battery.addEventListener('levelchange', checkBattery);
+                battery.addEventListener('chargingchange', checkBattery);
+            }).catch(function(err) {
+                console.log('[Battery] API not available:', err);
+            });
+        } else {
+            console.log('[Battery] API not supported');
+        }
+    })();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

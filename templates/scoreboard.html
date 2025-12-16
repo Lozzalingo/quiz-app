@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard - {{ game.name }}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+
+    <!-- Social Share Meta Tags -->
+    <meta property="og:title" content="{{ game.name }} - Fat Big Quiz">
+    <meta property="og:description" content="Join the quiz and compete for the top spot!">
+    <meta property="og:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: white;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Logo animation */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: logoEntrance 1.5s ease-out;
+        }
+
+        @keyframes logoEntrance {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+            50% {
+                transform: scale(1.1) rotate(10deg);
+            }
+            75% {
+                transform: scale(0.95) rotate(-5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .logo {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            box-shadow: 0 0 60px rgba(103, 58, 183, 0.5),
+                        0 0 100px rgba(103, 58, 183, 0.3);
+            animation: logoGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes logoGlow {
+            0%, 100% {
+                box-shadow: 0 0 60px rgba(103, 58, 183, 0.5),
+                            0 0 100px rgba(103, 58, 183, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 80px rgba(103, 58, 183, 0.7),
+                            0 0 120px rgba(103, 58, 183, 0.5);
+            }
+        }
+
+        .game-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 20px;
+            background: linear-gradient(90deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleFade 1s ease-out 0.5s both;
+        }
+
+        @keyframes titleFade {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .scoreboard-title {
+            text-align: center;
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite, titleEntrance 1s ease-out 0.3s both;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes titleEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Game finished banner */
+        .game-finished-banner {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            padding: 16px 32px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #137333, #1e8e3e);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(19, 115, 51, 0.4);
+            animation: finishPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes finishPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            padding: 20px 25px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            opacity: 0;
+            transform: translateX(-100px) rotate(-5deg);
+            animation: spiralIn 0.8s ease-out forwards;
+            transition: all 0.3s ease;
+        }
+
+        .team-row:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes spiralIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-100px) rotate(-10deg) scale(0.5);
+            }
+            60% {
+                transform: translateX(10px) rotate(2deg) scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0) rotate(0) scale(1);
+            }
+        }
+
+        /* Podium places */
+        .team-row.place-1 {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 180, 0, 0.1));
+            border-color: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .team-row.place-2 {
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.2), rgba(169, 169, 169, 0.1));
+            border-color: rgba(192, 192, 192, 0.3);
+        }
+
+        .team-row.place-3 {
+            background: linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(184, 115, 51, 0.1));
+            border-color: rgba(205, 127, 50, 0.3);
+        }
+
+        .position {
+            font-size: 32px;
+            font-weight: 800;
+            width: 60px;
+            text-align: center;
+            color: #888;
+        }
+
+        .place-1 .position {
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .place-2 .position {
+            color: #c0c0c0;
+            text-shadow: 0 0 20px rgba(192, 192, 192, 0.5);
+        }
+
+        .place-3 .position {
+            color: #cd7f32;
+            text-shadow: 0 0 20px rgba(205, 127, 50, 0.5);
+        }
+
+        .team-name {
+            flex: 1;
+            font-size: 22px;
+            font-weight: 600;
+            padding-left: 20px;
+        }
+
+        .team-score {
+            font-size: 28px;
+            font-weight: 700;
+            color: #673ab7;
+            background: rgba(103, 58, 183, 0.2);
+            padding: 8px 20px;
+            border-radius: 30px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .place-1 .team-score {
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        /* Trophy icons */
+        .trophy {
+            font-size: 28px;
+            margin-right: 10px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+        }
+
+        /* Scores hidden state */
+        .scores-hidden {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .scores-hidden .hidden-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .scores-hidden h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .scores-hidden p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 400px;
+            margin: 0 auto 12px;
+            line-height: 1.6;
+        }
+
+        .scores-hidden .hidden-hint {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .control-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #673ab7, #9c27b0);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            text-decoration: none;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(103, 58, 183, 0.4);
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #673ab7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated particles background -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fat Big Quiz" class="logo">
+            <h2 class="game-title">{{ game.name }}</h2>
+        </div>
+
+        <h1 class="scoreboard-title">Scoreboard</h1>
+
+        <div class="game-finished-banner" id="finished-banner" style="display: none;">
+            🏁 Game Finished - Final Scores!
+        </div>
+
+        <div class="scoreboard" id="scoreboard">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading scores...</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            {% if is_admin %}
+            <a href="{{ url_for('admin.live_control', game_id=game.id) }}" class="control-btn">Back to Live Control</a>
+            {% else %}
+            <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="control-btn">Back to Quiz</a>
+            {% endif %}
+            <button class="control-btn" onclick="loadScores()">Refresh Scores</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script>
+        const gameId = {{ game.id }};
+        const isAdmin = {{ 'true' if is_admin else 'false' }};
+        let isGameFinished = false;
+
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particle.style.width = (5 + Math.random() * 10) + 'px';
+                particle.style.height = particle.style.width;
+                container.appendChild(particle);
+            }
+        }
+
+        function updateFinishedBanner(finished) {
+            const banner = document.getElementById('finished-banner');
+            if (finished) {
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        async function loadScores() {
+            const scoreboard = document.getElementById('scoreboard');
+
+            try {
+                // Admin uses answers API (always shows scores), players use leaderboard API
+                const apiUrl = isAdmin ? `/api/game/${gameId}/answers` : `/api/game/${gameId}/leaderboard`;
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                // Update finished state (only from leaderboard API)
+                if (data.is_finished !== undefined) {
+                    isGameFinished = data.is_finished;
+                    updateFinishedBanner(isGameFinished);
+                }
+
+                // Check if scores are hidden (only for non-admin)
+                if (!isAdmin && data.scores_hidden) {
+                    scoreboard.innerHTML = `
+                        <div class="scores-hidden">
+                            <div class="hidden-icon">🔒</div>
+                            <h3>Scores Hidden</h3>
+                            <p>The quiz master will reveal the final scores in a dramatic fashion!</p>
+                            <p class="hidden-hint">Stay tuned...</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Handle admin API response (different structure)
+                if (isAdmin && data.success && data.teams) {
+                    const sorted = data.teams.sort((a, b) => b.total_score - a.total_score);
+
+                    scoreboard.innerHTML = sorted.map((team, index) => {
+                        const position = index + 1;
+                        const placeClass = position <= 3 ? `place-${position}` : '';
+                        const trophy = position === 1 ? '<span class="trophy">🏆</span>' :
+                                      position === 2 ? '<span class="trophy">🥈</span>' :
+                                      position === 3 ? '<span class="trophy">🥉</span>' : '';
+                        const delay = index * 0.15;
+
+                        return `
+                            <div class="team-row ${placeClass}" style="animation-delay: ${delay}s">
+                                <div class="position">${trophy}${position}</div>
+                                <div class="team-name">${team.team_name}</div>
+                                <div class="team-score">${team.total_score}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    return;
+                }
+
+                if (data.success && data.leaderboard && data.leaderboard.length > 0) {
+                    // Sort by score descending
+                    const sorted = data.leaderboard.sort((a, b) => b.total_points - a.total_points);
+
+                    scoreboard.innerHTML = sorted.map((team, index) => {
+                        const position = index + 1;
+                        const placeClass = position <= 3 ? `place-${position}` : '';
+                        const trophy = position === 1 ? '<span class="trophy">🏆</span>' :
+                                      position === 2 ? '<span class="trophy">🥈</span>' :
+                                      position === 3 ? '<span class="trophy">🥉</span>' : '';
+                        const delay = index * 0.15;
+
+                        return `
+                            <div class="team-row ${placeClass}" style="animation-delay: ${delay}s">
+                                <div class="position">${trophy}${position}</div>
+                                <div class="team-name">${team.team_name}</div>
+                                <div class="team-score">${team.total_points.toFixed(0)}</div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    scoreboard.innerHTML = '<div class="empty-state">No scores yet. Teams will appear here once they start answering!</div>';
+                }
+            } catch (error) {
+                console.log('Error loading scores:', error);
+            }
+        }
+
+        // Socket.IO for real-time updates
+        const socket = io();
+
+        socket.on('connect', function() {
+            console.log('[Scoreboard] Socket connected, joining game_' + gameId);
+            socket.emit('join_game', { game_id: gameId });
+        });
+
+        // Listen for submission updates
+        socket.on('submission_update', function(data) {
+            console.log('[Scoreboard] Submission update:', data);
+            loadScores();
+        });
+
+        // Listen for game finished
+        socket.on('game_finished', function(data) {
+            console.log('[Scoreboard] Game finished:', data);
+            isGameFinished = true;
+            updateFinishedBanner(true);
+            loadScores();
+        });
+
+        // Listen for game unfinished
+        socket.on('game_unfinished', function(data) {
+            console.log('[Scoreboard] Game unfinished:', data);
+            isGameFinished = false;
+            updateFinishedBanner(false);
+            loadScores();
+        });
+
+        // Initialize
+        createParticles();
+        loadScores();
+
+        // Auto-refresh every 5 seconds for real-time scores
+        setInterval(loadScores, 5000);
+    </script>
+</body>
+</html>

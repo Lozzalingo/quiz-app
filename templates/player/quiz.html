@@ -1,0 +1,666 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}{{ game.name }} - Fat Big Quiz{% endblock %}
+
+{% block extra_css %}
+<style>
+.quiz-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.quiz-header {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 10px solid #673ab7;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.quiz-logo {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+}
+
+.quiz-header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0;
+    color: #202124;
+}
+
+.header-stats {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.stat-badge.team {
+    background: #f3e8ff;
+    color: #673ab7;
+}
+
+.stat-badge.score {
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    color: white;
+}
+
+.stat-badge .stat-label {
+    opacity: 0.85;
+}
+
+.stat-badge .stat-value {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.timer-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    padding: 16px 24px;
+    box-shadow: 0 4px 20px rgba(103, 58, 183, 0.4);
+    text-align: center;
+    display: none;
+    z-index: 1000;
+}
+
+.timer-bar.show {
+    display: block;
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.timer-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.timer-display {
+    font-size: 48px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.timer-display.warning {
+    color: #ffeb3b;
+}
+
+.timer-display.danger {
+    color: #ff5252;
+    animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+body.timer-active {
+    padding-top: 100px;
+}
+
+.timer-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(103, 58, 183, 0.3);
+    z-index: 999;
+    pointer-events: none;
+    animation: flash 0.6s ease-out forwards;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.rounds-section {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.section-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
+}
+
+.rounds-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.round-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.round-card:last-child {
+    margin-bottom: 0;
+}
+
+.round-card.is-open {
+    border-color: #673ab7;
+    background: #f9f5ff;
+}
+
+.round-card.is-submitted {
+    border-color: #137333;
+    background: #e6f4ea;
+}
+
+.round-order {
+    width: 36px;
+    height: 36px;
+    background: #f1f3f4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+}
+
+.round-card.is-open .round-order {
+    background: #673ab7;
+    color: white;
+}
+
+.round-card.is-submitted .round-order {
+    background: #137333;
+    color: white;
+}
+
+.round-info {
+    flex: 1;
+}
+
+.round-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 2px 0;
+}
+
+.round-meta {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-open {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+.status-closed {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.status-submitted {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.round-action {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    background: #673ab7 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    text-decoration: none;
+    margin: 0 !important;
+}
+
+.round-action:hover {
+    background: #5e35a1 !important;
+}
+
+.round-action-edit {
+    background: #ff9800 !important;
+}
+
+.round-action-edit:hover {
+    background: #f57c00 !important;
+}
+
+.round-action-view {
+    background: #137333 !important;
+}
+
+.round-action-view:hover {
+    background: #0d5c29 !important;
+}
+
+.round-card.nested {
+    margin-left: 24px;
+    border-left: 3px solid #673ab7;
+    background: #faf8ff;
+}
+
+.round-card.nested .round-order {
+    background: #e8e0f0;
+    font-size: 11px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 24px;
+    color: #5f6368;
+    font-size: 14px;
+}
+
+.round-timer {
+    display: none;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Roboto Mono', monospace;
+    animation: timerPulse 1s ease-in-out infinite;
+}
+
+.round-timer.active {
+    display: inline-block;
+}
+
+.round-timer.warning {
+    background: linear-gradient(135deg, #f57c00, #ff9800);
+}
+
+.round-timer.danger {
+    background: linear-gradient(135deg, #d32f2f, #f44336);
+    animation: timerPulseDanger 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+}
+
+@keyframes timerPulseDanger {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.05); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="quiz-page">
+        <div class="quiz-header">
+            <div class="header-top">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fat Big Quiz" class="quiz-logo">
+                <h1>{{ game.name }}</h1>
+            </div>
+            <div class="header-stats">
+                <div class="stat-badge team">
+                    <span class="stat-label">Team</span>
+                    <span class="stat-value">{{ team.name }}</span>
+                </div>
+                <div class="stat-badge score">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value">{{ team_score }}</span>
+                </div>
+            </div>
+        </div>
+
+    <div class="rounds-section">
+        <h2 class="section-title">Rounds</h2>
+
+        {% if rounds %}
+        <ul class="rounds-list">
+            {% for round in rounds %}
+            {# Parent round #}
+            {% set children = round.get_children() %}
+            {% set has_children = children|length > 0 %}
+            {% set total_questions = namespace(count=0) %}
+            {% set all_children_submitted = namespace(value=true) %}
+            {% if has_children %}
+                {% for child in children %}
+                    {% set total_questions.count = total_questions.count + child.get_questions()|length %}
+                    {% if child.id not in submitted_rounds %}
+                        {% set all_children_submitted.value = false %}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                {% set total_questions.count = round.get_questions()|length %}
+                {% set all_children_submitted.value = false %}
+            {% endif %}
+            {# Parent is submitted if it has children and all children are submitted, or if it's directly submitted #}
+            {% set parent_submitted = (has_children and all_children_submitted.value) or round.id in submitted_rounds %}
+            <li class="round-card {{ 'is-submitted' if parent_submitted else 'is-open' if round.is_open else '' }}" data-round-id="{{ round.id }}">
+                <span class="round-order">{{ round.order }}</span>
+                <div class="round-info">
+                    <h3 class="round-name">{{ round.name }}</h3>
+                    <span class="round-meta">
+                        {% if parent_submitted %}
+                            Answers submitted
+                        {% elif round.is_open %}
+                            {{ total_questions.count }} questions
+                        {% else %}
+                            Not yet open
+                        {% endif %}
+                    </span>
+                </div>
+                <span class="round-timer" id="round-timer-{{ round.id }}">--:--</span>
+                {% if has_children %}
+                    {# Parent with subrounds - no action button, subrounds have their own #}
+                {% elif round.id in resubmit_rounds and round.is_open %}
+                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-edit">Edit</a>
+                {% elif round.id in submitted_rounds %}
+                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-view">See Answers</a>
+                {% elif round.is_open %}
+                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action">Answer</a>
+                {% else %}
+                    <span class="status-badge status-closed">Closed</span>
+                {% endif %}
+            </li>
+            {# Nested rounds #}
+            {% for child in children %}
+            <li class="round-card nested {{ 'is-submitted' if child.id in submitted_rounds else 'is-open' if child.is_open else '' }}" data-round-id="{{ child.id }}">
+                <span class="round-order">{{ round.order }}.{{ child.order }}</span>
+                <div class="round-info">
+                    <h3 class="round-name">{{ child.name }}</h3>
+                    <span class="round-meta">
+                        {% if child.id in submitted_rounds %}
+                            Answers submitted
+                        {% elif child.is_open %}
+                            {{ child.get_questions()|length }} questions
+                        {% else %}
+                            Not yet open
+                        {% endif %}
+                    </span>
+                </div>
+                <span class="round-timer" id="round-timer-{{ child.id }}">--:--</span>
+                {% if child.id in resubmit_rounds and child.is_open %}
+                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-edit">Edit</a>
+                {% elif child.id in submitted_rounds %}
+                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-view">See Answers</a>
+                {% elif child.is_open %}
+                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action">Answer</a>
+                {% else %}
+                    <span class="status-badge status-closed">Closed</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-state">No rounds available yet. Please wait for the host to start.</p>
+        {% endif %}
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+let isReloading = false;
+
+function safeReload() {
+    if (!isReloading) {
+        isReloading = true;
+        window.location.reload();
+    }
+}
+
+const socket = io();
+
+socket.on('connect', function() {
+    console.log('[Player] Socket connected, joining game_' + gameId);
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    console.log('[Player] Socket already connected, joining game_' + gameId);
+    socket.emit('join_game', { game_id: gameId });
+}
+
+// Confirm room join
+socket.on('joined_game', function(data) {
+    console.log('[Player] Successfully joined game room:', data.game_id);
+});
+
+socket.on('round_status_changed', function(data) {
+    console.log('[Player] Received round_status_changed:', data);
+    safeReload();
+});
+
+socket.on('timer_started', function(data) {
+    startRoundTimer(data.round_id, data.seconds, true);
+});
+
+socket.on('timer_stopped', function(data) {
+    stopRoundTimer(data.round_id);
+});
+
+socket.on('round_ending', function(data) {
+    console.log('[Player] Round ending:', data.round_id);
+    // Update the round card to show "See Answers" instead of "Answer"
+    updateRoundCardToSubmitted(data.round_id);
+});
+
+socket.on('round_closed', function(data) {
+    safeReload();
+});
+
+socket.on('submission_cleared', function(data) {
+    // Reload to reflect the cleared submission status
+    safeReload();
+});
+
+socket.on('game_finalising', function(data) {
+    // Redirect to game over page when all rounds close
+    window.location.href = "{{ url_for('player.game_over', game_code=game.code) }}";
+});
+
+// Round-specific timers
+const roundTimers = {}; // {roundId: {interval, seconds}}
+
+function startRoundTimer(roundId, seconds, showEffects = false) {
+    // Stop any existing timer for this round
+    stopRoundTimer(roundId);
+
+    roundTimers[roundId] = { seconds: seconds, interval: null };
+
+    const roundTimerEl = document.getElementById('round-timer-' + roundId);
+    if (roundTimerEl) {
+        roundTimerEl.classList.add('active');
+    }
+
+    // Show effects only when timer first starts (not on page load)
+    if (showEffects) {
+        // Flash overlay
+        const flash = document.createElement('div');
+        flash.className = 'timer-flash';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 600);
+
+        // Sound
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        } catch (e) {}
+
+        // Vibrate
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+    }
+
+    updateRoundTimerDisplay(roundId);
+
+    roundTimers[roundId].interval = setInterval(function() {
+        roundTimers[roundId].seconds--;
+        updateRoundTimerDisplay(roundId);
+
+        if (roundTimers[roundId].seconds <= 0) {
+            // Timer finished - update card to show "See Answers"
+            updateRoundCardToSubmitted(roundId);
+        }
+    }, 1000);
+}
+
+function stopRoundTimer(roundId) {
+    if (roundTimers[roundId]) {
+        if (roundTimers[roundId].interval) {
+            clearInterval(roundTimers[roundId].interval);
+        }
+        delete roundTimers[roundId];
+    }
+
+    const roundTimerEl = document.getElementById('round-timer-' + roundId);
+    if (roundTimerEl) {
+        roundTimerEl.classList.remove('active', 'warning', 'danger');
+    }
+}
+
+function updateRoundCardToSubmitted(roundId) {
+    // Stop the timer display
+    stopRoundTimer(roundId);
+
+    // Find the round card
+    const roundCard = document.querySelector(`[data-round-id="${roundId}"]`);
+    if (!roundCard) return;
+
+    // Update card styling
+    roundCard.classList.remove('is-open');
+    roundCard.classList.add('is-submitted');
+
+    // Update the round-order circle color (green for submitted)
+    const roundOrder = roundCard.querySelector('.round-order');
+    if (roundOrder) {
+        roundOrder.style.background = '#137333';
+        roundOrder.style.color = 'white';
+    }
+
+    // Update the meta text
+    const roundMeta = roundCard.querySelector('.round-meta');
+    if (roundMeta) {
+        roundMeta.textContent = 'Answers submitted';
+    }
+
+    // Update the action button from "Answer" to "See Answers"
+    const actionBtn = roundCard.querySelector('.round-action');
+    if (actionBtn && actionBtn.textContent.trim() === 'Answer') {
+        actionBtn.textContent = 'See Answers';
+        actionBtn.classList.remove('round-action');
+        actionBtn.classList.add('round-action', 'round-action-view');
+    }
+}
+
+function updateRoundTimerDisplay(roundId) {
+    const timer = roundTimers[roundId];
+    if (!timer) return;
+
+    const roundTimerEl = document.getElementById('round-timer-' + roundId);
+    if (!roundTimerEl) return;
+
+    const minutes = Math.floor(timer.seconds / 60);
+    const secs = timer.seconds % 60;
+    roundTimerEl.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+
+    roundTimerEl.classList.remove('warning', 'danger');
+    if (timer.seconds <= 10) {
+        roundTimerEl.classList.add('danger');
+    } else if (timer.seconds <= 30) {
+        roundTimerEl.classList.add('warning');
+    }
+}
+
+// Fetch active timers on page load
+function fetchActiveTimers() {
+    console.log('[Player] Fetching active timers for game', gameId);
+    fetch('/api/game/' + gameId + '/active-timers')
+        .then(r => r.json())
+        .then(data => {
+            console.log('[Player] Active timers response:', data);
+            if (data.success && data.timers) {
+                data.timers.forEach(timer => {
+                    console.log('[Player] Starting timer for round', timer.round_id, 'with', timer.seconds_remaining, 'seconds');
+                    startRoundTimer(timer.round_id, timer.seconds_remaining, false);
+                });
+            }
+        })
+        .catch(err => console.log('[Player] Error fetching active timers:', err));
+}
+
+// Load active timers on page load
+fetchActiveTimers();
+</script>
+{% endblock %}

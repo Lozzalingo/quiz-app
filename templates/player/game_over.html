@@ -1,0 +1,226 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}Scores Being Finalised - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.gameover-page {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+    min-height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.gameover-card {
+    background: linear-gradient(135deg, #673ab7 0%, #9c27b0 100%);
+    border-radius: 20px;
+    padding: 48px 32px;
+    box-shadow: 0 8px 32px rgba(103, 58, 183, 0.3);
+    color: white;
+}
+
+.trophy-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.gameover-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.gameover-subtitle {
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0 0 32px;
+    opacity: 0.95;
+    line-height: 1.6;
+}
+
+.loading-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0 auto 32px;
+    max-width: 200px;
+}
+
+.loading-fill {
+    height: 100%;
+    background: white;
+    border-radius: 2px;
+    animation: loading 2s ease-in-out infinite;
+}
+
+@keyframes loading {
+    0% { width: 0%; margin-left: 0%; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+}
+
+.suspense-dots {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.suspense-dot {
+    width: 16px;
+    height: 16px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    animation: suspense 1.5s ease-in-out infinite;
+}
+
+.suspense-dot:nth-child(1) { animation-delay: 0s; }
+.suspense-dot:nth-child(2) { animation-delay: 0.3s; }
+.suspense-dot:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes suspense {
+    0%, 100% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+
+.team-info {
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-top: 24px;
+}
+
+.team-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.team-name {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.hint-text {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-top: 24px;
+}
+
+.confetti {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confetti-fall 4s linear infinite;
+}
+
+@keyframes confetti-fall {
+    0% { top: -20px; transform: rotate(0deg) translateX(0); opacity: 1; }
+    100% { top: 100vh; transform: rotate(720deg) translateX(100px); opacity: 0; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confetti" id="confetti"></div>
+
+<div class="page-content">
+    <div class="gameover-page">
+        <div class="gameover-card">
+            <div class="trophy-icon">🏆</div>
+            <h1 class="gameover-title">That's a Wrap!</h1>
+            <p class="gameover-subtitle">
+                Scores are being finalised.<br>
+                Hold onto your seats.<br>
+                The quiz host will reveal all very soon.
+            </p>
+
+            <div class="loading-bar">
+                <div class="loading-fill"></div>
+            </div>
+
+            <div class="suspense-dots">
+                <div class="suspense-dot"></div>
+                <div class="suspense-dot"></div>
+                <div class="suspense-dot"></div>
+            </div>
+
+            <div class="team-info">
+                <div class="team-label">Your Team</div>
+                <div class="team-name">{{ team.name }}</div>
+            </div>
+
+            <p class="hint-text">
+                Good luck! 🍀
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+const socket = io();
+
+socket.on('connect', function() {
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    socket.emit('join_game', { game_id: gameId });
+}
+
+// If a round opens again, go back to quiz
+socket.on('round_status_changed', function(data) {
+    if (data.is_open) {
+        window.location.href = "{{ url_for('player.quiz', game_code=game.code) }}";
+    }
+});
+
+// Create confetti
+function createConfetti() {
+    const container = document.getElementById('confetti');
+    const colors = ['#673ab7', '#9c27b0', '#e91e63', '#ff9800', '#4caf50', '#2196f3'];
+
+    for (let i = 0; i < 50; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 4 + 's';
+        piece.style.animationDuration = (3 + Math.random() * 2) + 's';
+        container.appendChild(piece);
+    }
+}
+
+createConfetti();
+</script>
+{% endblock %}

@@ -1,0 +1,1251 @@
+{% extends "base.html" %}
+
+{% block title %}Live Control - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: #f0ebf8;
+}
+
+.control-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.control-header {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 10px solid #673ab7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.control-header h1 {
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0;
+    color: #202124;
+}
+
+.control-header .game-code {
+    font-family: monospace;
+    font-size: 14px;
+    color: #5f6368;
+    background: #f1f3f4;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+.teams-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.teams-count strong {
+    font-size: 20px;
+    color: #673ab7;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.card-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px 0;
+}
+
+.rounds-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.round-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-left: 4px solid #dadce0;
+}
+
+.round-card.is-open {
+    border-left-color: #137333;
+}
+
+.round-card.has-timer {
+    border-left-color: #ea8600;
+}
+
+.round-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.round-order {
+    width: 32px;
+    height: 32px;
+    background: #f1f3f4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+}
+
+.round-name {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: #202124;
+}
+
+.round-submissions {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-open {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.status-closed {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.round-card.nested {
+    margin-left: 24px;
+    border-left: 4px solid #673ab7;
+    background: #fafafa;
+}
+
+.round-card.nested .round-order {
+    background: #e8e0f0;
+    font-size: 11px;
+}
+
+.round-card.nested .round-header {
+    background: #f5f5f5;
+}
+
+.round-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f3f4;
+}
+
+.timer-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.timer-display {
+    font-size: 24px;
+    font-weight: 500;
+    font-family: 'Roboto Mono', monospace;
+    color: #202124;
+    min-width: 70px;
+}
+
+.timer-display.warning {
+    color: #ea8600;
+}
+
+.timer-display.danger {
+    color: #c5221f;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.timer-presets {
+    display: flex;
+    gap: 4px;
+}
+
+.preset-btn {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    background: #f1f3f4 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    color: #202124 !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.preset-btn:hover {
+    background: #e8eaed !important;
+}
+
+.preset-btn.active {
+    background: #673ab7 !important;
+    color: white !important;
+}
+
+.stop-btn {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    background: #fce8e6 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    color: #c5221f !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.stop-btn:hover {
+    background: #f8d7da !important;
+}
+
+.custom-timer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.custom-input {
+    width: 70px !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    margin: 0 !important;
+}
+
+.toggle-btn {
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    margin: 0 !important;
+    border: 1px solid #dadce0 !important;
+    background: white !important;
+    color: #202124 !important;
+}
+
+.toggle-btn:hover {
+    background: #f8f9fa !important;
+}
+
+.toggle-btn.open {
+    background: #673ab7 !important;
+    color: white !important;
+    border-color: #673ab7 !important;
+}
+
+.toggle-btn.open:hover {
+    background: #5e35a1 !important;
+}
+
+.toggle-btn.close {
+    background: #fce8e6 !important;
+    color: #c5221f !important;
+    border-color: #fce8e6 !important;
+}
+
+.toggle-btn.close:hover {
+    background: #f8d7da !important;
+}
+
+.end-round-btn {
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    margin: 0 !important;
+    border: none !important;
+    background: linear-gradient(135deg, #673ab7, #9c27b0) !important;
+    color: white !important;
+}
+
+.end-round-btn:hover {
+    background: linear-gradient(135deg, #5e35a1, #7b1fa2) !important;
+    box-shadow: 0 2px 8px rgba(103, 58, 183, 0.4);
+}
+
+.nav-bar {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.nav-bar .nav-btn {
+    flex: 1;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 8px !important;
+    background: white !important;
+    color: #202124 !important;
+    border: 1px solid #dadce0 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.nav-bar .nav-btn:hover {
+    background: #f8f9fa !important;
+}
+
+.nav-bar .nav-btn.primary {
+    background: #673ab7 !important;
+    color: white !important;
+    border-color: #673ab7 !important;
+}
+
+.nav-bar .nav-btn.primary:hover {
+    background: #5e35a1 !important;
+}
+
+.empty-state {
+    color: #5f6368;
+    font-size: 13px;
+    padding: 16px 0;
+    text-align: center;
+}
+
+.submissions-toggle {
+    font-size: 12px;
+    color: #673ab7;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    text-decoration: underline;
+}
+
+.submissions-toggle:hover {
+    color: #5e35a1;
+}
+
+.submissions-panel {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f3f4;
+}
+
+.submissions-panel.show {
+    display: block;
+}
+
+.team-submission {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.team-submission:last-child {
+    margin-bottom: 0;
+}
+
+.team-submission .team-name {
+    font-size: 13px;
+    color: #202124;
+}
+
+.team-submission .team-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.team-submission .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dadce0;
+}
+
+.team-submission .status-dot.submitted {
+    background: #137333;
+}
+
+.team-submission .status-dot.can-edit {
+    background: #ff9800;
+}
+
+.team-submission .status-text {
+    font-size: 11px;
+    color: #5f6368;
+}
+
+.resubmit-btn {
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    background: #fff3e0 !important;
+    border: 1px solid #ff9800 !important;
+    border-radius: 4px !important;
+    color: #e65100 !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.resubmit-btn:hover {
+    background: #ffe0b2 !important;
+}
+
+.no-teams {
+    font-size: 12px;
+    color: #5f6368;
+    font-style: italic;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-box {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 8px 0;
+}
+
+.modal-message {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 24px 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.modal-btn {
+    padding: 8px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.modal-btn-cancel {
+    background: white !important;
+    border: 1px solid #dadce0 !important;
+    color: #5f6368 !important;
+}
+
+.modal-btn-cancel:hover {
+    background: #f8f9fa !important;
+}
+
+.modal-btn-confirm {
+    background: #673ab7 !important;
+    border: none !important;
+    color: white !important;
+}
+
+.modal-btn-confirm:hover {
+    background: #5e35a1 !important;
+}
+
+/* Betting section */
+.betting-section {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f9f5ff;
+    border-radius: 8px;
+    border: 1px solid #e0d6f0;
+}
+
+.betting-section-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #673ab7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.betting-question {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.betting-question:last-child {
+    margin-bottom: 0;
+}
+
+.betting-question-text {
+    font-size: 13px;
+    color: #202124;
+    margin: 0 0 10px 0;
+}
+
+.betting-results-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.betting-place-label {
+    font-size: 12px;
+    color: #5f6368;
+    min-width: 50px;
+}
+
+.betting-place-select {
+    flex: 1;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    margin: 0 !important;
+    background: white !important;
+}
+
+.betting-multiplier {
+    font-size: 11px;
+    color: #673ab7;
+    min-width: 40px;
+    text-align: right;
+}
+
+.betting-save-btn {
+    margin-top: 8px;
+    padding: 6px 16px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    background: #673ab7 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    margin-left: 0 !important;
+}
+
+.betting-save-btn:hover {
+    background: #5e35a1 !important;
+}
+
+.betting-status {
+    font-size: 11px;
+    color: #137333;
+    margin-left: 8px;
+}
+
+.betting-status.error {
+    color: #c5221f;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-box">
+        <h3 class="modal-title" id="modal-title">Allow Edit</h3>
+        <p class="modal-message" id="modal-message">Allow this team to edit and resubmit their answers?</p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-confirm" id="modal-confirm-btn">Allow</button>
+        </div>
+    </div>
+</div>
+
+<div class="control-page">
+    <div class="control-header">
+        <div>
+            <h1>Live Control</h1>
+            <span class="game-code">{{ game.code }}</span>
+        </div>
+        <div class="teams-count">
+            <strong id="team-count">{{ teams|length }}</strong> teams connected
+        </div>
+    </div>
+
+    {% if rounds %}
+    <div id="rounds-container">
+        {% for round in rounds %}
+        {# Macro-like rendering for a round card #}
+        {% set r = round %}
+        {% set is_nested = false %}
+        <div class="round-card {{ 'is-open' if r.is_open else '' }}" id="round-card-{{ r.id }}" data-round-id="{{ r.id }}">
+            <div class="round-header">
+                <span class="round-order">{{ r.order }}</span>
+                <span class="round-name">{{ r.name }}</span>
+                <span class="round-submissions" id="submissions-{{ r.id }}">
+                    {{ r.answers.count() // (r.get_questions()|length or 1) }}/{{ teams|length }} submitted
+                </span>
+                <button class="submissions-toggle" onclick="toggleSubmissionsPanel({{ r.id }})">Manage</button>
+                <span class="status-badge {{ 'status-open' if r.is_open else 'status-closed' }}" id="status-{{ r.id }}">
+                    {{ 'Open' if r.is_open else 'Closed' }}
+                </span>
+            </div>
+            <div class="round-controls">
+                <div class="timer-section">
+                    <span class="timer-display" id="timer-{{ r.id }}">--:--</span>
+                    <div class="timer-presets" id="timer-presets-{{ r.id }}">
+                        <button class="preset-btn" onclick="startRoundTimer({{ r.id }}, 30)">30s</button>
+                        <button class="preset-btn" onclick="startRoundTimer({{ r.id }}, 60)">1m</button>
+                        <button class="preset-btn" onclick="startRoundTimer({{ r.id }}, 120)">2m</button>
+                        <button class="preset-btn" onclick="showCustomTimer({{ r.id }})">Custom</button>
+                    </div>
+                    <div class="custom-timer" id="custom-timer-{{ r.id }}" style="display: none;">
+                        <input type="number" class="custom-input" id="custom-input-{{ r.id }}" placeholder="sec" min="10" max="3600">
+                        <button class="preset-btn" onclick="startCustomTimer({{ r.id }})">Start</button>
+                        <button class="preset-btn" onclick="hideCustomTimer({{ r.id }})">Cancel</button>
+                    </div>
+                    <button class="stop-btn" id="stop-btn-{{ r.id }}" onclick="stopRoundTimer({{ r.id }})" style="display: none;">Stop</button>
+                </div>
+                <button class="toggle-btn {{ 'close' if r.is_open else 'open' }}" onclick="toggleRound({{ r.id }})" id="toggle-btn-{{ r.id }}">
+                    {{ 'Close Round' if r.is_open else 'Open Round' }}
+                </button>
+                <button class="end-round-btn" onclick="endRound({{ r.id }})" id="end-btn-{{ r.id }}" style="{{ '' if r.is_open else 'display: none;' }}">
+                    End Round
+                </button>
+            </div>
+            <div class="submissions-panel" id="submissions-panel-{{ r.id }}">
+                <div id="submissions-list-{{ r.id }}">
+                    <span class="no-teams">Loading...</span>
+                </div>
+            </div>
+            <div class="betting-section" id="betting-section-{{ r.id }}" style="display: none;">
+                <h4 class="betting-section-title">🎰 Betting Results</h4>
+                <div id="betting-questions-{{ r.id }}">
+                    <!-- Betting questions loaded via JS -->
+                </div>
+            </div>
+        </div>
+        {# Render child rounds #}
+        {% for child in round.get_children() %}
+        {% set r = child %}
+        <div class="round-card nested {{ 'is-open' if r.is_open else '' }}" id="round-card-{{ r.id }}" data-round-id="{{ r.id }}">
+            <div class="round-header">
+                <span class="round-order">{{ round.order }}.{{ r.order }}</span>
+                <span class="round-name">{{ r.name }}</span>
+                <span class="round-submissions" id="submissions-{{ r.id }}">
+                    {{ r.answers.count() // (r.get_questions()|length or 1) }}/{{ teams|length }} submitted
+                </span>
+                <button class="submissions-toggle" onclick="toggleSubmissionsPanel({{ r.id }})">Manage</button>
+                <span class="status-badge {{ 'status-open' if r.is_open else 'status-closed' }}" id="status-{{ r.id }}">
+                    {{ 'Open' if r.is_open else 'Closed' }}
+                </span>
+            </div>
+            <div class="round-controls">
+                <div class="timer-section">
+                    <span class="timer-display" id="timer-{{ r.id }}">--:--</span>
+                    <div class="timer-presets" id="timer-presets-{{ r.id }}">
+                        <button class="preset-btn" onclick="startRoundTimer({{ r.id }}, 30)">30s</button>
+                        <button class="preset-btn" onclick="startRoundTimer({{ r.id }}, 60)">1m</button>
+                        <button class="preset-btn" onclick="startRoundTimer({{ r.id }}, 120)">2m</button>
+                        <button class="preset-btn" onclick="showCustomTimer({{ r.id }})">Custom</button>
+                    </div>
+                    <div class="custom-timer" id="custom-timer-{{ r.id }}" style="display: none;">
+                        <input type="number" class="custom-input" id="custom-input-{{ r.id }}" placeholder="sec" min="10" max="3600">
+                        <button class="preset-btn" onclick="startCustomTimer({{ r.id }})">Start</button>
+                        <button class="preset-btn" onclick="hideCustomTimer({{ r.id }})">Cancel</button>
+                    </div>
+                    <button class="stop-btn" id="stop-btn-{{ r.id }}" onclick="stopRoundTimer({{ r.id }})" style="display: none;">Stop</button>
+                </div>
+                <button class="toggle-btn {{ 'close' if r.is_open else 'open' }}" onclick="toggleRound({{ r.id }})" id="toggle-btn-{{ r.id }}">
+                    {{ 'Close Round' if r.is_open else 'Open Round' }}
+                </button>
+                <button class="end-round-btn" onclick="endRound({{ r.id }})" id="end-btn-{{ r.id }}" style="{{ '' if r.is_open else 'display: none;' }}">
+                    End Round
+                </button>
+            </div>
+            <div class="submissions-panel" id="submissions-panel-{{ r.id }}">
+                <div id="submissions-list-{{ r.id }}">
+                    <span class="no-teams">Loading...</span>
+                </div>
+            </div>
+            <div class="betting-section" id="betting-section-{{ r.id }}" style="display: none;">
+                <h4 class="betting-section-title">🎰 Betting Results</h4>
+                <div id="betting-questions-{{ r.id }}">
+                    <!-- Betting questions loaded via JS -->
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <p class="empty-state">No rounds yet. Add rounds from the game edit page.</p>
+    </div>
+    {% endif %}
+
+    <div class="nav-bar">
+        <a href="{{ url_for('admin.scoreboard', game_id=game.id) }}" class="nav-btn primary">Scoreboard</a>
+        <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="nav-btn">Spreadsheet</a>
+        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="nav-btn">Back to Game</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+const roundTimers = {}; // Store timer state per round
+
+const socket = io();
+
+socket.on('connect', function() {
+    socket.emit('join_admin', { game_id: gameId });
+});
+
+socket.on('team_joined', function(data) {
+    document.getElementById('team-count').textContent = data.team_count;
+});
+
+socket.on('round_status_changed', function(data) {
+    updateRoundStatus(data.round_id, data.is_open);
+});
+
+socket.on('submission_update', function(data) {
+    const el = document.getElementById('submissions-' + data.round_id);
+    if (el) {
+        el.textContent = data.submissions + '/' + data.total_teams + ' submitted';
+    }
+});
+
+function updateRoundStatus(roundId, isOpen) {
+    const statusEl = document.getElementById('status-' + roundId);
+    const btnEl = document.getElementById('toggle-btn-' + roundId);
+    const cardEl = document.getElementById('round-card-' + roundId);
+    const endBtn = document.getElementById('end-btn-' + roundId);
+
+    if (statusEl) {
+        statusEl.textContent = isOpen ? 'Open' : 'Closed';
+        statusEl.className = 'status-badge ' + (isOpen ? 'status-open' : 'status-closed');
+    }
+    if (btnEl) {
+        btnEl.textContent = isOpen ? 'Close Round' : 'Open Round';
+        btnEl.className = 'toggle-btn ' + (isOpen ? 'close' : 'open');
+    }
+    if (cardEl) {
+        cardEl.classList.toggle('is-open', isOpen);
+    }
+
+    // Show/hide and reset the End Round button
+    if (endBtn) {
+        if (isOpen) {
+            endBtn.style.display = 'inline-block';
+            endBtn.disabled = false;
+            endBtn.textContent = 'End Round';
+        } else {
+            endBtn.style.display = 'none';
+        }
+    }
+
+    // If round was closed, stop any running timer
+    if (!isOpen && roundTimers[roundId]) {
+        stopRoundTimer(roundId, true);
+    }
+
+    // Note: Socket events are emitted by the API route, not here
+    // to avoid duplicate emissions
+}
+
+async function toggleRound(roundId) {
+    try {
+        const response = await fetch(`/api/round/${roundId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            updateRoundStatus(roundId, data.is_open);
+            // Socket events are now emitted server-side in the API
+        } else {
+            console.error('Toggle failed:', data.error);
+            showError('Failed to toggle round: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error toggling round:', error);
+        showError('Error: ' + error.message);
+    }
+}
+
+async function closeRound(roundId) {
+    // Only close if currently open
+    const statusEl = document.getElementById('status-' + roundId);
+    if (statusEl && statusEl.textContent.trim() === 'Closed') {
+        return; // Already closed
+    }
+
+    try {
+        const response = await fetch(`/api/round/${roundId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            updateRoundStatus(roundId, data.is_open);
+        }
+    } catch (error) {
+        console.error('Error closing round:', error);
+    }
+}
+
+async function endRound(roundId) {
+    // End round: notify players to submit (but keep round open for new players)
+    const btn = document.getElementById('end-btn-' + roundId);
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+    }
+
+    // Emit event to trigger auto-submit on all player devices
+    socket.emit('round_ending', {
+        game_id: gameId,
+        round_id: roundId
+    });
+
+    // Wait a moment for submissions to arrive, then reset button
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Reset button - round stays open for new players
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'End Round';
+    }
+
+    // Reload submissions to show updated count
+    await loadSubmissions(roundId);
+}
+
+function showCustomTimer(roundId) {
+    document.getElementById('timer-presets-' + roundId).style.display = 'none';
+    document.getElementById('custom-timer-' + roundId).style.display = 'flex';
+    document.getElementById('custom-input-' + roundId).focus();
+}
+
+function hideCustomTimer(roundId) {
+    document.getElementById('custom-timer-' + roundId).style.display = 'none';
+    document.getElementById('timer-presets-' + roundId).style.display = 'flex';
+}
+
+function startCustomTimer(roundId) {
+    const input = document.getElementById('custom-input-' + roundId);
+    const seconds = parseInt(input.value, 10);
+
+    if (!seconds || seconds < 10) {
+        showError('Please enter at least 10 seconds');
+        return;
+    }
+
+    if (seconds > 3600) {
+        showError('Maximum time is 1 hour (3600 seconds)');
+        return;
+    }
+
+    hideCustomTimer(roundId);
+    startRoundTimer(roundId, seconds);
+}
+
+async function startRoundTimer(roundId, seconds) {
+    // Stop any existing timer for this round
+    stopRoundTimer(roundId, true);
+
+    // First open the round if it's not already open
+    const statusEl = document.getElementById('status-' + roundId);
+    if (statusEl && statusEl.textContent.trim() === 'Closed') {
+        await toggleRound(roundId);
+    }
+
+    // Initialize timer state
+    roundTimers[roundId] = {
+        seconds: seconds,
+        interval: null
+    };
+
+    // Update UI
+    const presetsEl = document.getElementById('timer-presets-' + roundId);
+    const stopBtn = document.getElementById('stop-btn-' + roundId);
+    const cardEl = document.getElementById('round-card-' + roundId);
+
+    if (presetsEl) presetsEl.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'inline-block';
+    if (cardEl) cardEl.classList.add('has-timer');
+
+    updateRoundTimerDisplay(roundId);
+
+    // Emit to socket for players
+    socket.emit('timer_started', {
+        game_id: gameId,
+        round_id: roundId,
+        seconds: seconds
+    });
+
+    // Start countdown
+    roundTimers[roundId].interval = setInterval(function() {
+        roundTimers[roundId].seconds--;
+        updateRoundTimerDisplay(roundId);
+
+        if (roundTimers[roundId].seconds <= 0) {
+            // Timer ended - auto-submit all players (round stays open for new players)
+            stopRoundTimer(roundId, true);
+            endRound(roundId);
+        }
+    }, 1000);
+}
+
+function stopRoundTimer(roundId, skipEmit) {
+    if (roundTimers[roundId] && roundTimers[roundId].interval) {
+        clearInterval(roundTimers[roundId].interval);
+    }
+
+    // Reset UI
+    const display = document.getElementById('timer-' + roundId);
+    const presetsEl = document.getElementById('timer-presets-' + roundId);
+    const stopBtn = document.getElementById('stop-btn-' + roundId);
+    const cardEl = document.getElementById('round-card-' + roundId);
+
+    if (display) {
+        display.textContent = '--:--';
+        display.classList.remove('warning', 'danger');
+    }
+    if (presetsEl) presetsEl.style.display = 'flex';
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (cardEl) cardEl.classList.remove('has-timer');
+
+    delete roundTimers[roundId];
+
+    if (!skipEmit) {
+        socket.emit('timer_stopped', { game_id: gameId, round_id: roundId });
+    }
+}
+
+function updateRoundTimerDisplay(roundId) {
+    const timer = roundTimers[roundId];
+    if (!timer) return;
+
+    const display = document.getElementById('timer-' + roundId);
+    if (!display) return;
+
+    const minutes = Math.floor(timer.seconds / 60);
+    const secs = timer.seconds % 60;
+    display.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+
+    display.classList.remove('warning', 'danger');
+    if (timer.seconds <= 10) {
+        display.classList.add('danger');
+    } else if (timer.seconds <= 30) {
+        display.classList.add('warning');
+    }
+}
+
+async function toggleSubmissionsPanel(roundId) {
+    const panel = document.getElementById('submissions-panel-' + roundId);
+    if (!panel) return;
+
+    const isVisible = panel.classList.contains('show');
+
+    if (isVisible) {
+        panel.classList.remove('show');
+    } else {
+        panel.classList.add('show');
+        await loadSubmissions(roundId);
+    }
+}
+
+async function loadSubmissions(roundId) {
+    const listEl = document.getElementById('submissions-list-' + roundId);
+    if (!listEl) return;
+
+    try {
+        const response = await fetch(`/api/round/${roundId}/submissions`, {
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        if (data.success && data.submissions.length > 0) {
+            listEl.innerHTML = data.submissions.map(sub => {
+                let statusText = 'Not submitted';
+                let statusClass = '';
+                let actionBtn = '';
+
+                if (sub.can_resubmit) {
+                    statusText = 'Can edit';
+                    statusClass = 'can-edit';
+                } else if (sub.submitted) {
+                    statusText = 'Submitted';
+                    statusClass = 'submitted';
+                    actionBtn = `<button class="resubmit-btn" onclick="allowResubmit(${roundId}, ${sub.team_id}, '${sub.team_name}')">Allow Edit</button>`;
+                }
+
+                return `
+                <div class="team-submission" id="team-sub-${roundId}-${sub.team_id}">
+                    <span class="team-name">${sub.team_name}</span>
+                    <div class="team-status">
+                        <span class="status-dot ${statusClass}"></span>
+                        <span class="status-text">${statusText}</span>
+                        ${actionBtn}
+                    </div>
+                </div>
+            `}).join('');
+        } else if (data.submissions.length === 0) {
+            listEl.innerHTML = '<span class="no-teams">No teams have joined yet.</span>';
+        }
+    } catch (error) {
+        listEl.innerHTML = '<span class="no-teams">Error loading submissions.</span>';
+    }
+}
+
+let pendingResubmit = null;
+
+function allowResubmit(roundId, teamId, teamName) {
+    pendingResubmit = { roundId, teamId, teamName };
+    document.getElementById('modal-message').textContent =
+        `Allow ${teamName} to edit and resubmit their answers?`;
+    document.getElementById('confirm-modal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('confirm-modal').classList.remove('show');
+    pendingResubmit = null;
+    // Reset modal state
+    document.getElementById('modal-title').textContent = 'Allow Edit';
+    document.getElementById('modal-confirm-btn').style.display = '';
+    document.querySelector('.modal-btn-cancel').textContent = 'Cancel';
+}
+
+async function confirmResubmit() {
+    if (!pendingResubmit) return;
+
+    const { roundId, teamId } = pendingResubmit;
+    closeModal();
+
+    try {
+        const response = await fetch(`/api/round/${roundId}/team/${teamId}/clear`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // Reload the submissions panel
+            await loadSubmissions(roundId);
+
+            // Emit socket event to notify the player they can resubmit
+            socket.emit('submission_cleared', {
+                game_id: gameId,
+                round_id: roundId,
+                team_id: teamId
+            });
+        } else {
+            showError('Could not allow edit: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Error: ' + error.message);
+    }
+}
+
+function showError(message) {
+    document.getElementById('modal-title').textContent = 'Error';
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('modal-confirm-btn').style.display = 'none';
+    document.querySelector('.modal-btn-cancel').textContent = 'OK';
+    document.getElementById('confirm-modal').classList.add('show');
+}
+
+// Set up modal confirm button
+document.getElementById('modal-confirm-btn').addEventListener('click', confirmResubmit);
+
+// Close modal on overlay click
+document.getElementById('confirm-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+
+// Betting results functions
+async function loadBettingQuestions(roundId) {
+    try {
+        const response = await fetch(`/api/round/${roundId}/betting-questions`, {
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        if (data.success && data.betting_questions.length > 0) {
+            const section = document.getElementById('betting-section-' + roundId);
+            const container = document.getElementById('betting-questions-' + roundId);
+
+            if (section) section.style.display = 'block';
+
+            const ordinal = (n) => {
+                const s = ['th', 'st', 'nd', 'rd'];
+                const v = n % 100;
+                return n + (s[(v - 20) % 10] || s[v] || s[0]);
+            };
+
+            container.innerHTML = data.betting_questions.map(q => {
+                let resultsHtml = '';
+                for (let i = 0; i < q.num_places; i++) {
+                    const currentResult = q.results[i] || '';
+                    const multiplier = q.multipliers[i] || 1;
+                    resultsHtml += `
+                        <div class="betting-results-row">
+                            <span class="betting-place-label">${ordinal(i + 1)} place:</span>
+                            <select class="betting-place-select" id="betting-${roundId}-${q.id}-place-${i}">
+                                <option value="">Select...</option>
+                                ${q.choices.map(c => `<option value="${c}" ${c === currentResult ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                            <span class="betting-multiplier">×${multiplier}</span>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="betting-question" data-question-id="${q.id}">
+                        <p class="betting-question-text">${q.text || 'Betting Question'}</p>
+                        ${resultsHtml}
+                        <button class="betting-save-btn" onclick="saveBettingResults(${roundId}, '${q.id}', ${q.num_places})">
+                            Save Results
+                        </button>
+                        <span class="betting-status" id="betting-status-${roundId}-${q.id}"></span>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Error loading betting questions:', error);
+    }
+}
+
+async function saveBettingResults(roundId, questionId, numPlaces) {
+    const results = [];
+    for (let i = 0; i < numPlaces; i++) {
+        const select = document.getElementById(`betting-${roundId}-${questionId}-place-${i}`);
+        if (select && select.value) {
+            results.push(select.value);
+        }
+    }
+
+    const statusEl = document.getElementById(`betting-status-${roundId}-${questionId}`);
+
+    try {
+        const response = await fetch(`/api/round/${roundId}/question/${questionId}/betting-results`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ results })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (statusEl) {
+                statusEl.textContent = `✓ Saved! ${data.updated_count} scores updated`;
+                statusEl.className = 'betting-status';
+                setTimeout(() => { statusEl.textContent = ''; }, 3000);
+            }
+        } else {
+            if (statusEl) {
+                statusEl.textContent = '✗ ' + (data.error || 'Failed to save');
+                statusEl.className = 'betting-status error';
+            }
+        }
+    } catch (error) {
+        if (statusEl) {
+            statusEl.textContent = '✗ Error: ' + error.message;
+            statusEl.className = 'betting-status error';
+        }
+    }
+}
+
+// Load betting questions for all rounds on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-round-id]').forEach(el => {
+        const roundId = el.dataset.roundId;
+        loadBettingQuestions(roundId);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: quiz_app_web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - DATABASE_URL=postgresql://quiz_user:${DB_PASSWORD}@db:5432/quiz_app
+      - BASE_URL=${BASE_URL}
+    volumes:
+      - ./static/qrcodes:/app/static/qrcodes
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - quiz_network
+
+  db:
+    image: postgres:15-alpine
+    container_name: quiz_app_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=quiz_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=quiz_app
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quiz_user -d quiz_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quiz_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: quiz_app_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - web
+    networks:
+      - quiz_network
+
+volumes:
+  postgres_data:
+
+networks:
+  quiz_network:
+    driver: bridge

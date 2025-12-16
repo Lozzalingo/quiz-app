@@ -1,0 +1,1300 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}{{ round.name }} - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: #f0ebf8;
+}
+
+.round-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.round-header {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 10px solid #673ab7;
+}
+
+.round-header h1 {
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0 0 4px 0;
+    color: #202124;
+}
+
+.round-header .subtitle {
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.round-header .team-name {
+    color: #673ab7;
+    font-weight: 500;
+}
+
+.readonly-notice {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 6px 16px;
+    background: #e8f0fe;
+    color: #1a73e8;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.question-input:disabled {
+    background: #f8f9fa !important;
+    color: #5f6368 !important;
+    cursor: not-allowed;
+}
+
+.radio-option input:disabled + span {
+    color: #5f6368;
+}
+
+.timer-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    padding: 16px 24px;
+    box-shadow: 0 4px 20px rgba(103, 58, 183, 0.4);
+    text-align: center;
+    display: none;
+    z-index: 1000;
+    animation: slideDown 0.5s ease-out;
+}
+
+.timer-bar.show {
+    display: block;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.timer-bar.attention {
+    animation: slideDown 0.5s ease-out, attention 0.5s ease-in-out 0.5s 3;
+}
+
+@keyframes attention {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.timer-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.timer-display {
+    font-size: 48px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.timer-display.warning {
+    color: #ffeb3b;
+}
+
+.timer-display.danger {
+    color: #ff5252;
+    animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+/* Add padding to body when timer is visible */
+body.timer-active {
+    padding-top: 100px;
+}
+
+/* Overlay flash when timer starts */
+.timer-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(103, 58, 183, 0.3);
+    z-index: 999;
+    pointer-events: none;
+    animation: flash 0.6s ease-out forwards;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.question-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.question-number {
+    font-size: 11px;
+    font-weight: 500;
+    color: #673ab7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.question-image {
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.question-image img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 8px;
+}
+
+.question-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 16px 0;
+}
+
+.question-input {
+    width: 100% !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    color: #202124 !important;
+    background: white !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+}
+
+.question-input:focus {
+    outline: none !important;
+    border-color: #673ab7 !important;
+    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1) !important;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radio-option:hover {
+    background: #f8f9fa;
+    border-color: #673ab7;
+}
+
+.radio-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: #673ab7;
+}
+
+.radio-option span {
+    font-size: 14px;
+    color: #202124;
+}
+
+.question-points {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 8px;
+}
+
+.submit-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.submit-btn {
+    padding: 14px 32px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    background: #673ab7 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.submit-btn:hover {
+    background: #5e35a1 !important;
+}
+
+.submit-warning {
+    font-size: 12px;
+    color: #ea8600;
+    margin-top: 12px;
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 12px;
+}
+
+.back-link a {
+    font-size: 13px;
+    color: #5f6368;
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    color: #202124;
+}
+
+/* Betting question styles */
+.betting-section {
+    border: 2px solid #673ab7;
+    border-radius: 12px;
+    padding: 16px;
+    background: #f9f5ff;
+}
+
+.betting-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0d6f0;
+}
+
+.betting-max {
+    font-size: 13px;
+    color: #673ab7;
+    font-weight: 500;
+}
+
+.betting-amount {
+    margin-bottom: 16px;
+}
+
+.betting-amount label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 8px;
+}
+
+.betting-amount-input {
+    width: 120px !important;
+    padding: 12px 16px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border: 2px solid #673ab7 !important;
+    border-radius: 8px !important;
+    color: #673ab7 !important;
+    background: white !important;
+}
+
+.betting-amount-input:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(103, 58, 183, 0.2) !important;
+}
+
+.betting-choices-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 8px;
+}
+
+.betting-warning {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #fff3e0;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #e65100;
+}
+
+/* Overlay styles */
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.overlay-content {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.overlay-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.overlay-content h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 8px 0;
+}
+
+.overlay-content p {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 24px 0;
+}
+
+.overlay-btn {
+    display: inline-block;
+    padding: 14px 40px;
+    background: #673ab7;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+
+.overlay-btn:hover {
+    background: #5e35a1;
+}
+
+/* Ordering question styles */
+.ordering-section {
+    border: 2px solid #4caf50;
+    border-radius: 12px;
+    padding: 16px;
+    background: #e8f5e9;
+}
+
+.ordering-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #c8e6c9;
+}
+
+.ordering-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.ordering-title {
+    font-weight: 600;
+    color: #2e7d32;
+    font-size: 15px;
+}
+
+.ordering-scoring {
+    font-size: 12px;
+    color: #388e3c;
+}
+
+.ordering-instruction {
+    font-size: 13px;
+    color: #558b2f;
+    margin-top: 4px;
+}
+
+.ordering-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ordering-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2e7d32;
+    padding: 4px 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ordering-label-start {
+    margin-bottom: -4px;
+}
+
+.ordering-label-end {
+    margin-top: -4px;
+}
+
+.ordering-slot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #c8e6c9;
+}
+
+.ordering-slot-num {
+    width: 32px;
+    height: 32px;
+    background: #4caf50;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.ordering-slot select {
+    flex: 1;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 6px !important;
+    background: white !important;
+    color: #202124 !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+
+.ordering-slot select:focus {
+    outline: none !important;
+    border-color: #4caf50 !important;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
+}
+
+.ordering-slot select:disabled {
+    background: #f5f5f5 !important;
+    cursor: not-allowed;
+}
+
+.ordering-hint {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(76, 175, 80, 0.15);
+    border-radius: 6px;
+    font-size: 12px;
+    color: #2e7d32;
+}
+
+/* Estimate question styles */
+.estimate-section {
+    border: 2px solid #1976d2;
+    border-radius: 12px;
+    padding: 16px;
+    background: #e3f2fd;
+}
+
+.estimate-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #bbdefb;
+}
+
+.estimate-header span {
+    font-weight: 500;
+    color: #1565c0;
+}
+
+.estimate-scoring {
+    font-size: 11px;
+    color: #1976d2;
+}
+
+.estimate-input-wrapper {
+    text-align: center;
+}
+
+.estimate-input {
+    width: 160px !important;
+    padding: 14px 20px !important;
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border: 2px solid #1976d2 !important;
+    border-radius: 8px !important;
+    color: #1565c0 !important;
+    background: white !important;
+    margin: 0 auto !important;
+}
+
+.estimate-input:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2) !important;
+}
+
+.estimate-input:disabled {
+    background: #f5f5f5 !important;
+    cursor: not-allowed;
+}
+
+.estimate-hint {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(25, 118, 210, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+    color: #1565c0;
+    text-align: center;
+}
+
+/* Game Complete Overlay */
+.game-complete-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 2px solid #ffd700;
+}
+
+.game-complete-content h2 {
+    color: #ffd700;
+    font-size: 28px;
+}
+
+.game-complete-content .overlay-icon {
+    font-size: 64px;
+    animation: celebrateBounce 1s ease infinite;
+}
+
+@keyframes celebrateBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.game-complete-message {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 8px !important;
+}
+
+.game-complete-hint {
+    color: rgba(255, 215, 0, 0.8);
+    font-size: 14px;
+    font-style: italic;
+    margin-bottom: 24px !important;
+}
+
+.game-complete-content .overlay-btn {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #1a1a2e;
+    font-weight: 600;
+}
+
+.game-complete-content .overlay-btn:hover {
+    background: linear-gradient(135deg, #ffea00, #ffbb00);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="round-page">
+    <div class="round-header">
+        <h1>{{ round.name }}</h1>
+        <p class="subtitle">{{ game.name }} · <span class="team-name">{{ team.name }}</span></p>
+        {% if read_only %}
+        <p class="readonly-notice">Viewing your submitted answers</p>
+        {% endif %}
+    </div>
+
+    <div class="timer-bar" id="timer-bar">
+        <div class="timer-label">Time Remaining</div>
+        <div class="timer-display" id="timer-display">--:--</div>
+    </div>
+
+    <form method="POST" action="{{ url_for('player.submit_round', round_id=round.id) }}" id="quiz-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        {% for question in questions %}
+        <div class="question-card">
+            <div class="question-number">Question {{ loop.index }}</div>
+
+            {% if question.image %}
+            <div class="question-image">
+                <img src="{{ question.image }}" alt="Question image">
+            </div>
+            {% endif %}
+
+            <p class="question-text">{{ question.text }}</p>
+
+            {% if question.type == 'text' %}
+                <input type="text"
+                       class="question-input"
+                       name="answer_{{ question.id }}"
+                       id="answer_{{ question.id }}"
+                       placeholder="Enter your answer"
+                       value="{{ existing_answers.get(question.id, '') }}"
+                       {{ 'disabled' if read_only else '' }}>
+
+            {% elif question.type == 'number' %}
+                <input type="number"
+                       class="question-input"
+                       name="answer_{{ question.id }}"
+                       id="answer_{{ question.id }}"
+                       placeholder="Enter a number"
+                       step="any"
+                       value="{{ existing_answers.get(question.id, '') }}"
+                       {{ 'disabled' if read_only else '' }}>
+
+            {% elif question.type == 'radio' %}
+                <div class="radio-group">
+                    {% set options = question.options.split(',') if question.options else [] %}
+                    {% set current_answer = existing_answers.get(question.id, '') %}
+                    {% for option in options %}
+                    <label class="radio-option">
+                        <input type="radio"
+                               name="answer_{{ question.id }}"
+                               value="{{ option.strip() }}"
+                               {{ 'checked' if option.strip() == current_answer else '' }}
+                               {{ 'disabled' if read_only else '' }}>
+                        <span>{{ option.strip() }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+            {% elif question.type == 'betting' %}
+                {% set betting = question.betting or {} %}
+                {% set max_bet = betting.get('max_bet', 3) %}
+                {% set choices = betting.get('choices', []) %}
+                {% set existing = existing_answers.get(question.id, '') %}
+                {% if existing and existing.startswith('{') %}
+                    {% set existing_data = existing | fromjson if existing else {} %}
+                {% else %}
+                    {% set existing_data = {} %}
+                {% endif %}
+                <div class="betting-section">
+                    <div class="betting-header">
+                        <span>🎰 Place Your Bet</span>
+                        <span class="betting-max">Max bet: {{ max_bet }} points</span>
+                    </div>
+
+                    <div class="betting-amount">
+                        <label>How many points do you want to bet?</label>
+                        <input type="number"
+                               class="betting-amount-input"
+                               name="bet_amount_{{ question.id }}"
+                               id="bet_amount_{{ question.id }}"
+                               min="1"
+                               max="{{ max_bet }}"
+                               value="{{ existing_data.get('bet_amount', 1) }}"
+                               {{ 'disabled' if read_only else '' }}>
+                    </div>
+
+                    <div class="betting-choices-label">Pick your winner:</div>
+                    <div class="radio-group">
+                        {% for choice in choices %}
+                        <label class="radio-option">
+                            <input type="radio"
+                                   name="bet_choice_{{ question.id }}"
+                                   value="{{ choice }}"
+                                   {{ 'checked' if choice == existing_data.get('choice', '') else '' }}
+                                   {{ 'disabled' if read_only else '' }}>
+                            <span>{{ choice }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <div class="betting-warning">
+                        ⚠️ Your bet amount will be deducted from your score. Win to multiply it back!
+                    </div>
+                </div>
+
+            {% elif question.type == 'ordering' %}
+                {% set ordering = question.ordering or {} %}
+                {% set items = ordering.get('items', []) %}
+                {% set points_exact = ordering.get('points_exact', 2) %}
+                {% set points_adjacent = ordering.get('points_adjacent', 1) %}
+                {% set existing = existing_answers.get(question.id, '') %}
+                {% if existing and existing.startswith('[') %}
+                    {% set existing_order = existing | fromjson if existing else [] %}
+                {% else %}
+                    {% set existing_order = [] %}
+                {% endif %}
+                {% set instruction = ordering.get('instruction', '') %}
+                <div class="ordering-section">
+                    <div class="ordering-header">
+                        <div class="ordering-header-top">
+                            <span class="ordering-title">📋 Put in Order</span>
+                            <span class="ordering-scoring">Correct = {{ points_exact }}pts | One off = {{ points_adjacent }}pt</span>
+                        </div>
+                        {% if instruction %}
+                        <div class="ordering-instruction">{{ instruction }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% set start_label = ordering.get('start_label', '') %}
+                    {% set end_label = ordering.get('end_label', '') %}
+                    <div class="ordering-slots" id="ordering-slots-{{ question.id }}">
+                        {% if start_label %}
+                        <div class="ordering-label ordering-label-start">↑ {{ start_label }}</div>
+                        {% endif %}
+                        {% for i in range(items|length) %}
+                        <div class="ordering-slot">
+                            <span class="ordering-slot-num">{{ i + 1 }}</span>
+                            <select name="ordering_{{ question.id }}_{{ i }}"
+                                    id="ordering_{{ question.id }}_{{ i }}"
+                                    class="ordering-select"
+                                    data-question-id="{{ question.id }}"
+                                    {{ 'disabled' if read_only else '' }}>
+                                <option value="">Select item...</option>
+                                {% for item in items %}
+                                <option value="{{ item }}" {{ 'selected' if existing_order and i < existing_order|length and existing_order[i] == item else '' }}>{{ item }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endfor %}
+                        {% if end_label %}
+                        <div class="ordering-label ordering-label-end">↓ {{ end_label }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="ordering-hint">
+                        Place each item in the correct order. You score {{ points_exact }} pts for each item in the right spot, or {{ points_adjacent }} pt if you're just one place off.
+                    </div>
+                </div>
+
+            {% elif question.type == 'estimate' %}
+                {% set estimate = question.estimate or {} %}
+                {% set points_exact = estimate.get('points_exact', 4) %}
+                {% set points_10 = estimate.get('points_10', 3) %}
+                {% set points_20 = estimate.get('points_20', 2) %}
+                {% set points_30 = estimate.get('points_30', 1) %}
+                <div class="estimate-section">
+                    <div class="estimate-header">
+                        <span>🎯 Make Your Guess</span>
+                        <span class="estimate-scoring">Exact: {{ points_exact }} | ±10%: {{ points_10 }} | ±20%: {{ points_20 }} | ±30%: {{ points_30 }}</span>
+                    </div>
+
+                    <div class="estimate-input-wrapper">
+                        <input type="number"
+                               class="estimate-input"
+                               name="answer_{{ question.id }}"
+                               id="answer_{{ question.id }}"
+                               placeholder="?"
+                               step="any"
+                               value="{{ existing_answers.get(question.id, '') }}"
+                               {{ 'disabled' if read_only else '' }}>
+                    </div>
+
+                    <div class="estimate-hint">
+                        Enter your best guess. The closer you are, the more points you get!
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if question.points and question.points != 1 %}
+                <div class="question-points">{{ question.points }} points</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if not read_only %}
+        {% set has_betting = questions | selectattr('type', 'equalto', 'betting') | list | length > 0 %}
+        <div class="submit-section">
+            <button type="submit" class="submit-btn" id="submit-btn">
+                {% if is_resubmit %}
+                    Update {{ 'Bets' if has_betting else 'Answers' }}
+                {% else %}
+                    {{ 'Place Bet' if has_betting else 'Submit Answers' }}
+                {% endif %}
+            </button>
+            <p class="submit-warning">
+                {% if is_resubmit %}
+                    You are editing your previous submission
+                {% elif has_betting %}
+                    Your bet will be deducted from your score
+                {% else %}
+                    You cannot change your answers after submitting
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </form>
+
+    <div class="back-link">
+        <a href="{{ url_for('player.quiz', game_code=game.code) }}">← Back to rounds</a>
+    </div>
+</div>
+
+<!-- Round Closed Overlay -->
+<div class="overlay" id="round-closed-overlay">
+    <div class="overlay-content">
+        <div class="overlay-icon" id="overlay-icon">🔔</div>
+        <h2 id="overlay-title">Round Closed</h2>
+        <p id="overlay-message">This round has ended.</p>
+        <a href="{{ url_for('player.next_questions', game_code=game.code) }}" class="overlay-btn" id="next-btn">Continue</a>
+    </div>
+</div>
+
+<!-- Game Complete Overlay -->
+<div class="overlay" id="game-complete-overlay">
+    <div class="overlay-content game-complete-content">
+        <div class="overlay-icon">🎉</div>
+        <h2>Quiz Complete!</h2>
+        <p class="game-complete-message">Scores are now hidden. The quiz master will reveal the final scores in a dramatic fashion!</p>
+        <p class="game-complete-hint">Stay tuned...</p>
+        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="overlay-btn">See Your Answers</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const gameId = {{ game.id }};
+const roundId = {{ round.id }};
+const gameCode = '{{ game.code }}';
+const isPotentialFinal = {{ 'true' if is_potential_final else 'false' }};
+let hasSubmitted = false;
+
+const socket = io();
+
+socket.on('connect', function() {
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    socket.emit('join_game', { game_id: gameId });
+}
+
+socket.on('round_ending', function(data) {
+    if (data.round_id === roundId) {
+        // Round is ending - auto-submit answers immediately
+        if (!hasSubmitted) {
+            hasSubmitted = true;
+            stopClientTimer();
+            const form = document.getElementById('quiz-form');
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            }).finally(() => {
+                showRoundClosedOverlay("Time's up! Your answers have been saved.", true, isPotentialFinal);
+            });
+        }
+    }
+});
+
+socket.on('round_closed', function(data) {
+    if (data.round_id === roundId) {
+        // Show overlay (answers already submitted by round_ending)
+        if (!hasSubmitted) {
+            // Just in case round_ending wasn't received, submit now
+            hasSubmitted = true;
+            const form = document.getElementById('quiz-form');
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            }).finally(() => {
+                showRoundClosedOverlay('Round closed! Your answers have been saved.', false, isPotentialFinal);
+            });
+        } else {
+            showRoundClosedOverlay('Round ended! Your answers have been saved.', false, isPotentialFinal);
+        }
+    }
+});
+
+socket.on('game_finalising', function(data) {
+    // Update overlay to go to game over page
+    document.getElementById('overlay-message').textContent = 'The quiz has finished! Get ready for the results.';
+    document.getElementById('next-btn').textContent = 'See Results';
+    document.getElementById('next-btn').href = "{{ url_for('player.game_over', game_code=game.code) }}";
+    document.getElementById('round-closed-overlay').classList.add('show');
+});
+
+socket.on('timer_started', function(data) {
+    if (data.round_id === roundId) {
+        startClientTimer(data.seconds);
+    }
+});
+
+socket.on('timer_stopped', function(data) {
+    if (data.round_id === roundId) {
+        stopClientTimer();
+    }
+});
+
+let timerInterval = null;
+let timerSeconds = 0;
+
+function startClientTimer(seconds) {
+    stopClientTimer();
+    timerSeconds = seconds;
+    const bar = document.getElementById('timer-bar');
+
+    // Show timer with attention-grabbing effects
+    bar.classList.add('show', 'attention');
+    document.body.classList.add('timer-active');
+
+    // Create flash overlay
+    const flash = document.createElement('div');
+    flash.className = 'timer-flash';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+
+    // Try to play a sound (may be blocked by browser)
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.3);
+    } catch (e) {
+        // Audio not supported or blocked
+    }
+
+    // Vibrate on mobile if supported
+    if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+    }
+
+    // Scroll to top to see timer
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    updateTimerDisplay();
+
+    timerInterval = setInterval(function() {
+        timerSeconds--;
+        updateTimerDisplay();
+
+        if (timerSeconds <= 0) {
+            stopClientTimer();
+            autoSubmitAnswers();
+        }
+    }, 1000);
+}
+
+function stopClientTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    const bar = document.getElementById('timer-bar');
+    bar.classList.remove('show', 'attention');
+    document.body.classList.remove('timer-active');
+}
+
+function updateTimerDisplay() {
+    const display = document.getElementById('timer-display');
+    const minutes = Math.floor(timerSeconds / 60);
+    const secs = timerSeconds % 60;
+    display.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+
+    display.classList.remove('warning', 'danger');
+    if (timerSeconds <= 10) {
+        display.classList.add('danger');
+    } else if (timerSeconds <= 30) {
+        display.classList.add('warning');
+    }
+}
+
+function autoSubmitAnswers() {
+    if (hasSubmitted) return;
+    hasSubmitted = true;
+
+    // Submit via fetch (no redirect) then show popup
+    const form = document.getElementById('quiz-form');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    }).finally(() => {
+        showRoundClosedOverlay("Your answers have been saved.", true, isPotentialFinal);
+    });
+}
+
+function showGameCompleteOverlay() {
+    // Celebratory effects
+    const flash = document.createElement('div');
+    flash.className = 'timer-flash';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+
+    // Sound alert (higher pitch for celebration)
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Play a little celebration tune
+        [800, 1000, 1200].forEach((freq, i) => {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.value = freq;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.15);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.15 + 0.3);
+            oscillator.start(audioCtx.currentTime + i * 0.15);
+            oscillator.stop(audioCtx.currentTime + i * 0.15 + 0.3);
+        });
+    } catch (e) {}
+
+    // Vibrate celebration pattern
+    if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+
+    document.getElementById('game-complete-overlay').classList.add('show');
+}
+
+function showRoundClosedOverlay(message, isTimerExpiry, isFinalRound = false) {
+    // If this is the final round, show the game complete overlay instead
+    if (isFinalRound) {
+        showGameCompleteOverlay();
+        return;
+    }
+
+    // Flash overlay for attention
+    const flash = document.createElement('div');
+    flash.className = 'timer-flash';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+
+    // Sound alert
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 600;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch (e) {}
+
+    // Vibrate
+    if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+    }
+
+    // Set title and icon based on context
+    if (isTimerExpiry) {
+        document.getElementById('overlay-icon').textContent = '⏱️';
+        document.getElementById('overlay-title').textContent = "Time's Up!";
+    } else {
+        document.getElementById('overlay-icon').textContent = '🔔';
+        document.getElementById('overlay-title').textContent = 'Round Ended';
+    }
+
+    document.getElementById('overlay-message').textContent = message;
+
+    // Set button to go back to rounds list
+    const btn = document.getElementById('next-btn');
+    btn.href = "{{ url_for('player.quiz', game_code=game.code) }}";
+    btn.textContent = 'Back to Rounds';
+
+    document.getElementById('round-closed-overlay').classList.add('show');
+}
+
+document.getElementById('quiz-form').addEventListener('submit', function(e) {
+    if (hasSubmitted) {
+        e.preventDefault();
+        return;
+    }
+
+    // If this is the final round, submit via fetch and show the game complete popup
+    if (isPotentialFinal) {
+        e.preventDefault();
+        hasSubmitted = true;
+
+        const form = document.getElementById('quiz-form');
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        }).finally(() => {
+            showGameCompleteOverlay();
+        });
+        return;
+    }
+
+    // Normal submission - just let it submit
+    hasSubmitted = true;
+});
+
+// Shuffle ordering question options so players don't see correct order
+function shuffleOrderingOptions() {
+    const selects = document.querySelectorAll('.ordering-select');
+    const questionOptions = {};
+
+    // Group selects by question ID
+    selects.forEach(select => {
+        const qId = select.dataset.questionId;
+        if (!questionOptions[qId]) {
+            questionOptions[qId] = [];
+            // Get all options except the placeholder
+            const options = Array.from(select.options).slice(1);
+            // Shuffle using Fisher-Yates
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+            questionOptions[qId] = options.map(opt => ({ value: opt.value, text: opt.text }));
+        }
+    });
+
+    // Apply shuffled options to all selects for each question
+    selects.forEach(select => {
+        const qId = select.dataset.questionId;
+        const selectedValue = select.value;
+        const shuffled = questionOptions[qId];
+
+        // Clear existing options except placeholder
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+
+        // Add shuffled options
+        shuffled.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.text;
+            if (opt.value === selectedValue) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    });
+}
+
+// Shuffle on page load (only if not read-only/viewing existing answers)
+{% if not read_only %}
+shuffleOrderingOptions();
+{% endif %}
+
+// Fetch active timers on page load (persists across page refresh)
+function fetchActiveTimers() {
+    console.log('[Round] Fetching active timers for game', gameId);
+    fetch('/api/game/' + gameId + '/active-timers')
+        .then(r => r.json())
+        .then(data => {
+            console.log('[Round] Active timers response:', data);
+            if (data.success && data.timers) {
+                data.timers.forEach(timer => {
+                    console.log('[Round] Checking timer for round', timer.round_id, '(current round:', roundId, ')');
+                    if (timer.round_id === roundId) {
+                        console.log('[Round] Starting timer with', timer.seconds_remaining, 'seconds');
+                        // Start timer without attention effects (page refresh)
+                        timerSeconds = timer.seconds_remaining;
+                        const bar = document.getElementById('timer-bar');
+                        bar.classList.add('show');
+                        document.body.classList.add('timer-active');
+                        updateTimerDisplay();
+
+                        timerInterval = setInterval(function() {
+                            timerSeconds--;
+                            updateTimerDisplay();
+
+                            if (timerSeconds <= 0) {
+                                stopClientTimer();
+                                autoSubmitAnswers();
+                            }
+                        }, 1000);
+                    }
+                });
+            }
+        })
+        .catch(err => console.log('[Round] Error fetching active timers:', err));
+}
+
+// Load active timers on page load
+fetchActiveTimers();
+</script>
+{% endblock %}

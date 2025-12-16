@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Fat Big Quiz - Home{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: #f0ebf8;
+}
+
+.hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(103, 58, 183, 0.1);
+    margin-top: 40px;
+}
+
+.hero-logo {
+    width: 120px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.hero h1 {
+    font-size: 42px;
+    font-weight: 700;
+    color: #673ab7;
+    margin: 0 0 12px 0;
+}
+
+.hero .tagline {
+    font-size: 18px;
+    color: #5f6368;
+    margin: 0 0 40px 0;
+}
+
+.action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.action-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.action-card:hover {
+    border-color: #673ab7;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(103, 58, 183, 0.15);
+}
+
+.action-card .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.action-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 8px 0;
+}
+
+.action-card p {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+}
+
+.action-card .btn {
+    display: inline-block;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.action-card .btn-primary {
+    background: #673ab7;
+    color: white;
+}
+
+.action-card .btn-primary:hover {
+    background: #5e35a1;
+}
+
+.action-card .btn-secondary {
+    background: #f1f3f4;
+    color: #673ab7;
+}
+
+.action-card .btn-secondary:hover {
+    background: #e8e0f0;
+}
+
+.features {
+    margin-top: 60px;
+    text-align: center;
+}
+
+.features h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 32px 0;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+}
+
+.feature {
+    padding: 20px;
+}
+
+.feature .feature-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.feature h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 8px 0;
+}
+
+.feature p {
+    font-size: 13px;
+    color: #5f6368;
+    margin: 0;
+}
+
+footer {
+    background: transparent !important;
+    border-top: none !important;
+}
+
+footer small {
+    color: #9e9e9e;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fat Big Quiz" class="hero-logo">
+    <h1>Fat Big Quiz</h1>
+    <p class="tagline">The ultimate pub quiz experience</p>
+</div>
+
+<div class="action-cards">
+    <div class="action-card">
+        <div class="icon">🎮</div>
+        <h3>Join a Game</h3>
+        <p>Got a game code? Jump in with your team and compete in the quiz!</p>
+        <a href="{{ url_for('auth.player_login') }}" class="btn btn-primary">Play Now</a>
+    </div>
+
+    {% if current_user.is_authenticated and current_user.get_id().startswith('admin_') %}
+    <div class="action-card">
+        <div class="icon">📊</div>
+        <h3>Admin Dashboard</h3>
+        <p>Manage your quizzes, create rounds, and track scores in real-time.</p>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Go to Dashboard</a>
+    </div>
+    {% else %}
+    <div class="action-card">
+        <div class="icon">🎯</div>
+        <h3>Host a Quiz</h3>
+        <p>Create and manage quiz games with timed rounds and live scoring.</p>
+        <a href="{{ url_for('auth.admin_login') }}" class="btn btn-secondary">Admin Login</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="features">
+    <h2>Everything you need for a great quiz</h2>
+    <div class="feature-grid">
+        <div class="feature">
+            <div class="feature-icon">⏱️</div>
+            <h4>Timed Rounds</h4>
+            <p>Set countdown timers with auto-submit</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📱</div>
+            <h4>QR Join</h4>
+            <p>Players scan to join instantly</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📋</div>
+            <h4>Spreadsheet Grading</h4>
+            <p>Grade answers in a familiar interface</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🏆</div>
+            <h4>Live Scoreboard</h4>
+            <p>Real-time score updates</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

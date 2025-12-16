@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Join Game - Quiz App{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: #f0ebf8;
+}
+
+.join-page {
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 16px;
+}
+
+.join-card {
+    background: white;
+    border-radius: 8px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border-top: 10px solid #673ab7;
+}
+
+.join-card h1 {
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0 0 8px 0;
+    color: #202124;
+    text-align: center;
+}
+
+.join-card .subtitle {
+    font-size: 14px;
+    color: #5f6368;
+    text-align: center;
+    margin: 0 0 24px 0;
+}
+
+.game-code-display {
+    background: #f9f5ff;
+    border: 2px solid #673ab7;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.game-code-display .label {
+    font-size: 11px;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.game-code-display .code {
+    font-size: 28px;
+    font-weight: 500;
+    font-family: monospace;
+    color: #673ab7;
+    letter-spacing: 4px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100% !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    color: #202124 !important;
+    background: white !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+}
+
+.form-input:focus {
+    outline: none !important;
+    border-color: #673ab7 !important;
+    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1) !important;
+}
+
+.form-input::placeholder {
+    color: #9aa0a6;
+}
+
+.form-hint {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 4px;
+}
+
+.form-error {
+    font-size: 12px;
+    color: #c5221f;
+    margin-top: 4px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    background: #673ab7 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    margin: 24px 0 0 0 !important;
+}
+
+.submit-btn:hover {
+    background: #5e35a1 !important;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.login-link a {
+    color: #673ab7;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+.login-link span {
+    color: #5f6368;
+    font-size: 13px;
+}
+
+/* Hide the game code input if pre-filled */
+.hidden-code {
+    display: none;
+}
+
+/* Team error box */
+.team-error-box {
+    background: #fef7e0;
+    border: 1px solid #f9ab00;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.team-error-box .error-title {
+    font-weight: 600;
+    color: #b06000;
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.team-error-box .error-section {
+    margin-bottom: 12px;
+}
+
+.team-error-box .error-section:last-child {
+    margin-bottom: 0;
+}
+
+.team-error-box .error-section-title {
+    font-weight: 500;
+    color: #202124;
+    font-size: 13px;
+    margin: 0 0 4px 0;
+}
+
+.team-error-box .error-section p {
+    color: #5f6368;
+    font-size: 12px;
+    margin: 0;
+    line-height: 1.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="join-page">
+    <div class="join-card">
+        <h1>Join Quiz</h1>
+        <p class="subtitle">Create your team to start playing</p>
+
+        {% if game_code %}
+        <div class="game-code-display">
+            <div class="label">Game Code</div>
+            <div class="code">{{ game_code }}</div>
+        </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                {% if category == 'team_error' %}
+                <div class="team-error-box">
+                    <div class="error-title">⚠️ Team name already exists</div>
+                    <div class="error-section">
+                        <div class="error-section-title">New team?</div>
+                        <p>That team name is already taken. Please choose a different, unique team name.</p>
+                    </div>
+                    <div class="error-section">
+                        <div class="error-section-title">Returning team?</div>
+                        <p>Check that your team name and password are correct. Passwords are case-sensitive.</p>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            {% if not game_code %}
+            <div class="form-group">
+                <label class="form-label" for="game_code">Game Code</label>
+                {{ form.game_code(class="form-input", placeholder="Enter 6-letter code", maxlength=6, style="text-transform: uppercase;") }}
+                {% for error in form.game_code.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="hidden-code">
+                {{ form.game_code(value=game_code) }}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label" for="team_name">Team Name</label>
+                {{ form.team_name(class="form-input", placeholder="Enter your team name") }}
+                {% for error in form.team_name.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                {{ form.password(class="form-input", placeholder="Create a password") }}
+                <div class="form-hint">You'll need this to log back in</div>
+                {% for error in form.password.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password_confirm">Confirm Password</label>
+                {{ form.password_confirm(class="form-input", placeholder="Confirm your password") }}
+                {% for error in form.password_confirm.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="submit-btn">Join Game</button>
+        </form>
+
+        {% if game_code %}
+        <div class="login-link">
+            <span>Already have a team? </span>
+            <a href="{{ url_for('auth.player_relogin', game_code=game_code) }}">Sign in</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1941 @@
+{% extends "base.html" %}
+
+{% block title %}{{ game.name }} - Quiz App{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: #f0ebf8;
+}
+
+.game-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.game-header {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 10px solid #673ab7;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.game-info {
+    flex: 1;
+}
+
+.game-info h1 {
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0 0 8px 0;
+    color: #202124;
+}
+
+.game-code {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f3f4;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 16px;
+    color: #202124;
+}
+
+.join-link-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.join-link {
+    font-size: 13px;
+    color: #673ab7;
+    word-break: break-all;
+}
+
+.copy-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    color: #5f6368 !important;
+    cursor: pointer;
+    margin: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-btn:hover {
+    background: #f1f3f4 !important;
+    color: #202124 !important;
+}
+
+.copy-btn.copied {
+    color: #137333 !important;
+}
+
+.copy-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.game-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #5f6368;
+}
+
+.game-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.scores-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #673ab7;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 4px 10px;
+    background: #f3e8ff;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.scores-link:hover {
+    background: #e9d5ff;
+    color: #5e35a1;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.status-inactive {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.qr-section {
+    text-align: center;
+}
+
+.qr-section img {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+}
+
+.qr-section small {
+    display: block;
+    font-size: 11px;
+    color: #5f6368;
+    margin-top: 4px;
+}
+
+.section-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-header h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0;
+}
+
+.add-btn {
+    background: transparent;
+    color: #673ab7;
+    border: 1px solid #673ab7;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.add-btn:hover {
+    background: #f9f5ff;
+}
+
+.rounds-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.round-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f4;
+    gap: 12px;
+}
+
+.round-item:last-child {
+    border-bottom: none;
+}
+
+.round-item.nested {
+    padding-left: 32px;
+    background: #fafafa;
+    border-left: 3px solid #673ab7;
+    margin-left: 12px;
+}
+
+.round-item.nested .round-order {
+    background: #e8e0f0;
+    font-size: 10px;
+}
+
+.add-sub-btn {
+    font-size: 11px;
+    color: #673ab7;
+    background: none;
+    border: 1px dashed #673ab7;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-sub-btn:hover {
+    background: #f9f5ff;
+}
+
+.drag-handle {
+    cursor: grab;
+    padding: 4px;
+    color: #9e9e9e;
+    font-size: 16px;
+    user-select: none;
+}
+
+.drag-handle:hover {
+    color: #673ab7;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.round-item.dragging {
+    opacity: 0.5;
+    background: #e8e0f0;
+}
+
+.round-item.drag-over {
+    border-top: 2px solid #673ab7;
+}
+
+.round-order {
+    width: 24px;
+    height: 24px;
+    background: #f1f3f4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.round-name {
+    flex: 1;
+    font-size: 14px;
+    color: #202124;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin: -4px 0;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.round-name:hover {
+    background: #f1f3f4;
+    border-color: #dadce0;
+}
+
+.round-name.editing {
+    border: 2px solid #673ab7 !important;
+    background: white;
+    outline: none;
+}
+
+.round-questions {
+    font-size: 12px;
+    color: #5f6368;
+    margin-right: 8px;
+}
+
+.round-status {
+    margin-right: 8px;
+}
+
+.round-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.icon-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6368;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
+    text-decoration: none;
+}
+
+.icon-btn:hover {
+    background: #f1f3f4;
+}
+
+.icon-btn.danger:hover {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.teams-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.team-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    gap: 12px;
+}
+
+.team-name {
+    flex: 1;
+    font-size: 14px;
+    color: #202124;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin: -4px 0;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.team-name:hover {
+    background: #f1f3f4;
+    border-color: #dadce0;
+}
+
+.team-name.editing {
+    border: 2px solid #673ab7 !important;
+    background: white;
+    outline: none;
+}
+
+.team-score {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    color: white;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 50px;
+    justify-content: center;
+}
+
+.team-score .score-label {
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+.team-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.team-tab-penalty {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #5f6368;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: background 0.2s;
+}
+
+.team-tab-penalty:hover {
+    background: #f1f3f4;
+    border-color: #dadce0;
+}
+
+.team-tab-penalty.has-penalty {
+    color: #c5221f;
+    background: #fce8e6;
+}
+
+.team-tab-penalty.has-penalty:hover {
+    background: #f8d7da;
+    border-color: #f5c6c4;
+}
+
+.team-tab-penalty.editing {
+    border: 2px solid #673ab7 !important;
+    background: white !important;
+}
+
+.team-tab-penalty.is-away {
+    background: #c5221f;
+    color: white;
+    border-color: #c5221f;
+    animation: pulse-away 1.5s ease-in-out infinite;
+}
+
+.team-tab-penalty.is-away .timer-display {
+    color: white;
+}
+
+@keyframes pulse-away {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+.team-tab-penalty .stopwatch-icon {
+    font-size: 14px;
+}
+
+.team-tab-penalty .timer-display {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 45px;
+}
+
+.team-tab-penalty .timer-display.editing {
+    outline: none;
+}
+
+/* Tab penalty controls */
+.tab-penalty-controls {
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f4;
+    margin-bottom: 8px;
+}
+
+.tab-penalty-controls-info {
+    margin-bottom: 10px;
+}
+
+.tab-penalty-controls-info h4 {
+    margin: 0 0 2px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+}
+
+.tab-penalty-controls-info p {
+    margin: 0;
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.tab-penalty-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.tab-penalty-btn {
+    padding: 6px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    background: #f1f3f4;
+    color: #5f6368;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0;
+}
+
+.tab-penalty-btn:hover {
+    background: #e8eaed;
+}
+
+/* Start button - green when active */
+.tab-penalty-btn.start.active {
+    background: #e6f4ea;
+    border-color: #137333;
+    color: #137333;
+}
+
+/* Pause button - amber when active */
+.tab-penalty-btn.pause.active {
+    background: #fef7e0;
+    border-color: #ea8600;
+    color: #ea8600;
+}
+
+/* Reset button - red on hover */
+.tab-penalty-btn.reset:hover {
+    background: #fce8e6;
+    border-color: #c5221f;
+    color: #c5221f;
+}
+
+.team-chip {
+    background: #f1f3f4;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    color: #202124;
+}
+
+.empty-state {
+    color: #5f6368;
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+.action-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.action-btn {
+    flex: 1;
+    background: white !important;
+    border: 1px solid #dadce0 !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    color: #202124 !important;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 !important;
+    box-sizing: border-box;
+}
+
+.action-btn:hover {
+    background: #f8f9fa !important;
+    border-color: #c6c6c6 !important;
+}
+
+.action-btn.primary {
+    background: #673ab7 !important;
+    color: white !important;
+    border-color: #673ab7 !important;
+}
+
+.action-btn.primary:hover {
+    background: #5e35a1 !important;
+}
+
+.action-btn.finish {
+    background: #e6f4ea !important;
+    color: #137333 !important;
+    border-color: #137333 !important;
+}
+
+.action-btn.finish:hover {
+    background: #ceead6 !important;
+}
+
+.action-btn.finish-active {
+    background: #137333 !important;
+    color: white !important;
+    border-color: #137333 !important;
+}
+
+.action-btn.finish-active:hover {
+    background: #0d5c29 !important;
+}
+
+.danger-zone {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border: 1px solid #fce8e6;
+}
+
+.danger-zone summary {
+    font-size: 13px;
+    color: #c5221f;
+    cursor: pointer;
+}
+
+.danger-zone[open] summary {
+    margin-bottom: 12px;
+}
+
+.danger-btn {
+    background: #c5221f;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.danger-btn:hover {
+    background: #a31b18;
+}
+
+.toggle-btn {
+    background: transparent;
+    border: 1px solid #dadce0;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.toggle-btn:hover {
+    background: #f1f3f4;
+}
+
+.toggle-round-btn {
+    background: transparent;
+    border: 1px solid #dadce0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    margin: 0;
+    transition: all 0.2s;
+}
+
+.toggle-round-btn:hover {
+    background: #f1f3f4;
+}
+
+.toggle-round-btn.is-open {
+    background: #e6f4ea;
+    border-color: #137333;
+    color: #137333;
+}
+
+.toggle-round-btn.is-closed {
+    background: #f1f3f4;
+    border-color: #dadce0;
+    color: #5f6368;
+}
+
+/* Custom Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-icon {
+    width: 48px;
+    height: 48px;
+    background: #fce8e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #202124;
+    text-align: center;
+    margin: 0 0 8px;
+}
+
+.modal-message {
+    font-size: 14px;
+    color: #5f6368;
+    text-align: center;
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.modal-btn-cancel {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.modal-btn-cancel:hover {
+    background: #e8e8e8;
+}
+
+.modal-btn-danger {
+    background: #c5221f;
+    color: white;
+}
+
+.modal-btn-danger:hover {
+    background: #a31b18;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="game-page">
+    <div class="game-header">
+        <div class="game-info">
+            <h1>{{ game.name }}</h1>
+            <div class="game-code">{{ game.code }}</div>
+            <div class="join-link-row">
+                <a href="{{ url_for('player.join_game', game_code=game.code, _external=True) }}" class="join-link" id="join-link" target="_blank">
+                    {{ url_for('player.join_game', game_code=game.code, _external=True) }}
+                </a>
+                <button type="button" class="copy-btn" onclick="copyLink()" title="Copy link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="game-meta">
+                <span>
+                    <span class="status-badge {{ 'status-active' if game.is_active else 'status-inactive' }}">
+                        {{ 'Active' if game.is_active else 'Inactive' }}
+                    </span>
+                </span>
+                <span>Created {{ game.created_at.strftime('%b %d, %Y') }}</span>
+                <span>{{ teams|length }} teams</span>
+                <a href="{{ url_for('admin.admin_scores', game_id=game.id) }}" class="scores-link" target="_blank">
+                    📊 See Scores
+                </a>
+            </div>
+        </div>
+        {% if game.qr_code_path %}
+        <div class="qr-section">
+            <img src="{{ url_for('static', filename=game.qr_code_path) }}" alt="QR Code">
+            <small>Scan to join</small>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="action-bar">
+        <a href="{{ url_for('admin.live_control', game_id=game.id) }}" class="action-btn primary">
+            ▶ Live Control
+        </a>
+        <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="action-btn">
+            ☷ Spreadsheet
+        </a>
+        <form method="POST" action="{{ url_for('admin.toggle_game_active', game_id=game.id) }}" style="flex: 1; margin: 0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="action-btn" style="width: 100%;">
+                {{ '⏸ Deactivate' if game.is_active else '▶ Activate' }}
+            </button>
+        </form>
+    </div>
+
+    <div class="action-bar">
+        <button type="button" id="finish-game-btn" class="action-btn {{ 'finish-active' if game.is_finished else 'finish' }}" onclick="toggleFinishGame()">
+            {{ '↩ Unfinish Game' if game.is_finished else '🏁 Finish Game' }}
+        </button>
+        <a href="{{ url_for('admin.scoreboard', game_id=game.id) }}" class="action-btn" target="_blank">
+            📊 View Scoreboard
+        </a>
+    </div>
+
+    <div class="section-card">
+        <div class="section-header">
+            <h2>Rounds</h2>
+            <a href="{{ url_for('admin.create_round', game_id=game.id) }}" class="add-btn">+ Add Round</a>
+        </div>
+        {% if rounds %}
+        <ul class="rounds-list">
+            {% for round in rounds %}
+            {% set children = round.get_children() %}
+            {% set has_children = children|length > 0 %}
+            {% set total_questions = namespace(count=0) %}
+            {% if has_children %}
+                {% for child in children %}
+                    {% set total_questions.count = total_questions.count + child.get_questions()|length %}
+                {% endfor %}
+            {% else %}
+                {% set total_questions.count = round.get_questions()|length %}
+            {% endif %}
+            <li class="round-item" id="round-{{ round.id }}" draggable="true" data-round-id="{{ round.id }}" data-parent-id="">
+                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                <span class="round-order">{{ round.order }}</span>
+                <span class="round-name" id="round-name-{{ round.id }}" onclick="editRoundName({{ round.id }}, '{{ round.name | e }}')" title="Click to edit">{{ round.name }}</span>
+                <span class="round-questions">{{ total_questions.count }} questions</span>
+                <button type="button"
+                        class="toggle-round-btn {{ 'is-open' if round.is_open else 'is-closed' }}"
+                        id="toggle-btn-{{ round.id }}"
+                        onclick="toggleRound({{ round.id }})">
+                    {{ 'Open' if round.is_open else 'Closed' }}
+                </button>
+                <div class="round-actions">
+                    <a href="{{ url_for('admin.create_round', game_id=game.id, parent_id=round.id) }}" class="add-sub-btn" title="Add sub-round">+ Sub</a>
+                    <a href="{{ url_for('admin.edit_questions', round_id=round.id) }}" class="icon-btn" title="Edit Questions">✎</a>
+                    <form method="POST" action="{{ url_for('admin.delete_round', round_id=round.id) }}" style="margin: 0;" id="delete-round-form-{{ round.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="button" class="icon-btn danger" title="Delete" onclick="confirmDeleteRound({{ round.id }}, '{{ round.name | e }}')">🗑</button>
+                    </form>
+                </div>
+            </li>
+            {% for child in children %}
+            <li class="round-item nested" id="round-{{ child.id }}" draggable="true" data-round-id="{{ child.id }}" data-parent-id="{{ round.id }}">
+                <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                <span class="round-order">{{ round.order }}.{{ child.order }}</span>
+                <span class="round-name" id="round-name-{{ child.id }}" onclick="editRoundName({{ child.id }}, '{{ child.name | e }}')" title="Click to edit">{{ child.name }}</span>
+                <span class="round-questions">{{ child.get_questions()|length }} questions</span>
+                <button type="button"
+                        class="toggle-round-btn {{ 'is-open' if child.is_open else 'is-closed' }}"
+                        id="toggle-btn-{{ child.id }}"
+                        onclick="toggleRound({{ child.id }})">
+                    {{ 'Open' if child.is_open else 'Closed' }}
+                </button>
+                <div class="round-actions">
+                    <a href="{{ url_for('admin.edit_questions', round_id=child.id) }}" class="icon-btn" title="Edit Questions">✎</a>
+                    <form method="POST" action="{{ url_for('admin.delete_round', round_id=child.id) }}" style="margin: 0;" id="delete-round-form-{{ child.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="button" class="icon-btn danger" title="Delete" onclick="confirmDeleteRound({{ child.id }}, '{{ child.name | e }}')">🗑</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-state">No rounds yet. Add your first round to get started.</p>
+        {% endif %}
+    </div>
+
+    <div class="section-card">
+        <div class="section-header">
+            <h2>Teams</h2>
+            <span style="font-size: 12px; color: #5f6368;">{{ teams|length }} teams</span>
+        </div>
+
+        <div class="tab-penalty-controls">
+            <div class="tab-penalty-controls-info">
+                <h4>Tab Penalty Tracking</h4>
+                <p>Track time players spend away from the quiz tab (1 point penalty per 10 seconds)</p>
+            </div>
+            <div class="tab-penalty-buttons">
+                <button type="button" class="tab-penalty-btn start {{ 'active' if game.tab_penalty_enabled else '' }}" id="tab-penalty-start" onclick="setTabPenaltyState(true)">
+                    Start
+                </button>
+                <button type="button" class="tab-penalty-btn pause {{ '' if game.tab_penalty_enabled else 'active' }}" id="tab-penalty-pause" onclick="setTabPenaltyState(false)">
+                    Pause
+                </button>
+                <button type="button" class="tab-penalty-btn reset" id="tab-penalty-reset" onclick="resetAllTabPenalties()">
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        {% if teams %}
+        <div class="teams-list" id="teams-list">
+            {% for team in teams %}
+            <div class="team-item" id="team-{{ team.id }}">
+                <span class="team-name" id="team-name-{{ team.id }}" onclick="editTeamName({{ team.id }}, '{{ team.name | e }}')" title="Click to edit">{{ team.name }}</span>
+                <div class="team-score" id="team-score-{{ team.id }}">
+                    {{ team_scores.get(team.id, 0) }} pts
+                </div>
+                <div class="team-tab-penalty {{ 'has-penalty' if team.tab_away_seconds and team.tab_away_seconds > 0 else '' }}"
+                     id="team-penalty-{{ team.id }}"
+                     data-team-id="{{ team.id }}"
+                     data-seconds="{{ team.tab_away_seconds or 0 }}"
+                     onclick="editTabPenalty({{ team.id }})"
+                     title="Click to edit">
+                    <span class="stopwatch-icon">⏱️</span>
+                    <span class="timer-display" id="penalty-time-{{ team.id }}">{{ '%d:%02d'|format((team.tab_away_seconds or 0) // 60, (team.tab_away_seconds or 0) % 60) }}</span>
+                </div>
+                <div class="team-actions">
+                    <button type="button" class="icon-btn danger" title="Delete team" onclick="deleteTeam({{ team.id }}, '{{ team.name | e }}')">🗑</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No teams have joined yet. Share the QR code or game code to let players join.</p>
+        {% endif %}
+    </div>
+
+    <details class="danger-zone">
+        <summary>Danger Zone</summary>
+        <form method="POST" action="{{ url_for('admin.delete_game', game_id=game.id) }}" style="margin: 0;" id="delete-game-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="button" class="danger-btn" onclick="confirmDeleteGame()">
+                Delete Game
+            </button>
+        </form>
+    </details>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal-content">
+        <div class="modal-icon" id="modal-icon">🗑</div>
+        <h3 class="modal-title" id="modal-title">Delete Item?</h3>
+        <p class="modal-message" id="modal-message">This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-danger" id="modal-confirm-btn" onclick="confirmAction()">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyLink() {
+    const link = document.getElementById('join-link').href;
+    navigator.clipboard.writeText(link).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.innerHTML = originalIcon;
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+
+function updateRoundButton(roundId, isOpen) {
+    const btn = document.getElementById('toggle-btn-' + roundId);
+    if (btn) {
+        if (isOpen) {
+            btn.classList.remove('is-closed');
+            btn.classList.add('is-open');
+            btn.textContent = 'Open';
+        } else {
+            btn.classList.remove('is-open');
+            btn.classList.add('is-closed');
+            btn.textContent = 'Closed';
+        }
+    }
+}
+
+function toggleRound(roundId) {
+    const btn = document.getElementById('toggle-btn-' + roundId);
+    const roundItem = document.getElementById('round-' + roundId);
+    btn.disabled = true;
+
+    // Find all child rounds (elements with data-parent-id matching this roundId)
+    const childRounds = document.querySelectorAll(`[data-parent-id="${roundId}"]`);
+    const hasChildren = childRounds.length > 0;
+
+    fetch('/api/round/' + roundId + '/toggle', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update parent button state
+            updateRoundButton(roundId, data.is_open);
+
+            // Emit socket event to notify players
+            socket.emit('round_status_changed', {
+                game_id: gameId,
+                round_id: roundId,
+                is_open: data.is_open
+            });
+
+            // If this round has children, toggle them all to the same state
+            if (hasChildren) {
+                const promises = Array.from(childRounds).map(childEl => {
+                    const childId = childEl.dataset.roundId;
+                    const childBtn = document.getElementById('toggle-btn-' + childId);
+                    const childIsOpen = childBtn && childBtn.classList.contains('is-open');
+
+                    // Only toggle if child state is different from parent's new state
+                    if (childIsOpen !== data.is_open) {
+                        return fetch('/api/round/' + childId + '/toggle', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin'
+                        })
+                        .then(r => r.json())
+                        .then(childData => {
+                            if (childData.success) {
+                                updateRoundButton(childId, childData.is_open);
+                                // Emit socket event for child round
+                                socket.emit('round_status_changed', {
+                                    game_id: gameId,
+                                    round_id: parseInt(childId),
+                                    is_open: childData.is_open
+                                });
+                            }
+                        });
+                    }
+                    return Promise.resolve();
+                });
+                return Promise.all(promises);
+            }
+        } else {
+            showError('Failed to toggle round: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Failed to toggle round');
+    })
+    .finally(() => {
+        btn.disabled = false;
+    });
+}
+
+function editRoundName(roundId, currentName) {
+    const el = document.getElementById('round-name-' + roundId);
+    if (!el || el.contentEditable === 'true') return;
+
+    el.contentEditable = 'true';
+    el.classList.add('editing');
+    el.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    let saved = false;
+    const saveRoundName = async () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+
+        const newName = el.textContent.trim();
+        if (!newName) {
+            el.textContent = currentName;
+            return;
+        }
+
+        if (newName !== currentName) {
+            try {
+                const response = await fetch('/api/round/' + roundId + '/name', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Update the onclick handler with new name
+                    el.onclick = () => editRoundName(roundId, newName);
+                } else {
+                    el.textContent = currentName;
+                    showError('Failed to update: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                el.textContent = currentName;
+                showError('Failed to update name');
+            }
+        }
+    };
+
+    el.addEventListener('blur', saveRoundName, { once: true });
+    el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            el.blur();
+        } else if (e.key === 'Escape') {
+            saved = true;
+            el.contentEditable = 'false';
+            el.classList.remove('editing');
+            el.textContent = currentName;
+        }
+    });
+}
+
+function editTeamName(teamId, currentName) {
+    const el = document.getElementById('team-name-' + teamId);
+    if (!el || el.contentEditable === 'true') return;
+
+    el.contentEditable = 'true';
+    el.classList.add('editing');
+    el.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    let saved = false;
+    const saveTeamName = async () => {
+        if (saved) return;
+        saved = true;
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+
+        const newName = el.textContent.trim();
+        if (!newName) {
+            el.textContent = currentName;
+            return;
+        }
+
+        if (newName !== currentName) {
+            try {
+                const response = await fetch('/api/team/' + teamId + '/name', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Update the onclick handler with new name
+                    el.onclick = () => editTeamName(teamId, newName);
+                    // Update the delete button onclick
+                    const deleteBtn = document.querySelector('#team-' + teamId + ' .icon-btn.danger');
+                    if (deleteBtn) {
+                        deleteBtn.onclick = () => deleteTeam(teamId, newName);
+                    }
+                } else {
+                    el.textContent = currentName;
+                    showError('Failed to update: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                el.textContent = currentName;
+                showError('Failed to update name');
+            }
+        }
+    };
+
+    el.addEventListener('blur', saveTeamName, { once: true });
+    el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            el.blur();
+        } else if (e.key === 'Escape') {
+            saved = true;
+            el.contentEditable = 'false';
+            el.classList.remove('editing');
+            el.textContent = currentName;
+        }
+    });
+}
+
+// Modal handling
+let pendingAction = null;
+
+function showModal(title, message, onConfirm, icon = '🗑', confirmText = 'Delete') {
+    document.getElementById('modal-icon').textContent = icon;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('modal-confirm-btn').style.display = '';
+    document.querySelector('.modal-btn-cancel').style.display = '';
+    document.getElementById('modal-confirm-btn').textContent = confirmText;
+    pendingAction = onConfirm;
+    document.getElementById('confirm-modal').classList.add('show');
+}
+
+function showError(message) {
+    document.getElementById('modal-icon').textContent = '⚠️';
+    document.getElementById('modal-title').textContent = 'Error';
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('modal-confirm-btn').style.display = 'none';
+    document.querySelector('.modal-btn-cancel').textContent = 'OK';
+    pendingAction = null;
+    document.getElementById('confirm-modal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('confirm-modal').classList.remove('show');
+    pendingAction = null;
+    // Reset modal state
+    document.querySelector('.modal-btn-cancel').textContent = 'Cancel';
+    document.getElementById('modal-confirm-btn').style.display = '';
+}
+
+function confirmAction() {
+    if (pendingAction) {
+        pendingAction();
+    }
+    closeModal();
+}
+
+// Close modal on overlay click
+document.getElementById('confirm-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
+function confirmDeleteRound(roundId, roundName) {
+    showModal(
+        'Delete Round?',
+        'Delete "' + roundName + '"? This will remove all questions and team answers for this round.',
+        function() {
+            document.getElementById('delete-round-form-' + roundId).submit();
+        }
+    );
+}
+
+function confirmDeleteGame() {
+    showModal(
+        'Delete Game?',
+        'This will permanently delete all rounds, teams, and answers. This cannot be undone.',
+        function() {
+            document.getElementById('delete-game-form').submit();
+        }
+    );
+}
+
+function deleteTeam(teamId, teamName) {
+    showModal(
+        'Delete Team?',
+        'Delete "' + teamName + '"? This will remove all their answers and cannot be undone.',
+        function() {
+            fetch('/api/team/' + teamId, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const teamEl = document.getElementById('team-' + teamId);
+                    if (teamEl) {
+                        teamEl.remove();
+                    }
+                    const teamsList = document.getElementById('teams-list');
+                    if (teamsList && teamsList.children.length === 0) {
+                        teamsList.innerHTML = '<p class="empty-state">No teams have joined yet. Share the QR code or game code to let players join.</p>';
+                    }
+                } else {
+                    showModal('Error', data.error || 'Failed to delete team', closeModal);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showModal('Error', 'Failed to delete team', closeModal);
+            });
+        }
+    );
+}
+
+// Drag and drop functionality for round reordering
+let draggedItem = null;
+let draggedChildren = []; // Children of the dragged parent
+const gameId = {{ game.id }};
+
+document.querySelectorAll('.round-item').forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('dragleave', handleDragLeave);
+    item.addEventListener('drop', handleDrop);
+    item.addEventListener('dragend', handleDragEnd);
+});
+
+function getChildrenOfRound(roundId) {
+    return Array.from(document.querySelectorAll(`.round-item[data-parent-id="${roundId}"]`));
+}
+
+function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.roundId);
+
+    // If dragging a parent round, also mark its children
+    if (!this.dataset.parentId) {
+        draggedChildren = getChildrenOfRound(this.dataset.roundId);
+        draggedChildren.forEach(child => child.classList.add('dragging'));
+    } else {
+        draggedChildren = [];
+    }
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (this === draggedItem) return;
+    if (draggedChildren.includes(this)) return; // Don't allow dropping on own children
+
+    const draggedParent = draggedItem.dataset.parentId;
+    const targetParent = this.dataset.parentId;
+
+    // For parent rounds: can drop on other parent rounds
+    // For nested rounds: can only drop on siblings (same parent)
+    if (draggedParent === targetParent) {
+        this.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    if (this === draggedItem) return;
+    if (draggedChildren.includes(this)) return;
+
+    const draggedParent = draggedItem.dataset.parentId;
+    const targetParent = this.dataset.parentId;
+
+    if (draggedParent !== targetParent) return;
+
+    const list = document.querySelector('.rounds-list');
+
+    if (!draggedParent) {
+        // Moving a parent round - need to move it and all its children together
+        const allItems = Array.from(list.querySelectorAll('.round-item'));
+        const draggedIndex = allItems.indexOf(draggedItem);
+        const targetIndex = allItems.indexOf(this);
+
+        // Find the target's last child (if it has any) to insert after
+        const targetChildren = getChildrenOfRound(this.dataset.roundId);
+        const insertAfterElement = targetChildren.length > 0 ? targetChildren[targetChildren.length - 1] : this;
+
+        if (draggedIndex < targetIndex) {
+            // Moving down - insert after target and its children
+            insertAfterElement.after(draggedItem);
+            // Move children after their parent
+            let prevElement = draggedItem;
+            draggedChildren.forEach(child => {
+                prevElement.after(child);
+                prevElement = child;
+            });
+        } else {
+            // Moving up - insert before target
+            this.before(draggedItem);
+            // Move children after their parent
+            let prevElement = draggedItem;
+            draggedChildren.forEach(child => {
+                prevElement.after(child);
+                prevElement = child;
+            });
+        }
+    } else {
+        // Moving a nested round within its siblings
+        const allItems = Array.from(list.querySelectorAll('.round-item'));
+        const draggedIndex = allItems.indexOf(draggedItem);
+        const targetIndex = allItems.indexOf(this);
+
+        if (draggedIndex < targetIndex) {
+            this.after(draggedItem);
+        } else {
+            this.before(draggedItem);
+        }
+    }
+
+    // Save the new order
+    saveRoundOrder();
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    draggedChildren.forEach(child => child.classList.remove('dragging'));
+    draggedChildren = [];
+    document.querySelectorAll('.round-item').forEach(item => {
+        item.classList.remove('drag-over');
+    });
+}
+
+function saveRoundOrder() {
+    const list = document.querySelector('.rounds-list');
+    const items = list.querySelectorAll('.round-item');
+
+    // Build order data - separate top-level and nested rounds
+    const orderData = [];
+    let topLevelOrder = 1;
+    const nestedOrders = {}; // parentId -> current order
+
+    items.forEach(item => {
+        const roundId = parseInt(item.dataset.roundId);
+        const parentId = item.dataset.parentId ? parseInt(item.dataset.parentId) : null;
+
+        if (!parentId) {
+            // Top-level round
+            orderData.push({
+                id: roundId,
+                order: topLevelOrder,
+                parent_id: null
+            });
+            topLevelOrder++;
+        } else {
+            // Nested round
+            if (!nestedOrders[parentId]) {
+                nestedOrders[parentId] = 1;
+            }
+            orderData.push({
+                id: roundId,
+                order: nestedOrders[parentId],
+                parent_id: parentId
+            });
+            nestedOrders[parentId]++;
+        }
+    });
+
+    // Update visual order numbers
+    updateOrderNumbers();
+
+    // Send to server
+    fetch('/api/game/' + gameId + '/rounds/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: orderData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            showError('Failed to save order: ' + (data.error || 'Unknown error'));
+            location.reload(); // Reload to get correct order
+        }
+    })
+    .catch(error => {
+        console.error('Error saving order:', error);
+        showError('Failed to save order');
+        location.reload();
+    });
+}
+
+function updateOrderNumbers() {
+    const list = document.querySelector('.rounds-list');
+    const items = list.querySelectorAll('.round-item');
+
+    let topLevelOrder = 1;
+    let currentParentOrder = 0;
+    const nestedOrders = {};
+
+    items.forEach(item => {
+        const orderSpan = item.querySelector('.round-order');
+        const parentId = item.dataset.parentId;
+
+        if (!parentId) {
+            // Top-level round
+            orderSpan.textContent = topLevelOrder;
+            currentParentOrder = topLevelOrder;
+            topLevelOrder++;
+        } else {
+            // Nested round - find the parent's current order
+            const parentEl = document.getElementById('round-' + parentId);
+            if (parentEl) {
+                const parentOrder = parentEl.querySelector('.round-order').textContent;
+                if (!nestedOrders[parentId]) {
+                    nestedOrders[parentId] = 1;
+                }
+                orderSpan.textContent = parentOrder + '.' + nestedOrders[parentId];
+                nestedOrders[parentId]++;
+            }
+        }
+    });
+}
+
+// Tab Penalty Functions
+async function setTabPenaltyState(enabled) {
+    console.log('[Admin] setTabPenaltyState called with:', enabled);
+    try {
+        const response = await fetch(`/api/game/${gameId}/tab-penalty-enabled`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled: enabled })
+        });
+        const data = await response.json();
+        console.log('[Admin] setTabPenaltyState response:', data);
+        if (data.success) {
+            // Update button states
+            const startBtn = document.getElementById('tab-penalty-start');
+            const pauseBtn = document.getElementById('tab-penalty-pause');
+            startBtn.classList.toggle('active', enabled);
+            pauseBtn.classList.toggle('active', !enabled);
+
+            // Start or stop real-time polling based on enabled state
+            if (enabled) {
+                startTimerPolling();
+            } else {
+                stopTimerPolling();
+                // Fetch one final time to get the stopped values
+                fetchAndUpdateTimers();
+            }
+        } else {
+            showError('Failed to update tab penalty setting: ' + (data.error || 'Unknown'));
+        }
+    } catch (e) {
+        console.error('[Admin] setTabPenaltyState error:', e);
+        showError('Failed to update tab penalty setting');
+    }
+}
+
+async function resetAllTabPenalties() {
+    showModal(
+        'Reset All Tab Penalties?',
+        'This will reset all teams\' tab penalty timers to 0:00. This cannot be undone.',
+        async function() {
+            try {
+                const response = await fetch(`/api/game/${gameId}/reset-all-tab-penalties`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                console.log('[Admin] resetAllTabPenalties response:', data);
+                if (data.success) {
+                    // Emit socket event to players (same as Start/Pause)
+                    socket.emit('tab_penalty_tracking_changed', {
+                        game_id: gameId,
+                        enabled: document.getElementById('tab-penalty-start').classList.contains('active')
+                    });
+
+                    // Fetch fresh data from DB and update display (same pattern as player)
+                    fetch(`/api/game/${gameId}/answers`)
+                        .then(r => r.json())
+                        .then(answerData => {
+                            if (answerData.success && answerData.teams) {
+                                answerData.teams.forEach(team => {
+                                    const timeEl = document.getElementById('penalty-time-' + team.team_id);
+                                    const container = document.getElementById('team-penalty-' + team.team_id);
+                                    if (timeEl) {
+                                        timeEl.textContent = formatTime(team.tab_away_seconds || 0);
+                                    }
+                                    if (container) {
+                                        container.dataset.seconds = team.tab_away_seconds || 0;
+                                        container.classList.toggle('has-penalty', (team.tab_away_seconds || 0) > 0);
+                                        container.classList.remove('is-away');
+                                    }
+                                });
+                            }
+                        });
+                } else {
+                    showError('Failed to reset tab penalties');
+                }
+            } catch (e) {
+                showError('Failed to reset tab penalties');
+            }
+        },
+        '↺',
+        'Reset All'
+    );
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
+}
+
+function parseTime(timeStr) {
+    // Parse "m:ss" or "mm:ss" format, or just seconds
+    if (timeStr.includes(':')) {
+        const parts = timeStr.split(':');
+        return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+    return parseInt(timeStr) || 0;
+}
+
+function editTabPenalty(teamId) {
+    const container = document.getElementById('team-penalty-' + teamId);
+    const el = document.getElementById('penalty-time-' + teamId);
+    if (!container || !el || el.contentEditable === 'true') return;
+
+    const currentSeconds = parseInt(container.dataset.seconds) || 0;
+
+    container.classList.add('editing');
+    el.contentEditable = 'true';
+    el.classList.add('editing');
+    el.focus();
+
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    let saved = false;
+    const saveTabPenalty = async () => {
+        if (saved) return;
+        saved = true;
+        console.log('[Admin] saveTabPenalty called for team', teamId);
+        el.contentEditable = 'false';
+        el.classList.remove('editing');
+        container.classList.remove('editing');
+
+        const newSeconds = parseTime(el.textContent.trim());
+        console.log('[Admin] Parsed time:', newSeconds, 'previous:', currentSeconds);
+
+        if (newSeconds !== currentSeconds) {
+            try {
+                console.log('[Admin] Saving new tab penalty:', newSeconds);
+                const response = await fetch(`/api/team/${teamId}/tab-away-seconds`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ seconds: newSeconds })
+                });
+                const data = await response.json();
+                console.log('[Admin] saveTabPenalty response:', data);
+                if (data.success) {
+                    container.dataset.seconds = newSeconds;
+                    el.textContent = formatTime(newSeconds);
+
+                    // Update styling
+                    if (newSeconds > 0) {
+                        container.classList.add('has-penalty');
+                    } else {
+                        container.classList.remove('has-penalty');
+                    }
+
+                    // Emit socket event to update player frontend (same as reset button)
+                    socket.emit('tab_penalty_tracking_changed', {
+                        game_id: gameId,
+                        enabled: document.getElementById('tab-penalty-start').classList.contains('active')
+                    });
+                } else {
+                    el.textContent = formatTime(currentSeconds);
+                    showError('Failed to update tab penalty');
+                }
+            } catch (e) {
+                console.error('[Admin] saveTabPenalty error:', e);
+                el.textContent = formatTime(currentSeconds);
+                showError('Failed to update tab penalty');
+            }
+        } else {
+            console.log('[Admin] No change, skipping save');
+            el.textContent = formatTime(currentSeconds);
+        }
+    };
+
+    el.addEventListener('blur', saveTabPenalty, { once: true });
+    el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            el.blur();
+        } else if (e.key === 'Escape') {
+            saved = true;
+            el.contentEditable = 'false';
+            el.classList.remove('editing');
+            container.classList.remove('editing');
+            el.textContent = formatTime(currentSeconds);
+        }
+    });
+}
+
+// Socket.IO for real-time tab penalty updates
+const socket = io();
+
+// Real-time timer polling when tracking is active
+let timerPollingInterval = null;
+
+function fetchAndUpdateTimers() {
+    fetch(`/api/game/${gameId}/answers`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.teams) {
+                data.teams.forEach(team => {
+                    const timeEl = document.getElementById('penalty-time-' + team.team_id);
+                    const container = document.getElementById('team-penalty-' + team.team_id);
+                    if (timeEl) {
+                        timeEl.textContent = formatTime(team.tab_away_seconds || 0);
+                    }
+                    if (container) {
+                        container.dataset.seconds = team.tab_away_seconds || 0;
+                        container.classList.toggle('has-penalty', (team.tab_away_seconds || 0) > 0);
+                    }
+                });
+            }
+        })
+        .catch(err => console.log('[Admin] Failed to fetch timers:', err));
+}
+
+function startTimerPolling() {
+    if (timerPollingInterval) return; // Already polling
+    if (document.hidden) return; // Don't poll if tab is hidden
+    console.log('[Admin] Starting timer polling');
+    fetchAndUpdateTimers(); // Fetch immediately
+    timerPollingInterval = setInterval(fetchAndUpdateTimers, 1000);
+}
+
+function stopTimerPolling() {
+    if (timerPollingInterval) {
+        console.log('[Admin] Stopping timer polling');
+        clearInterval(timerPollingInterval);
+        timerPollingInterval = null;
+    }
+}
+
+// Pause polling when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+    const trackingEnabled = document.getElementById('tab-penalty-start').classList.contains('active');
+    if (document.hidden) {
+        stopTimerPolling();
+    } else if (trackingEnabled) {
+        startTimerPolling();
+    }
+});
+
+// Start polling if tracking is already enabled on page load
+if (document.getElementById('tab-penalty-start').classList.contains('active')) {
+    startTimerPolling();
+}
+
+socket.on('connect', () => {
+    console.log('[Admin] Socket connected, joining rooms for game', gameId);
+    socket.emit('join_spreadsheet', { game_id: gameId });
+    socket.emit('join_game', { game_id: gameId });
+});
+
+// If socket already connected, join now
+if (socket.connected) {
+    console.log('[Admin] Socket already connected, joining rooms for game', gameId);
+    socket.emit('join_spreadsheet', { game_id: gameId });
+    socket.emit('join_game', { game_id: gameId });
+}
+
+socket.on('joined_spreadsheet', (data) => {
+    console.log('[Admin] Joined spreadsheet room', data);
+});
+
+// Listen for tracking enabled/disabled changes (from other admin tabs or Reset)
+socket.on('tab_penalty_tracking_changed', (data) => {
+    console.log('[Admin] Tracking changed:', data);
+    const startBtn = document.getElementById('tab-penalty-start');
+    const pauseBtn = document.getElementById('tab-penalty-pause');
+    if (startBtn && pauseBtn) {
+        startBtn.classList.toggle('active', data.enabled);
+        pauseBtn.classList.toggle('active', !data.enabled);
+    }
+
+    // Start or stop real-time polling based on enabled state
+    if (data.enabled) {
+        startTimerPolling();
+    } else {
+        stopTimerPolling();
+        // Fetch one final time to get the stopped values
+        fetchAndUpdateTimers();
+    }
+});
+
+// Listen for time updates from backend (single source of truth)
+socket.on('tab_time_updated', (data) => {
+    console.log('[Admin] Received tab_time_updated:', data);
+    const container = document.getElementById('team-penalty-' + data.team_id);
+    const timeEl = document.getElementById('penalty-time-' + data.team_id);
+
+    if (container && timeEl) {
+        const seconds = data.total_away_seconds || 0;
+        container.dataset.seconds = seconds;
+        timeEl.textContent = formatTime(seconds);
+
+        // Show as "away" (red/pulsing) when time is actively incrementing
+        container.classList.add('is-away');
+        container.classList.toggle('has-penalty', seconds > 0);
+
+        // Remove "is-away" style after 2 seconds of no updates (player came back)
+        clearTimeout(container._awayTimeout);
+        container._awayTimeout = setTimeout(() => {
+            container.classList.remove('is-away');
+        }, 2000);
+    }
+});
+
+// Listen for individual team updates (from reset or direct edits)
+socket.on('tab_penalty_updated', (data) => {
+    console.log('[Admin] Received tab_penalty_updated:', data);
+    const container = document.getElementById('team-penalty-' + data.team_id);
+    const timeEl = document.getElementById('penalty-time-' + data.team_id);
+    if (container && timeEl) {
+        const seconds = data.tab_away_seconds || 0;
+        container.dataset.seconds = seconds;
+        timeEl.textContent = formatTime(seconds);
+        container.classList.toggle('has-penalty', seconds > 0);
+        container.classList.remove('is-away');
+    }
+});
+
+// Listen for reset all - update all teams to 0
+socket.on('tab_penalty_reset', (data) => {
+    console.log('[Admin] Received tab_penalty_reset');
+    // Reset all team displays to 0
+    document.querySelectorAll('.team-tab-penalty').forEach(container => {
+        container.dataset.seconds = 0;
+        container.classList.remove('has-penalty', 'is-away');
+        const timeEl = container.querySelector('.timer-display');
+        if (timeEl) timeEl.textContent = '0:00';
+    });
+});
+
+// Listen for submission updates and refresh team scores
+socket.on('submission_update', (data) => {
+    console.log('[Admin] Submission update:', data);
+    fetchTeamScores();
+});
+
+function fetchTeamScores() {
+    fetch(`/api/game/${gameId}/answers`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.teams) {
+                data.teams.forEach(team => {
+                    const scoreEl = document.getElementById('team-score-' + team.team_id);
+                    if (scoreEl) {
+                        const score = team.total_score || 0;
+                        scoreEl.textContent = score + ' pts';
+                    }
+                });
+            }
+        })
+        .catch(err => console.log('[Admin] Failed to fetch scores:', err));
+}
+
+// Game finished state
+let isGameFinished = {{ 'true' if game.is_finished else 'false' }};
+
+function toggleFinishGame() {
+    const btn = document.getElementById('finish-game-btn');
+    const endpoint = isGameFinished ? `/api/game/${gameId}/unfinish` : `/api/game/${gameId}/finish`;
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            isGameFinished = data.is_finished;
+            if (isGameFinished) {
+                // Redirect to admin scoreboard when game is finished
+                window.location.href = "{{ url_for('admin.scoreboard', game_id=game.id) }}";
+            } else {
+                btn.textContent = '🏁 Finish Game';
+                btn.classList.remove('finish-active');
+                btn.classList.add('finish');
+            }
+        } else {
+            showError('Failed to update game status');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        showError('Failed to update game status');
+    });
+}
+</script>
+{% endblock %}
