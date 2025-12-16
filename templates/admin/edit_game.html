@@ -144,11 +144,14 @@ body {
 
 .qr-section {
     text-align: center;
+    flex-shrink: 0;
 }
 
 .qr-section img {
     width: 120px;
     height: 120px;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
     border-radius: 8px;
 }
 
@@ -157,6 +160,59 @@ body {
     font-size: 11px;
     color: #5f6368;
     margin-top: 4px;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 600px) {
+    .game-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .game-meta {
+        flex-wrap: wrap;
+    }
+
+    .round-item {
+        flex-wrap: wrap;
+    }
+
+    .round-item .round-name {
+        flex: none;
+        width: 100%;
+        order: -1;
+        margin-bottom: 8px;
+    }
+
+    .round-item.nested {
+        padding-left: 16px;
+        margin-left: 8px;
+    }
+
+    .round-item.nested .round-name {
+        width: calc(100% - 40px);
+    }
+
+    .team-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .team-name {
+        flex: none;
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .action-bar {
+        flex-wrap: wrap;
+    }
+
+    .action-bar .action-btn,
+    .action-bar form {
+        flex: 1 1 45%;
+        min-width: 120px;
+    }
 }
 
 .section-card {

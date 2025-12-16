@@ -607,6 +607,75 @@ body {
 .betting-status.error {
     color: #c5221f;
 }
+
+/* Mobile responsive styles */
+@media (max-width: 600px) {
+    .control-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .round-header {
+        flex-wrap: wrap;
+    }
+
+    .round-name {
+        flex: none;
+        width: 100%;
+        order: -1;
+        margin-bottom: 8px;
+    }
+
+    .round-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .timer-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .timer-display {
+        text-align: center;
+        font-size: 32px;
+    }
+
+    .timer-presets {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .custom-timer {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .stop-btn {
+        width: 100%;
+    }
+
+    .toggle-btn,
+    .end-round-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .nav-bar {
+        flex-direction: column;
+    }
+
+    .nav-bar .nav-btn {
+        width: 100%;
+    }
+
+    .round-card.nested {
+        margin-left: 12px;
+    }
+}
 </style>
 {% endblock %}
 
