@@ -63,8 +63,8 @@ class ProductionConfig(Config):
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
-    # Rate limiting - stricter in production
-    RATELIMIT_DEFAULT = '100 per day, 30 per hour'
+    # Rate limiting - reasonable limits for quiz app
+    RATELIMIT_DEFAULT = '5000 per day, 500 per hour'
 
 
 class TestingConfig(Config):
