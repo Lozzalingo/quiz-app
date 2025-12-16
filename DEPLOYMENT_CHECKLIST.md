@@ -114,9 +114,9 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 ## Droplet Details
 
-- **IP Address**: _________________
-- **Domain**: _________________
-- **SSH**: `ssh root@YOUR_IP`
+- **IP Address**: 157.245.42.21
+- **Domain**: app.fatbigquiz.com
+- **SSH**: `ssh -i ~/.ssh/id_ed25519_droplet root@157.245.42.21`
 
 ---
 
@@ -126,6 +126,6 @@ python -c "import secrets; print(secrets.token_hex(32))"
 |-------|--------|
 | Dockerize | ✅ Done |
 | GitHub | ✅ Done |
-| Droplet Setup | ⏳ Waiting for droplet access |
-| Data Transfer | Pending |
-| Production Config | Pending |
+| Droplet Setup | ✅ Done |
+| Data Transfer | ✅ Done |
+| Production Config | ✅ Done |
