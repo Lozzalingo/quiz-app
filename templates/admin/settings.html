@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings - Quiz App{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h2>Admin Settings</h2>
+    </header>
+
+    <form method="POST" action="{{ url_for('admin.settings') }}">
+        {{ form.hidden_tag() }}
+
+        <label for="username">
+            {{ form.username.label.text }}
+            {{ form.username(class="") }}
+            {% for error in form.username.errors %}
+                <small class="error">{{ error }}</small>
+            {% endfor %}
+        </label>
+
+        <label for="current_password">
+            {{ form.current_password.label.text }}
+            {{ form.current_password(class="") }}
+            {% for error in form.current_password.errors %}
+                <small class="error">{{ error }}</small>
+            {% endfor %}
+        </label>
+
+        <hr>
+        <small>Leave password fields blank to keep current password</small>
+
+        <label for="new_password">
+            {{ form.new_password.label.text }}
+            {{ form.new_password(class="", placeholder="Leave blank to keep current") }}
+            {% for error in form.new_password.errors %}
+                <small class="error">{{ error }}</small>
+            {% endfor %}
+        </label>
+
+        <label for="confirm_password">
+            {{ form.confirm_password.label.text }}
+            {{ form.confirm_password(class="") }}
+            {% for error in form.confirm_password.errors %}
+                <small class="error">{{ error }}</small>
+            {% endfor %}
+        </label>
+
+        {{ form.submit(class="") }}
+    </form>
+
+    <footer>
+        <small><a href="{{ url_for('admin.dashboard') }}">Back to Dashboard</a></small>
+    </footer>
+</article>
+{% endblock %}

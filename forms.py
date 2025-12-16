@@ -103,3 +103,26 @@ class CreateRoundForm(FlaskForm):
     ])
 
     submit = SubmitField('Create Round')
+
+
+class AdminSettingsForm(FlaskForm):
+    """Form for admin to update their username and password."""
+
+    username = StringField('Username', validators=[
+        DataRequired(message='Username is required'),
+        Length(min=3, max=50, message='Username must be 3-50 characters')
+    ])
+
+    current_password = PasswordField('Current Password', validators=[
+        DataRequired(message='Current password is required')
+    ])
+
+    new_password = PasswordField('New Password (leave blank to keep current)', validators=[
+        Length(max=100)
+    ])
+
+    confirm_password = PasswordField('Confirm New Password', validators=[
+        EqualTo('new_password', message='Passwords must match')
+    ])
+
+    submit = SubmitField('Save Changes')

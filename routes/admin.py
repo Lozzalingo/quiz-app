@@ -9,7 +9,7 @@ from flask_login import login_required, current_user
 
 from models import db, Admin, Game, Round, Team, Answer
 from sqlalchemy import func
-from forms import CreateGameForm, CreateRoundForm
+from forms import CreateGameForm, CreateRoundForm, AdminSettingsForm
 from utils import generate_unique_code, generate_qr_code
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -279,3 +279,31 @@ def scoreboard(game_id):
     """
     game = Game.query.get_or_404(game_id)
     return render_template('scoreboard.html', game=game, is_admin=True)
+
+
+@bp.route('/settings', methods=['GET', 'POST'])
+@admin_required
+def settings():
+    """Admin settings page to update username and password."""
+    admin_id = int(current_user.get_id().replace('admin_', ''))
+    admin = Admin.query.get_or_404(admin_id)
+    form = AdminSettingsForm(obj=admin)
+
+    if form.validate_on_submit():
+        # Verify current password
+        if not admin.check_password(form.current_password.data):
+            flash('Current password is incorrect.', 'danger')
+            return render_template('admin/settings.html', form=form)
+
+        # Update username
+        admin.username = form.username.data
+
+        # Update password if provided
+        if form.new_password.data:
+            admin.set_password(form.new_password.data)
+
+        db.session.commit()
+        flash('Settings updated successfully.', 'success')
+        return redirect(url_for('admin.settings'))
+
+    return render_template('admin/settings.html', form=form)

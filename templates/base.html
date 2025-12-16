@@ -106,6 +106,7 @@
             {% if current_user.is_authenticated %}
                 {% if current_user.get_id().startswith('admin_') %}
                     <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
                 {% else %}
                     <li><a href="{{ url_for('player.quiz', game_code=current_user.game.code) }}">My Quiz</a></li>
                 {% endif %}
