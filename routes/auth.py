@@ -3,7 +3,7 @@ Authentication routes for Quiz App.
 
 Handles login/logout for both admin users and player teams.
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 
 from models import db, Admin, Team, Game
@@ -147,5 +147,7 @@ def player_relogin(game_code):
 def logout():
     """Log out current user (admin or team)."""
     logout_user()
+    # Clear any pending flash messages before showing logout message
+    session.pop('_flashes', None)
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
