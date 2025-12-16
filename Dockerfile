@@ -19,7 +19,7 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir gunicorn gevent gevent-websocket
+RUN pip install --no-cache-dir gunicorn eventlet
 
 # Copy application code
 COPY . .
@@ -30,5 +30,5 @@ RUN mkdir -p static/qrcodes
 # Expose port
 EXPOSE 5000
 
-# Run with gunicorn + gevent for Socket.IO support
-CMD ["gunicorn", "--worker-class", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "--workers", "1", "--bind", "0.0.0.0:5000", "--timeout", "120", "app:app"]
+# Run with gunicorn + eventlet for Socket.IO support
+CMD ["gunicorn", "--worker-class", "eventlet", "--workers", "1", "--bind", "0.0.0.0:5000", "--timeout", "120", "app:app"]
