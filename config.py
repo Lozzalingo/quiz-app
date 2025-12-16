@@ -58,8 +58,8 @@ class ProductionConfig(Config):
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
-    # Rate limiting - reasonable limits for quiz app
-    RATELIMIT_DEFAULT = '5000 per day, 500 per hour'
+    # Rate limiting disabled - was causing hangs
+    RATELIMIT_ENABLED = False
 
 
 class TestingConfig(Config):
