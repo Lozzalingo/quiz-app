@@ -1232,9 +1232,9 @@ body {
             {% for team in teams %}
             <div class="team-item" id="team-{{ team.id }}">
                 <span class="team-name" id="team-name-{{ team.id }}" onclick="editTeamName({{ team.id }}, '{{ team.name | e }}')" title="Click to edit">{{ team.name }}</span>
-                <div class="team-login-count" id="team-logins-{{ team.id }}" title="Sign-ins">
+                <div class="team-login-count" id="team-logins-{{ team.id }}" title="Sign-ins / Sign-outs">
                     <span class="login-icon">🔑</span>
-                    <span class="login-value" id="login-count-{{ team.id }}">{{ team.login_count or 1 }}</span>
+                    <span class="login-value"><span id="login-count-{{ team.id }}">{{ team.login_count or 1 }}</span>/<span id="logout-count-{{ team.id }}">{{ team.logout_count or 0 }}</span></span>
                 </div>
                 <div class="team-score" id="team-score-{{ team.id }}">
                     {{ team_scores.get(team.id, 0) }} pts
@@ -2339,6 +2339,15 @@ socket.on('team_login', (data) => {
     const loginEl = document.getElementById('login-count-' + data.team_id);
     if (loginEl) {
         loginEl.textContent = data.login_count || 1;
+    }
+});
+
+// Listen for team logout updates
+socket.on('team_logout', (data) => {
+    console.log('[Admin] Received team_logout:', data);
+    const logoutEl = document.getElementById('logout-count-' + data.team_id);
+    if (logoutEl) {
+        logoutEl.textContent = data.logout_count || 0;
     }
 });
 

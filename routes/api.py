@@ -239,6 +239,7 @@ def get_game_answers(game_id):
             'tab_penalty_points': team.tab_penalty_points,
             'tab_switch_count': team.tab_switch_count or 0,
             'login_count': team.login_count or 0,
+            'logout_count': team.logout_count or 0,
             'rounds': {}
         }
 

@@ -187,6 +187,24 @@ def player_relogin(game_code):
 @login_required
 def logout():
     """Log out current user (admin or team)."""
+    # Track logout for teams
+    if current_user.get_id().startswith('team_'):
+        team = Team.query.get(int(current_user.get_id().split('_')[1]))
+        if team:
+            team.logout_count = (team.logout_count or 0) + 1
+            game_id = team.game_id
+            db.session.commit()
+
+            # Emit socket event for admin to see logout
+            try:
+                from app import socketio
+                socketio.emit('team_logout', {
+                    'team_id': team.id,
+                    'logout_count': team.logout_count
+                }, room=f'game_{game_id}')
+            except Exception as e:
+                print(f'[Auth] Error emitting team_logout: {e}')
+
     logout_user()
     # Clear any pending flash messages before showing logout message
     session.pop('_flashes', None)
