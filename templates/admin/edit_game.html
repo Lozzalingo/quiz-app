@@ -2247,12 +2247,19 @@ socket.on('submission_update', (data) => {
 socket.on('game_pause_changed', function(data) {
     console.log('[Admin] game_pause_changed:', data);
     updatePauseUI(data.pause_mode);
-    // Also update tab penalty UI if it changed
+    // Also update tab penalty UI and polling if it changed
     if (data.tab_penalty_enabled !== undefined) {
         const startBtn = document.getElementById('tab-penalty-start');
         const pauseBtn = document.getElementById('tab-penalty-pause');
         if (startBtn) startBtn.classList.toggle('active', data.tab_penalty_enabled);
         if (pauseBtn) pauseBtn.classList.toggle('active', !data.tab_penalty_enabled);
+        // Start or stop timer polling
+        if (data.tab_penalty_enabled) {
+            startTimerPolling();
+        } else {
+            stopTimerPolling();
+            fetchAndUpdateTimers(); // Fetch final values
+        }
     }
 });
 

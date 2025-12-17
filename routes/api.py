@@ -1209,13 +1209,13 @@ def set_game_pause(game_id):
 
     game.pause_mode = pause_mode
 
-    # Auto-pause tab penalty when game is paused
+    # Auto-pause tab penalty when game is paused, re-enable when resumed
     if will_be_paused and not was_paused:
-        # Store current state and pause
+        # Pause - disable tab penalty tracking
         game.tab_penalty_enabled = False
     elif not will_be_paused and was_paused:
-        # Resume - admin can manually re-enable tab penalty if desired
-        pass
+        # Resume - re-enable tab penalty tracking
+        game.tab_penalty_enabled = True
 
     db.session.commit()
 
