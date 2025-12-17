@@ -1240,6 +1240,26 @@ def set_game_pause(game_id):
     })
 
 
+@bp.route('/game/<int:game_id>/regenerate-qr', methods=['POST'])
+@admin_required_api
+def regenerate_qr_code(game_id):
+    """Regenerate QR code for a game with correct BASE_URL (admin only)."""
+    from flask import current_app
+    from utils import generate_qr_code
+
+    game = Game.query.get_or_404(game_id)
+    base_url = current_app.config.get('BASE_URL', 'http://localhost:5777')
+    qr_path = generate_qr_code(game.code, game.id, base_url)
+    game.qr_code_path = qr_path
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'qr_path': qr_path,
+        'base_url': base_url
+    })
+
+
 @bp.route('/game/<int:game_id>/finish', methods=['POST'])
 @admin_required_api
 def finish_game(game_id):

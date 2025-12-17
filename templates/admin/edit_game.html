@@ -179,6 +179,24 @@ body {
     margin-top: 4px;
 }
 
+.qr-regenerate-btn {
+    display: block;
+    margin: 8px auto 0;
+    padding: 4px 12px;
+    font-size: 14px;
+    background: #f1f3f4;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #5f6368;
+    transition: all 0.2s;
+}
+
+.qr-regenerate-btn:hover {
+    background: #e8eaed;
+    color: #202124;
+}
+
 /* Mobile responsive styles */
 @media (max-width: 600px) {
     .game-header {
@@ -1025,8 +1043,9 @@ body {
         </div>
         {% if game.qr_code_path %}
         <div class="qr-section">
-            <img src="{{ url_for('static', filename=game.qr_code_path) }}" alt="QR Code">
+            <img src="{{ url_for('static', filename=game.qr_code_path) }}" alt="QR Code" id="qr-code-img">
             <small>Scan to join</small>
+            <button type="button" class="qr-regenerate-btn" onclick="regenerateQRCode()" title="Regenerate QR code">↻</button>
         </div>
         {% endif %}
     </div>
@@ -1329,6 +1348,42 @@ function toggleRound(roundId) {
     .finally(() => {
         btn.disabled = false;
     });
+}
+
+async function regenerateQRCode() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    try {
+        const response = await fetch(`/api/game/${gameId}/regenerate-qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            // Reload the QR code image with cache buster
+            const img = document.getElementById('qr-code-img');
+            img.src = '/static/' + data.qr_path + '?t=' + Date.now();
+            showSuccess('QR code regenerated');
+        } else {
+            showError('Failed to regenerate QR code');
+        }
+    } catch (e) {
+        showError('Failed to regenerate QR code');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '↻';
+    }
+}
+
+function showSuccess(message) {
+    // Simple success notification
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;top:20px;right:20px;background:#137333;color:white;padding:12px 20px;border-radius:8px;z-index:9999;font-size:14px;';
+    div.textContent = message;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
 }
 
 function editGameName(currentName) {
