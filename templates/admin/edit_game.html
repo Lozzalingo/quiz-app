@@ -564,6 +564,20 @@ body {
     outline: none;
 }
 
+.team-tab-penalty .switch-count {
+    font-size: 10px;
+    background: #e8eaed;
+    color: #5f6368;
+    padding: 2px 5px;
+    border-radius: 8px;
+    margin-left: 4px;
+}
+
+.team-tab-penalty.has-penalty .switch-count {
+    background: #f5c6c4;
+    color: #c5221f;
+}
+
 /* Tab penalty controls */
 .tab-penalty-controls {
     padding: 10px 0;
@@ -1205,10 +1219,12 @@ body {
                      id="team-penalty-{{ team.id }}"
                      data-team-id="{{ team.id }}"
                      data-seconds="{{ team.tab_away_seconds or 0 }}"
+                     data-switches="{{ team.tab_switch_count or 0 }}"
                      onclick="editTabPenalty({{ team.id }})"
-                     title="Click to edit">
+                     title="Click to edit penalty time">
                     <span class="stopwatch-icon">⏱️</span>
                     <span class="timer-display" id="penalty-time-{{ team.id }}">{{ '%d:%02d'|format((team.tab_away_seconds or 0) // 60, (team.tab_away_seconds or 0) % 60) }}</span>
+                    <span class="switch-count" id="switch-count-{{ team.id }}" title="Tab switches">{{ team.tab_switch_count or 0 }}x</span>
                 </div>
                 <div class="team-actions">
                     <button type="button" class="icon-btn danger" title="Delete team" onclick="deleteTeam({{ team.id }}, '{{ team.name | e }}')">🗑</button>
@@ -2280,15 +2296,31 @@ socket.on('tab_penalty_updated', (data) => {
     }
 });
 
+// Listen for tab switch count updates
+socket.on('tab_switch_updated', (data) => {
+    console.log('[Admin] Received tab_switch_updated:', data);
+    const countEl = document.getElementById('switch-count-' + data.team_id);
+    const container = document.getElementById('team-penalty-' + data.team_id);
+    if (countEl) {
+        countEl.textContent = (data.tab_switch_count || 0) + 'x';
+    }
+    if (container) {
+        container.dataset.switches = data.tab_switch_count || 0;
+    }
+});
+
 // Listen for reset all - update all teams to 0
 socket.on('tab_penalty_reset', (data) => {
     console.log('[Admin] Received tab_penalty_reset');
     // Reset all team displays to 0
     document.querySelectorAll('.team-tab-penalty').forEach(container => {
         container.dataset.seconds = 0;
+        container.dataset.switches = 0;
         container.classList.remove('has-penalty', 'is-away');
         const timeEl = container.querySelector('.timer-display');
         if (timeEl) timeEl.textContent = '0:00';
+        const countEl = container.querySelector('.switch-count');
+        if (countEl) countEl.textContent = '0x';
     });
 });
 

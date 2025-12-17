@@ -616,6 +616,12 @@
                     isAway = true;
                     setAwayStyle(true);
                     startTicking();
+                    // Report the tab switch to backend
+                    fetch('/api/team/report-tab-switch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin'
+                    }).catch(err => console.log('[TabTracker] Failed to report tab switch:', err));
                 } else if (!away && isAway) {
                     // Came back - stop ticking
                     isAway = false;

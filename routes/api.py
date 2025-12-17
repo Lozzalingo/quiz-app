@@ -237,6 +237,7 @@ def get_game_answers(game_id):
             'custom_scores': custom_scores,
             'tab_away_seconds': team.tab_away_seconds or 0,
             'tab_penalty_points': team.tab_penalty_points,
+            'tab_switch_count': team.tab_switch_count or 0,
             'rounds': {}
         }
 
@@ -954,6 +955,57 @@ def tick_away_time():
     })
 
 
+@bp.route('/team/report-tab-switch', methods=['POST'])
+@team_required_api
+def report_tab_switch():
+    """Report a tab switch (called when player leaves the tab)."""
+    team = Team.query.get(int(current_user.get_id().split('_')[1]))
+    if not team:
+        return jsonify({'success': False, 'error': 'Team not found'}), 404
+
+    game = team.game
+
+    # Check if tracking is enabled
+    if not game.tab_penalty_enabled:
+        return jsonify({
+            'success': False,
+            'tracking_disabled': True,
+            'tab_switch_count': team.tab_switch_count or 0
+        })
+
+    # Check if game has any open rounds
+    open_rounds = Round.query.filter_by(game_id=game.id, is_open=True).first()
+    if not open_rounds:
+        return jsonify({
+            'success': False,
+            'game_finished': True,
+            'tab_switch_count': team.tab_switch_count or 0
+        })
+
+    # Increment tab switch count
+    team.tab_switch_count = (team.tab_switch_count or 0) + 1
+    db.session.commit()
+
+    # Broadcast to admin views
+    try:
+        from app import socketio
+        socketio.emit('tab_switch_updated', {
+            'team_id': team.id,
+            'tab_switch_count': team.tab_switch_count
+        }, room=f'game_{game.id}')
+        socketio.emit('tab_switch_updated', {
+            'team_id': team.id,
+            'tab_switch_count': team.tab_switch_count
+        }, room=f'spreadsheet_{game.id}')
+    except Exception as e:
+        print(f'[API] Error broadcasting tab_switch_updated: {e}')
+
+    return jsonify({
+        'success': True,
+        'tab_switch_count': team.tab_switch_count
+    })
+
+
 @bp.route('/team/report-away-time', methods=['POST'])
 @team_required_api
 def report_away_time():
@@ -1017,9 +1069,10 @@ def reset_tab_penalty(team_id):
     team = Team.query.get_or_404(team_id)
 
     team.tab_away_seconds = 0
+    team.tab_switch_count = 0
     db.session.commit()
 
-    # Emit Socket.IO event
+    # Emit Socket.IO events
     try:
         from app import socketio
         socketio.emit('tab_penalty_updated', {
@@ -1027,6 +1080,10 @@ def reset_tab_penalty(team_id):
             'tab_away_seconds': 0,
             'penalty_points': 0
         }, room=f'spreadsheet_{team.game_id}')
+        socketio.emit('tab_switch_updated', {
+            'team_id': team.id,
+            'tab_switch_count': 0
+        }, room=f'game_{team.game_id}')
     except Exception:
         pass
 
@@ -1126,13 +1183,14 @@ def reset_all_tab_penalties(game_id):
     print(f'[API] reset_all_tab_penalties called for game {game_id}')
     game = Game.query.get_or_404(game_id)
 
-    # Reset all teams' tab away seconds
+    # Reset all teams' tab away seconds and switch counts
     teams = Team.query.filter_by(game_id=game_id).all()
     for team in teams:
         team.tab_away_seconds = 0
+        team.tab_switch_count = 0
 
     db.session.commit()
-    print(f'[API] Reset {len(teams)} teams to 0 seconds')
+    print(f'[API] Reset {len(teams)} teams to 0 seconds and 0 switches')
 
     # Emit Socket.IO events to ALL clients
     try:
