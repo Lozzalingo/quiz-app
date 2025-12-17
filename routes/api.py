@@ -913,8 +913,8 @@ def tick_away_time():
 
     game = team.game
 
-    # Check if tracking is enabled
-    if not game.tab_penalty_enabled:
+    # Check if tracking is enabled or game is paused
+    if not game.tab_penalty_enabled or game.pause_mode:
         return jsonify({
             'success': False,
             'tracking_disabled': True,
@@ -967,8 +967,8 @@ def report_tab_switch():
 
     game = team.game
 
-    # Check if tracking is enabled
-    if not game.tab_penalty_enabled:
+    # Check if tracking is enabled or game is paused
+    if not game.tab_penalty_enabled or game.pause_mode:
         return jsonify({
             'success': False,
             'tracking_disabled': True,
