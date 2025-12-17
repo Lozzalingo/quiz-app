@@ -1018,7 +1018,7 @@ body {
                 </span>
                 <span>Created {{ game.created_at.strftime('%b %d, %Y') }}</span>
                 <span>{{ teams|length }} teams</span>
-                <a href="{{ url_for('admin.admin_scores', game_id=game.id) }}" class="scores-link" target="_blank">
+                <a href="{{ url_for('admin.admin_scores', game_id=game.id) }}" class="scores-link">
                     📊 See Scores
                 </a>
             </div>
