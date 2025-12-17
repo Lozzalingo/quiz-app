@@ -150,6 +150,7 @@ class Team(UserMixin, db.Model):
     custom_scores_json = db.Column(db.Text, nullable=False, default='{}')
     tab_away_seconds = db.Column(db.Integer, default=0)  # Track time spent away from tab
     tab_switch_count = db.Column(db.Integer, default=0)  # Track number of tab switches
+    login_count = db.Column(db.Integer, default=0)  # Track number of sign-ins
 
     # Relationships
     answers = db.relationship('Answer', backref='team', lazy='dynamic',

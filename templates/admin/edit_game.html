@@ -578,6 +578,26 @@ body {
     color: #c5221f;
 }
 
+.team-login-count {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #5f6368;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #f1f3f4;
+}
+
+.team-login-count .login-icon {
+    font-size: 12px;
+}
+
+.team-login-count .login-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+}
+
 /* Tab penalty controls */
 .tab-penalty-controls {
     padding: 10px 0;
@@ -1212,6 +1232,10 @@ body {
             {% for team in teams %}
             <div class="team-item" id="team-{{ team.id }}">
                 <span class="team-name" id="team-name-{{ team.id }}" onclick="editTeamName({{ team.id }}, '{{ team.name | e }}')" title="Click to edit">{{ team.name }}</span>
+                <div class="team-login-count" id="team-logins-{{ team.id }}" title="Sign-ins">
+                    <span class="login-icon">🔑</span>
+                    <span class="login-value" id="login-count-{{ team.id }}">{{ team.login_count or 1 }}</span>
+                </div>
                 <div class="team-score" id="team-score-{{ team.id }}">
                     {{ team_scores.get(team.id, 0) }} pts
                 </div>
@@ -2306,6 +2330,15 @@ socket.on('tab_switch_updated', (data) => {
     }
     if (container) {
         container.dataset.switches = data.tab_switch_count || 0;
+    }
+});
+
+// Listen for team login updates
+socket.on('team_login', (data) => {
+    console.log('[Admin] Received team_login:', data);
+    const loginEl = document.getElementById('login-count-' + data.team_id);
+    if (loginEl) {
+        loginEl.textContent = data.login_count || 1;
     }
 });
 

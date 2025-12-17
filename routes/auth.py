@@ -85,6 +85,20 @@ def player_login(game_code=None):
         if existing_team:
             # Team exists - verify password
             if existing_team.check_password(password):
+                # Track login
+                existing_team.login_count = (existing_team.login_count or 0) + 1
+                db.session.commit()
+
+                # Emit socket event for admin to see login
+                try:
+                    from app import socketio
+                    socketio.emit('team_login', {
+                        'team_id': existing_team.id,
+                        'login_count': existing_team.login_count
+                    }, room=f'game_{game.id}')
+                except Exception as e:
+                    print(f'[Auth] Error emitting team_login: {e}')
+
                 login_user(existing_team, remember=True)
                 flash(f'Welcome back, {team_name}!', 'success')
                 return redirect(url_for('player.quiz', game_code=game_code))
@@ -94,7 +108,8 @@ def player_login(game_code=None):
             # Create new team
             new_team = Team(
                 game_id=game.id,
-                name=team_name
+                name=team_name,
+                login_count=1
             )
             new_team.set_password(password)
 
@@ -145,6 +160,20 @@ def player_relogin(game_code):
         team = Team.query.filter_by(game_id=game.id, name=team_name).first()
 
         if team and team.check_password(password):
+            # Track login
+            team.login_count = (team.login_count or 0) + 1
+            db.session.commit()
+
+            # Emit socket event for admin to see login
+            try:
+                from app import socketio
+                socketio.emit('team_login', {
+                    'team_id': team.id,
+                    'login_count': team.login_count
+                }, room=f'game_{game.id}')
+            except Exception as e:
+                print(f'[Auth] Error emitting team_login: {e}')
+
             login_user(team, remember=True)
             flash(f'Welcome back, {team_name}!', 'success')
             return redirect(url_for('player.quiz', game_code=game_code))
