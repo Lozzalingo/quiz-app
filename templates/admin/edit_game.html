@@ -2290,7 +2290,11 @@ socket.on('tab_time_updated', (data) => {
     const timeEl = document.getElementById('penalty-time-' + data.team_id);
 
     if (container && timeEl) {
+        const oldSeconds = parseInt(container.dataset.seconds) || 0;
         const seconds = data.total_away_seconds || 0;
+        const oldPenalty = Math.floor(oldSeconds / 10);
+        const newPenalty = Math.floor(seconds / 10);
+
         container.dataset.seconds = seconds;
         timeEl.textContent = formatTime(seconds);
 
@@ -2303,6 +2307,11 @@ socket.on('tab_time_updated', (data) => {
         container._awayTimeout = setTimeout(() => {
             container.classList.remove('is-away');
         }, 2000);
+
+        // Refresh scores when penalty points change (every 10 seconds)
+        if (newPenalty !== oldPenalty) {
+            fetchTeamScores();
+        }
     }
 });
 
@@ -2318,6 +2327,8 @@ socket.on('tab_penalty_updated', (data) => {
         container.classList.toggle('has-penalty', seconds > 0);
         container.classList.remove('is-away');
     }
+    // Refresh scores since penalty affects total
+    fetchTeamScores();
 });
 
 // Listen for tab switch count updates
@@ -2364,6 +2375,8 @@ socket.on('tab_penalty_reset', (data) => {
         const countEl = container.querySelector('.switch-count');
         if (countEl) countEl.textContent = '0x';
     });
+    // Refresh scores since penalties affect totals
+    fetchTeamScores();
 });
 
 // Listen for submission updates and refresh team scores
