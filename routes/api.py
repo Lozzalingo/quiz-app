@@ -337,6 +337,13 @@ def update_answer_text(answer_id):
         socketio.emit('score_updated', {
             'answer_id': answer.id
         }, room=f'spreadsheet_{game_id}')
+        # Also emit to game room for players viewing their answers
+        socketio.emit('answer_score_updated', {
+            'round_id': answer.round_id,
+            'question_id': answer.question_id,
+            'team_id': answer.team_id,
+            'points': answer.points
+        }, room=f'game_{game_id}')
     except Exception:
         pass
 
@@ -445,12 +452,46 @@ def update_answer_score(answer_id):
             'notes': answer.notes,
             'total': answer.total_points
         }, room=f'spreadsheet_{game_id}')
+        # Also emit to game room for players viewing their answers
+        socketio.emit('answer_score_updated', {
+            'round_id': answer.round_id,
+            'question_id': answer.question_id,
+            'team_id': answer.team_id,
+            'points': answer.points
+        }, room=f'game_{game_id}')
     except Exception:
         pass  # Socket.IO not available
 
     return jsonify({
         'success': True,
         'total': answer.total_points
+    })
+
+
+@bp.route('/team/round/<int:round_id>/scores', methods=['GET'])
+@team_required_api
+def get_team_round_scores(round_id):
+    """Get scores for a team's answers in a round (for showing correct/incorrect)."""
+    team = Team.query.get(int(current_user.get_id().split('_')[1]))
+    if not team:
+        return jsonify({'success': False, 'error': 'Team not found'}), 404
+
+    round_obj = Round.query.get_or_404(round_id)
+
+    # Verify team belongs to this game
+    if team.game_id != round_obj.game_id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+
+    # Get all answers for this team in this round
+    answers = Answer.query.filter_by(team_id=team.id, round_id=round_id).all()
+
+    scores = {}
+    for answer in answers:
+        scores[answer.question_id] = answer.points or 0
+
+    return jsonify({
+        'success': True,
+        'scores': scores
     })
 
 

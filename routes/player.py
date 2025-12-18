@@ -289,9 +289,12 @@ def view_round(round_id):
     questions = round_obj.get_questions()
 
     # Build a dict of existing answers for pre-filling the form
+    # Also build a dict of answer points (for showing correct/incorrect in read_only mode)
     existing_answers_dict = {}
+    answer_points_dict = {}
     for answer in existing_answers:
         existing_answers_dict[answer.question_id] = answer.answer_text
+        answer_points_dict[answer.question_id] = answer.points or 0
 
     # Check if this is the final round (for game complete popup)
     # Count all rounds that need submissions (excluding parent rounds that only have children)
@@ -314,6 +317,7 @@ def view_round(round_id):
                           team=team,
                           questions=questions,
                           existing_answers=existing_answers_dict,
+                          answer_points=answer_points_dict,
                           is_resubmit=can_resubmit,
                           read_only=read_only,
                           is_potential_final=is_potential_final,

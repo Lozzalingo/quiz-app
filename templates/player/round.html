@@ -159,6 +159,53 @@ body.timer-active {
     padding: 20px 24px;
     margin-bottom: 12px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    border: 2px solid transparent;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.question-card.is-correct {
+    border-color: #34a853;
+    background: linear-gradient(135deg, #e6f4ea 0%, #fff 100%);
+}
+
+.question-card.is-incorrect {
+    border-color: #ea4335;
+    background: linear-gradient(135deg, #fce8e6 0%, #fff 100%);
+}
+
+.question-card.is-pending {
+    border-color: #fbbc04;
+    background: linear-gradient(135deg, #fef7e0 0%, #fff 100%);
+}
+
+.answer-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.answer-indicator.correct {
+    background: #34a853;
+    color: white;
+}
+
+.answer-indicator.incorrect {
+    background: #ea4335;
+    color: white;
+}
+
+.answer-indicator.pending {
+    background: #fbbc04;
+    color: white;
 }
 
 .question-number {
@@ -686,7 +733,26 @@ body.timer-active {
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         {% for question in questions %}
-        <div class="question-card">
+        {% set points = answer_points.get(question.id, 0) if answer_points else 0 %}
+        {% set has_answer = question.id in existing_answers %}
+        {% set correctness_class = '' %}
+        {% set indicator_class = '' %}
+        {% set indicator_symbol = '' %}
+        {% if read_only and has_answer %}
+            {% if points > 0 %}
+                {% set correctness_class = 'is-correct' %}
+                {% set indicator_class = 'correct' %}
+                {% set indicator_symbol = '✓' %}
+            {% else %}
+                {% set correctness_class = 'is-incorrect' %}
+                {% set indicator_class = 'incorrect' %}
+                {% set indicator_symbol = '✗' %}
+            {% endif %}
+        {% endif %}
+        <div class="question-card {{ correctness_class }}" data-question-id="{{ question.id }}">
+            {% if read_only and has_answer %}
+            <div class="answer-indicator {{ indicator_class }}" data-question-id="{{ question.id }}">{{ indicator_symbol }}</div>
+            {% endif %}
             <div class="question-number">Question {{ loop.index }}</div>
 
             {% if question.image %}
@@ -1018,6 +1084,42 @@ socket.on('timer_stopped', function(data) {
         stopClientTimer();
     }
 });
+
+// Listen for score updates (for showing correct/incorrect in read-only mode)
+socket.on('answer_score_updated', function(data) {
+    // Only update if this is for our team and round
+    if (data.team_id === teamId && data.round_id === roundId) {
+        updateQuestionCorrectness(data.question_id, data.points);
+    }
+});
+
+function updateQuestionCorrectness(questionId, points) {
+    const card = document.querySelector(`.question-card[data-question-id="${questionId}"]`);
+    if (!card) return;
+
+    // Remove existing classes
+    card.classList.remove('is-correct', 'is-incorrect', 'is-pending');
+
+    // Find or create indicator
+    let indicator = card.querySelector('.answer-indicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'answer-indicator';
+        indicator.setAttribute('data-question-id', questionId);
+        card.insertBefore(indicator, card.firstChild);
+    }
+
+    // Update based on points
+    if (points > 0) {
+        card.classList.add('is-correct');
+        indicator.className = 'answer-indicator correct';
+        indicator.textContent = '✓';
+    } else {
+        card.classList.add('is-incorrect');
+        indicator.className = 'answer-indicator incorrect';
+        indicator.textContent = '✗';
+    }
+}
 
 let timerInterval = null;
 let timerSeconds = 0;
