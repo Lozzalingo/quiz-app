@@ -1656,22 +1656,23 @@ async function loadAllBettingQuestions() {
             return;
         }
 
-        // Get betting questions for each round
-        const bettingByRound = {};
+        // Get betting questions for each round (preserve order from columns)
+        const bettingRounds = [];
 
         for (const roundInfo of data.columns) {
             const roundResponse = await fetch(`/api/round/${roundInfo.round_id}/betting-questions`);
             const roundData = await roundResponse.json();
 
             if (roundData.success && roundData.betting_questions.length > 0) {
-                bettingByRound[roundInfo.round_id] = {
+                bettingRounds.push({
+                    roundId: roundInfo.round_id,
                     name: roundInfo.round_name,
                     questions: roundData.betting_questions
-                };
+                });
             }
         }
 
-        if (Object.keys(bettingByRound).length === 0) {
+        if (bettingRounds.length === 0) {
             content.innerHTML = '<p class="betting-empty">No betting questions found in this game.</p>';
             return;
         }
@@ -1684,7 +1685,8 @@ async function loadAllBettingQuestions() {
         };
 
         let html = '';
-        for (const [roundId, roundData] of Object.entries(bettingByRound)) {
+        for (const roundData of bettingRounds) {
+            const roundId = roundData.roundId;
             html += `<div class="betting-round">
                 <h4 class="betting-round-title">${roundData.name}</h4>`;
 
