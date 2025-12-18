@@ -293,11 +293,43 @@ def view_round(round_id):
 
     # Build a dict of existing answers for pre-filling the form
     # Also build a dict of answer points (for showing correct/incorrect in read_only mode)
+    # And ordering slot results for ordering questions
+    import json
     existing_answers_dict = {}
     answer_points_dict = {}
+    ordering_results_dict = {}  # {question_id: [{item, status: 'correct'|'adjacent'|'wrong'}]}
+
     for answer in existing_answers:
         existing_answers_dict[answer.question_id] = answer.answer_text
         answer_points_dict[answer.question_id] = answer.points or 0
+
+    # Calculate per-slot results for ordering questions
+    for q in questions:
+        if q.get('type') == 'ordering' and q.get('id') in existing_answers_dict:
+            ordering_config = q.get('ordering', {})
+            correct_items = ordering_config.get('items', [])
+            answer_text = existing_answers_dict.get(q.get('id'), '')
+
+            try:
+                player_order = json.loads(answer_text) if answer_text else []
+            except (json.JSONDecodeError, TypeError):
+                player_order = []
+
+            slot_results = []
+            for player_pos, player_item in enumerate(player_order):
+                if player_item and player_item in correct_items:
+                    correct_pos = correct_items.index(player_item)
+                    distance = abs(player_pos - correct_pos)
+                    if distance == 0:
+                        slot_results.append({'item': player_item, 'status': 'correct'})
+                    elif distance == 1:
+                        slot_results.append({'item': player_item, 'status': 'adjacent'})
+                    else:
+                        slot_results.append({'item': player_item, 'status': 'wrong'})
+                else:
+                    slot_results.append({'item': player_item or '', 'status': 'wrong'})
+
+            ordering_results_dict[q.get('id')] = slot_results
 
     # Check if this is the final round (for game complete popup)
     # Count all rounds that need submissions (excluding parent rounds that only have children)
@@ -321,6 +353,7 @@ def view_round(round_id):
                           questions=questions,
                           existing_answers=existing_answers_dict,
                           answer_points=answer_points_dict,
+                          ordering_results=ordering_results_dict,
                           is_resubmit=can_resubmit,
                           read_only=read_only,
                           is_potential_final=is_potential_final,

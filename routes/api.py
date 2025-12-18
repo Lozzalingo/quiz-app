@@ -931,6 +931,71 @@ def get_team_round_scores(round_id):
     })
 
 
+@bp.route('/team/round/<int:round_id>/ordering-results/<question_id>', methods=['GET'])
+@team_required_api
+def get_ordering_results(round_id, question_id):
+    """Get per-slot ordering results for a question."""
+    import json
+    team = Team.query.get(int(current_user.get_id().split('_')[1]))
+    if not team:
+        return jsonify({'success': False, 'error': 'Team not found'}), 404
+
+    round_obj = Round.query.get_or_404(round_id)
+
+    # Verify team belongs to this game
+    if team.game_id != round_obj.game_id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    # Get the question config
+    questions = round_obj.get_questions()
+    question = None
+    for q in questions:
+        if q.get('id') == question_id:
+            question = q
+            break
+
+    if not question or question.get('type') != 'ordering':
+        return jsonify({'success': False, 'error': 'Ordering question not found'}), 404
+
+    # Get the answer
+    answer = Answer.query.filter_by(
+        team_id=team.id,
+        round_id=round_id,
+        question_id=question_id
+    ).first()
+
+    if not answer:
+        return jsonify({'success': True, 'results': [], 'points': 0})
+
+    ordering_config = question.get('ordering', {})
+    correct_items = ordering_config.get('items', [])
+
+    try:
+        player_order = json.loads(answer.answer_text) if answer.answer_text else []
+    except (json.JSONDecodeError, TypeError):
+        player_order = []
+
+    slot_results = []
+    for player_pos, player_item in enumerate(player_order):
+        if player_item and player_item in correct_items:
+            correct_pos = correct_items.index(player_item)
+            distance = abs(player_pos - correct_pos)
+            if distance == 0:
+                slot_results.append({'item': player_item, 'status': 'correct'})
+            elif distance == 1:
+                slot_results.append({'item': player_item, 'status': 'adjacent'})
+            else:
+                slot_results.append({'item': player_item, 'status': 'wrong'})
+        else:
+            slot_results.append({'item': player_item or '', 'status': 'wrong'})
+
+    return jsonify({
+        'success': True,
+        'results': slot_results,
+        'points': answer.points or 0
+    })
+
+
 @bp.route('/team/get-away-time', methods=['GET'])
 @team_required_api
 def get_away_time():

@@ -603,6 +603,62 @@ body.timer-active {
     color: #2e7d32;
 }
 
+/* Ordering slot status indicators */
+.ordering-slot.slot-correct {
+    background: #e8f5e9;
+    border-color: #4caf50;
+}
+
+.ordering-slot.slot-correct .ordering-slot-num {
+    background: #4caf50;
+}
+
+.ordering-slot.slot-adjacent {
+    background: #fff8e1;
+    border-color: #ffc107;
+}
+
+.ordering-slot.slot-adjacent .ordering-slot-num {
+    background: #ffc107;
+}
+
+.ordering-slot.slot-wrong {
+    background: #ffebee;
+    border-color: #f44336;
+}
+
+.ordering-slot.slot-wrong .ordering-slot-num {
+    background: #f44336;
+}
+
+.ordering-slot-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.ordering-slot-indicator.correct {
+    background: #4caf50;
+    color: white;
+}
+
+.ordering-slot-indicator.adjacent {
+    background: #ffc107;
+    color: white;
+}
+
+.ordering-slot-indicator.wrong {
+    background: #f44336;
+    color: white;
+}
+
 /* Estimate question styles */
 .estimate-section {
     border: 2px solid #1976d2;
@@ -886,12 +942,14 @@ body.timer-active {
 
                     {% set start_label = ordering.get('start_label', '') %}
                     {% set end_label = ordering.get('end_label', '') %}
+                    {% set slot_results = ordering_results.get(question.id, []) if ordering_results else [] %}
                     <div class="ordering-slots" id="ordering-slots-{{ question.id }}">
                         {% if start_label %}
                         <div class="ordering-label ordering-label-start">↑ {{ start_label }}</div>
                         {% endif %}
                         {% for i in range(items|length) %}
-                        <div class="ordering-slot">
+                        {% set slot_status = slot_results[i].status if read_only and i < slot_results|length else '' %}
+                        <div class="ordering-slot {% if slot_status %}slot-{{ slot_status }}{% endif %}" data-slot-index="{{ i }}">
                             <span class="ordering-slot-num">{{ i + 1 }}</span>
                             <select name="ordering_{{ question.id }}_{{ i }}"
                                     id="ordering_{{ question.id }}_{{ i }}"
@@ -903,6 +961,11 @@ body.timer-active {
                                 <option value="{{ item }}" {{ 'selected' if existing_order and i < existing_order|length and existing_order[i] == item else '' }}>{{ item }}</option>
                                 {% endfor %}
                             </select>
+                            {% if read_only and slot_status %}
+                            <span class="ordering-slot-indicator {{ slot_status }}">
+                                {% if slot_status == 'correct' %}✓{% elif slot_status == 'adjacent' %}~{% else %}✗{% endif %}
+                            </span>
+                            {% endif %}
                         </div>
                         {% endfor %}
                         {% if end_label %}
@@ -910,9 +973,15 @@ body.timer-active {
                         {% endif %}
                     </div>
 
+                    {% if read_only %}
+                    <div class="ordering-hint">
+                        <strong>Results:</strong> ✓ = Correct position ({{ points_exact }} pts) | ~ = Off by one ({{ points_adjacent }} pt) | ✗ = Wrong position (0 pts)
+                    </div>
+                    {% else %}
                     <div class="ordering-hint">
                         Place each item in the correct order. You score {{ points_exact }} pts for each item in the right spot, or {{ points_adjacent }} pt if you're just one place off.
                     </div>
+                    {% endif %}
                 </div>
 
             {% elif question.type == 'estimate' %}
@@ -1109,9 +1178,59 @@ socket.on('answer_score_updated', function(data) {
     }
 });
 
+// Check if a question is an ordering type
+function isOrderingQuestion(questionId) {
+    const card = document.querySelector(`.question-card[data-question-id="${questionId}"]`);
+    return card && card.querySelector('.ordering-section') !== null;
+}
+
+// Update ordering slot indicators
+async function updateOrderingSlots(questionId) {
+    try {
+        const response = await fetch(`/api/team/round/${roundId}/ordering-results/${questionId}`);
+        const data = await response.json();
+
+        if (!data.success) return;
+
+        const slotsContainer = document.getElementById(`ordering-slots-${questionId}`);
+        if (!slotsContainer) return;
+
+        const slots = slotsContainer.querySelectorAll('.ordering-slot');
+        data.results.forEach((result, index) => {
+            if (index >= slots.length) return;
+
+            const slot = slots[index];
+
+            // Remove existing status classes
+            slot.classList.remove('slot-correct', 'slot-adjacent', 'slot-wrong');
+
+            // Add new status class
+            slot.classList.add(`slot-${result.status}`);
+
+            // Update or create indicator
+            let indicator = slot.querySelector('.ordering-slot-indicator');
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'ordering-slot-indicator';
+                slot.appendChild(indicator);
+            }
+
+            indicator.className = `ordering-slot-indicator ${result.status}`;
+            indicator.textContent = result.status === 'correct' ? '✓' : (result.status === 'adjacent' ? '~' : '✗');
+        });
+    } catch (error) {
+        console.error('Error fetching ordering results:', error);
+    }
+}
+
 function updateQuestionCorrectness(questionId, points) {
     const card = document.querySelector(`.question-card[data-question-id="${questionId}"]`);
     if (!card) return;
+
+    // For ordering questions, also update slot indicators
+    if (isOrderingQuestion(questionId)) {
+        updateOrderingSlots(questionId);
+    }
 
     // Remove existing classes
     card.classList.remove('is-correct', 'is-incorrect', 'is-pending');
