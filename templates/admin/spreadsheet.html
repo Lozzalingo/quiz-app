@@ -768,6 +768,11 @@ socket.on('submission_update', () => {
     if (!isLocalUpdate) loadDataPreserveScroll();
 });
 
+// Helper to reset isLocalUpdate after a delay (to ignore our own socket events)
+function resetLocalUpdateFlag() {
+    setTimeout(() => { isLocalUpdate = false; }, 500);
+}
+
 socket.on('columns_updated', () => {
     // Rebuild table when columns change
     if (table) {
@@ -906,7 +911,7 @@ function buildColumns(config, customCols = []) {
                 const row = cell.getRow().getData();
                 isLocalUpdate = true;
                 updateTeamName(row.team_id, cell.getValue())
-                    .finally(() => { isLocalUpdate = false; });
+                    .finally(resetLocalUpdateFlag);
             }
         },
         {
@@ -937,7 +942,7 @@ function buildColumns(config, customCols = []) {
                 isLocalUpdate = true;
                 updateTabAwaySeconds(row.team_id, newSeconds)
                     .then(() => updateRowTotal(cell.getRow()))
-                    .finally(() => { isLocalUpdate = false; });
+                    .finally(resetLocalUpdateFlag);
             }
         },
     ];
@@ -973,7 +978,7 @@ function buildColumns(config, customCols = []) {
                 isLocalUpdate = true;
                 updateCustomScore(row.team_id, col.id, cell.getValue())
                     .then(() => updateRowTotal(cell.getRow()))
-                    .finally(() => { isLocalUpdate = false; });
+                    .finally(resetLocalUpdateFlag);
             }
         });
     }
@@ -1027,7 +1032,7 @@ function buildColumns(config, customCols = []) {
                                     updateRowTotal(cell.getRow());
                                 }
                             })
-                            .finally(() => { isLocalUpdate = false; });
+                            .finally(resetLocalUpdateFlag);
                     } else {
                         // Create new answer
                         createAnswer(row.team_id, round.round_id, q.id, cell.getValue())
@@ -1041,7 +1046,7 @@ function buildColumns(config, customCols = []) {
                                     updateRowTotal(cell.getRow());
                                 }
                             })
-                            .finally(() => { isLocalUpdate = false; });
+                            .finally(resetLocalUpdateFlag);
                     }
                 }
             });
@@ -1071,7 +1076,7 @@ function buildColumns(config, customCols = []) {
                         isLocalUpdate = true;
                         updateScore(aid, { points: cell.getValue() })
                             .then(() => updateRowTotal(cell.getRow()))
-                            .finally(() => { isLocalUpdate = false; });
+                            .finally(resetLocalUpdateFlag);
                     }
                 }
             });
