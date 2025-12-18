@@ -1012,15 +1012,33 @@ function buildColumns(config, customCols = []) {
                 cellEdited: function(cell) {
                     const row = cell.getRow().getData();
                     const aid = row[`r${round.round_id}_q${q.id}_answer_id`];
+                    const pointsField = `r${round.round_id}_q${q.id}_points`;
                     isLocalUpdate = true;
                     if (aid) {
                         updateAnswerText(aid, cell.getValue())
-                            .then(data => { if (data.points !== undefined) updateRowTotal(cell.getRow()); })
+                            .then(data => {
+                                if (data.points !== undefined) {
+                                    // Update points cell and total
+                                    const update = {};
+                                    update[pointsField] = data.points;
+                                    cell.getRow().update(update);
+                                    updateRowTotal(cell.getRow());
+                                }
+                            })
                             .finally(() => { isLocalUpdate = false; });
                     } else {
                         // Create new answer
                         createAnswer(row.team_id, round.round_id, q.id, cell.getValue())
-                            .then(data => { if (data.answer_id) updateRowTotal(cell.getRow()); })
+                            .then(data => {
+                                if (data.answer_id) {
+                                    // Update answer_id, points cell and total
+                                    const update = {};
+                                    update[`r${round.round_id}_q${q.id}_answer_id`] = data.answer_id;
+                                    if (data.points !== undefined) update[pointsField] = data.points;
+                                    cell.getRow().update(update);
+                                    updateRowTotal(cell.getRow());
+                                }
+                            })
                             .finally(() => { isLocalUpdate = false; });
                     }
                 }
