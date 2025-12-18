@@ -904,7 +904,7 @@ function buildColumns(config, customCols = []) {
                 const row = cell.getRow().getData();
                 isLocalUpdate = true;
                 updateTeamName(row.team_id, cell.getValue())
-                    .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                    .finally(() => { isLocalUpdate = false; });
             }
         },
         {
@@ -934,7 +934,8 @@ function buildColumns(config, customCols = []) {
                 const newSeconds = parseTabTime(String(inputVal));
                 isLocalUpdate = true;
                 updateTabAwaySeconds(row.team_id, newSeconds)
-                    .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                    .then(() => updateRowTotal(cell.getRow()))
+                    .finally(() => { isLocalUpdate = false; });
             }
         },
     ];
@@ -969,7 +970,8 @@ function buildColumns(config, customCols = []) {
                 const row = cell.getRow().getData();
                 isLocalUpdate = true;
                 updateCustomScore(row.team_id, col.id, cell.getValue())
-                    .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                    .then(() => updateRowTotal(cell.getRow()))
+                    .finally(() => { isLocalUpdate = false; });
             }
         });
     }
@@ -1013,11 +1015,13 @@ function buildColumns(config, customCols = []) {
                     isLocalUpdate = true;
                     if (aid) {
                         updateAnswerText(aid, cell.getValue())
-                            .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                            .then(data => { if (data.points !== undefined) updateRowTotal(cell.getRow()); })
+                            .finally(() => { isLocalUpdate = false; });
                     } else {
                         // Create new answer
                         createAnswer(row.team_id, round.round_id, q.id, cell.getValue())
-                            .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                            .then(data => { if (data.answer_id) updateRowTotal(cell.getRow()); })
+                            .finally(() => { isLocalUpdate = false; });
                     }
                 }
             });
@@ -1046,7 +1050,8 @@ function buildColumns(config, customCols = []) {
                     if (aid) {
                         isLocalUpdate = true;
                         updateScore(aid, { points: cell.getValue() })
-                            .finally(() => { isLocalUpdate = false; loadDataPreserveScroll(); });
+                            .then(() => updateRowTotal(cell.getRow()))
+                            .finally(() => { isLocalUpdate = false; });
                     }
                 }
             });
@@ -1190,6 +1195,24 @@ async function createAnswer(teamId, roundId, questionId, text) {
         })
     });
     return response.json();
+}
+
+// Update just the total score for a single row (without reloading entire table)
+async function updateRowTotal(row) {
+    const teamId = row.getData().team_id;
+    try {
+        // Fetch fresh data for just this team
+        const response = await fetch(`/api/game/${gameId}/answers`);
+        const data = await response.json();
+        if (data.success && data.teams) {
+            const teamData = data.teams.find(t => t.team_id === teamId);
+            if (teamData) {
+                row.update({ total_score: teamData.total_score });
+            }
+        }
+    } catch (e) {
+        console.error('Error updating row total:', e);
+    }
 }
 
 function exportData() {
