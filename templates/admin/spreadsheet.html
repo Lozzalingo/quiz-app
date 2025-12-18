@@ -782,6 +782,20 @@ socket.on('columns_updated', () => {
     loadData();
 });
 
+socket.on('rounds_reordered', () => {
+    // Rebuild table when round order changes
+    if (table) {
+        table.destroy();
+        table = null;
+    }
+    loadData();
+});
+
+socket.on('betting_results_set', () => {
+    // Refresh when betting results are set (scores change)
+    loadDataPreserveScroll();
+});
+
 socket.on('tab_penalty_updated', (data) => {
     // Refresh data when tab penalty changes
     if (!isLocalUpdate) loadDataPreserveScroll();

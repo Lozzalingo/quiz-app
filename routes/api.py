@@ -134,6 +134,15 @@ def reorder_rounds(game_id):
 
     db.session.commit()
 
+    # Emit socket event for spreadsheet to update
+    try:
+        from app import socketio
+        socketio.emit('rounds_reordered', {
+            'game_id': game_id
+        }, room=f'spreadsheet_{game_id}')
+    except Exception:
+        pass
+
     return jsonify({'success': True})
 
 
