@@ -463,7 +463,7 @@
     <!-- Bottom Navigation -->
     {% if show_nav is not defined or show_nav %}
     <nav class="bottom-nav" id="bottom-nav">
-        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="nav-item {% if active_nav == 'questions' %}active{% endif %}" data-nav="questions">
+        <a href="{{ url_for('player.next_questions', game_code=game.code) }}" class="nav-item {% if active_nav == 'questions' %}active{% endif %}" data-nav="questions">
             <span class="nav-icon">📝</span>
             <span>Questions</span>
         </a>
