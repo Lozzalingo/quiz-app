@@ -468,33 +468,6 @@ def update_answer_score(answer_id):
     })
 
 
-@bp.route('/team/round/<int:round_id>/scores', methods=['GET'])
-@team_required_api
-def get_team_round_scores(round_id):
-    """Get scores for a team's answers in a round (for showing correct/incorrect)."""
-    team = Team.query.get(int(current_user.get_id().split('_')[1]))
-    if not team:
-        return jsonify({'success': False, 'error': 'Team not found'}), 404
-
-    round_obj = Round.query.get_or_404(round_id)
-
-    # Verify team belongs to this game
-    if team.game_id != round_obj.game_id:
-        return jsonify({'success': False, 'error': 'Access denied'}), 403
-
-    # Get all answers for this team in this round
-    answers = Answer.query.filter_by(team_id=team.id, round_id=round_id).all()
-
-    scores = {}
-    for answer in answers:
-        scores[answer.question_id] = answer.points or 0
-
-    return jsonify({
-        'success': True,
-        'scores': scores
-    })
-
-
 @bp.route('/game/<int:game_id>/teams', methods=['GET'])
 @admin_required_api
 def get_game_teams(game_id):
@@ -920,6 +893,33 @@ def update_team_password():
     db.session.commit()
 
     return jsonify({'success': True})
+
+
+@bp.route('/team/round/<int:round_id>/scores', methods=['GET'])
+@team_required_api
+def get_team_round_scores(round_id):
+    """Get scores for a team's answers in a round (for showing correct/incorrect)."""
+    team = Team.query.get(int(current_user.get_id().split('_')[1]))
+    if not team:
+        return jsonify({'success': False, 'error': 'Team not found'}), 404
+
+    round_obj = Round.query.get_or_404(round_id)
+
+    # Verify team belongs to this game
+    if team.game_id != round_obj.game_id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+
+    # Get all answers for this team in this round
+    answers = Answer.query.filter_by(team_id=team.id, round_id=round_id).all()
+
+    scores = {}
+    for answer in answers:
+        scores[answer.question_id] = answer.points or 0
+
+    return jsonify({
+        'success': True,
+        'scores': scores
+    })
 
 
 @bp.route('/team/get-away-time', methods=['GET'])
