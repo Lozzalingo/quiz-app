@@ -764,7 +764,9 @@ socket.on('score_updated', (data) => {
     if (!isLocalUpdate) loadDataPreserveScroll();
 });
 
-socket.on('submission_update', () => loadDataPreserveScroll());
+socket.on('submission_update', () => {
+    if (!isLocalUpdate) loadDataPreserveScroll();
+});
 
 socket.on('columns_updated', () => {
     // Rebuild table when columns change
