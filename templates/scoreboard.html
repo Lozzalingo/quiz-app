@@ -409,6 +409,92 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Mobile responsive - match smallest screen view */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 12px;
+            }
+
+            .logo-container {
+                margin-bottom: 24px;
+            }
+
+            .logo {
+                width: 100px;
+                height: 100px;
+            }
+
+            .game-title {
+                font-size: 18px;
+                margin-top: 12px;
+            }
+
+            .scoreboard-title {
+                font-size: 24px;
+                letter-spacing: 2px;
+                margin-bottom: 24px;
+            }
+
+            .game-finished-banner {
+                font-size: 16px;
+                padding: 12px 16px;
+            }
+
+            .scoreboard {
+                padding: 16px;
+                border-radius: 12px;
+            }
+
+            .team-row {
+                padding: 12px 14px;
+                margin-bottom: 10px;
+                border-radius: 10px;
+            }
+
+            .position {
+                font-size: 20px;
+                width: 40px;
+            }
+
+            .trophy {
+                font-size: 18px;
+                margin-right: 4px;
+            }
+
+            .team-name {
+                font-size: 14px;
+                padding-left: 10px;
+            }
+
+            .team-score {
+                font-size: 16px;
+                padding: 6px 12px;
+                min-width: 60px;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .control-btn {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+
+            .scores-hidden .hidden-icon {
+                font-size: 50px;
+            }
+
+            .scores-hidden h3 {
+                font-size: 20px;
+            }
+
+            .scores-hidden p {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
