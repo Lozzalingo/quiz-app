@@ -527,15 +527,15 @@ def get_leaderboard(game_id):
                 final_round = r
                 break
 
-        if final_round and not final_round.is_open:
-            # Final round exists and is closed - check if team submitted to it
+        if final_round:
+            # Check if team submitted to the final round
             submitted_to_final = Answer.query.filter_by(
                 team_id=requesting_team_id,
                 round_id=final_round.id
             ).first()
             scores_hidden = submitted_to_final is not None
         else:
-            # No final round or final round is still open - show scores
+            # No final round - show scores
             scores_hidden = False
     else:
         # No team_id provided (admin view) - show scores
