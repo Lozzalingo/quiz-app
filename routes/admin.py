@@ -94,7 +94,7 @@ def edit_game(game_id):
     game = Game.query.get_or_404(game_id)
     # Get only top-level rounds (no parent)
     top_rounds = Round.query.filter_by(game_id=game.id, parent_id=None).order_by(Round.order).all()
-    teams = Team.query.filter_by(game_id=game.id).all()
+    teams = Team.query.filter_by(game_id=game.id).order_by(Team.name).all()
 
     # Calculate team scores (full calculation: points + bonus - penalty + custom - tab_penalty)
     team_scores = {}
@@ -221,7 +221,7 @@ def live_control(game_id):
     game = Game.query.get_or_404(game_id)
     # Get only top-level rounds (no parent)
     top_rounds = Round.query.filter_by(game_id=game.id, parent_id=None).order_by(Round.order).all()
-    teams = Team.query.filter_by(game_id=game.id).all()
+    teams = Team.query.filter_by(game_id=game.id).order_by(Team.name).all()
 
     return render_template('admin/live_control.html', game=game, rounds=top_rounds, teams=teams)
 
