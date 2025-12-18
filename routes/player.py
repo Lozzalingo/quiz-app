@@ -392,8 +392,8 @@ def submit_round(round_id):
                 'choice': bet_choice
             })
 
-            # Points for betting = negative bet amount (deducted until results are set)
-            points = -bet_amount
+            # Points = 0 until admin sets results (no deduction on bet placement)
+            points = 0
 
         # Handle ordering questions specially
         elif q_type == 'ordering':

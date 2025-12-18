@@ -735,11 +735,27 @@ body.timer-active {
         {% for question in questions %}
         {% set points = answer_points.get(question.id, 0) if answer_points else 0 %}
         {% set has_answer = question.id in existing_answers %}
+        {% set is_betting = question.type == 'betting' %}
+        {% set betting_results_set = question.betting.betting_results | default([]) | length > 0 if is_betting and question.betting else false %}
         {% set correctness_class = '' %}
         {% set indicator_class = '' %}
         {% set indicator_symbol = '' %}
         {% if read_only and has_answer %}
-            {% if points > 0 %}
+            {% if is_betting and not betting_results_set %}
+                {# Betting question without results - show pending #}
+                {% set correctness_class = 'is-pending' %}
+                {% set indicator_class = 'pending' %}
+                {% set indicator_symbol = '⏳' %}
+            {% elif points > 0 %}
+                {% set correctness_class = 'is-correct' %}
+                {% set indicator_class = 'correct' %}
+                {% set indicator_symbol = '✓' %}
+            {% elif points < 0 %}
+                {% set correctness_class = 'is-incorrect' %}
+                {% set indicator_class = 'incorrect' %}
+                {% set indicator_symbol = '✗' %}
+            {% elif is_betting %}
+                {# Betting with 0 points and results set means break-even #}
                 {% set correctness_class = 'is-correct' %}
                 {% set indicator_class = 'correct' %}
                 {% set indicator_symbol = '✓' %}

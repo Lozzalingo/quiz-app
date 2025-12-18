@@ -1517,16 +1517,25 @@ def set_betting_results(round_id, question_id):
             choice = bet_data.get('choice', '')
 
             # Calculate points based on where their choice placed
-            points = 0
+            # Points are NOT deducted upfront, so:
+            # - If won: net gain = bet_amount * multiplier - bet_amount (profit)
+            # - If lost: net loss = -bet_amount
             if choice in results:
                 place = results.index(choice)  # 0 = 1st, 1 = 2nd, etc.
                 if place < len(multipliers):
                     multiplier = multipliers[place]
-                    points = bet_amount * multiplier
+                    # Win: profit = (multiplier * bet) - bet = bet * (multiplier - 1)
+                    # But if multiplier >= 1, they at least get their bet back as profit
+                    points = bet_amount * multiplier - bet_amount
+                    if points < 0:
+                        points = 0  # At worst, break even if multiplier < 1
+                else:
+                    # Placed but no multiplier for this place - lose bet
+                    points = -bet_amount
+            else:
+                # Didn't place at all - lose bet
+                points = -bet_amount
 
-            # Points = winnings (bet was already deducted, so we add back the win amount)
-            # If they won: bet_amount * multiplier
-            # If they lost: 0 (they already lost bet_amount from initial submission)
             answer.points = points
             updated_count += 1
         except (json.JSONDecodeError, KeyError, TypeError):
@@ -1546,6 +1555,17 @@ def set_betting_results(round_id, question_id):
         socketio.emit('score_updated', {
             'round_id': round_id
         }, room=f'spreadsheet_{game.id}')
+
+        # Also emit to game room for players viewing their answers
+        # Re-fetch answers to get updated points
+        updated_answers = Answer.query.filter_by(round_id=round_id, question_id=question_id).all()
+        for answer in updated_answers:
+            socketio.emit('answer_score_updated', {
+                'round_id': round_id,
+                'question_id': question_id,
+                'team_id': answer.team_id,
+                'points': answer.points
+            }, room=f'game_{game.id}')
     except Exception:
         pass
 
