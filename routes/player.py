@@ -132,8 +132,11 @@ def next_questions(game_code):
                               pause_mode=game.pause_mode,
                               active_nav='questions')
 
-    # Get all rounds ordered
-    rounds = Round.query.filter_by(game_id=game.id).order_by(Round.order).all()
+    # Get all rounds ordered - top-level rounds first (parent_id null), then by order
+    rounds = Round.query.filter_by(game_id=game.id).order_by(
+        Round.parent_id.isnot(None),  # False (0) for top-level, True (1) for children
+        Round.order
+    ).all()
 
     # Find submitted round IDs
     submitted_round_ids = set()
