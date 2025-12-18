@@ -2369,6 +2369,33 @@ socket.on('tab_penalty_reset', (data) => {
 // Listen for submission updates and refresh team scores
 socket.on('submission_update', (data) => {
     console.log('[Admin] Submission update:', data);
+    // Update specific team score if we have the data
+    if (data.team_id && data.total_score !== undefined) {
+        const scoreEl = document.getElementById('team-score-' + data.team_id);
+        if (scoreEl) {
+            scoreEl.textContent = data.total_score + ' pts';
+        }
+    } else {
+        // Fallback to fetching all scores
+        fetchTeamScores();
+    }
+});
+
+// Listen for score updates (from spreadsheet edits)
+socket.on('score_updated', (data) => {
+    console.log('[Admin] Score update:', data);
+    fetchTeamScores();
+});
+
+// Listen for answer score updates (from spreadsheet edits)
+socket.on('answer_score_updated', (data) => {
+    console.log('[Admin] Answer score update:', data);
+    fetchTeamScores();
+});
+
+// Listen for betting results (scores change)
+socket.on('betting_results_set', (data) => {
+    console.log('[Admin] Betting results set:', data);
     fetchTeamScores();
 });
 
