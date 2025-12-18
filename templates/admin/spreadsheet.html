@@ -764,8 +764,45 @@ socket.on('score_updated', (data) => {
     if (!isLocalUpdate) loadDataPreserveScroll();
 });
 
-socket.on('submission_update', () => {
-    if (!isLocalUpdate) loadDataPreserveScroll();
+socket.on('submission_update', (data) => {
+    if (isLocalUpdate) return;
+
+    // If we have detailed data, update cells directly (from spreadsheet room)
+    if (data.team_id && data.answers && table) {
+        const row = table.getRows().find(r => r.getData().team_id === data.team_id);
+        if (row) {
+            const updates = {};
+
+            // Update each answer cell
+            for (const [questionId, answerData] of Object.entries(data.answers)) {
+                updates[`r${data.round_id}_q${questionId}_text`] = answerData.text;
+                updates[`r${data.round_id}_q${questionId}_points`] = answerData.points;
+            }
+
+            // Update round total
+            updates[`round_${data.round_id}_total`] = data.round_points;
+
+            // Update total score
+            updates.total_score = data.total_score;
+
+            // Apply updates with animation
+            row.update(updates);
+
+            // Flash the row to indicate update
+            const rowEl = row.getElement();
+            rowEl.style.transition = 'background-color 0.3s';
+            rowEl.style.backgroundColor = '#e8f5e9';
+            setTimeout(() => {
+                rowEl.style.backgroundColor = '';
+            }, 1000);
+        } else {
+            // New team - reload data
+            loadDataPreserveScroll();
+        }
+    } else {
+        // Fallback for game room events (no detailed data)
+        // Don't reload for these - they're just for player UI
+    }
 });
 
 // Helper to reset isLocalUpdate after a delay (to ignore our own socket events)

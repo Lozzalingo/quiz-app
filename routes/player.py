@@ -506,6 +506,35 @@ def submit_round(round_id):
                 'total_teams': total_teams
             }, room=f'game_{game.id}')
 
+            # Emit detailed data to spreadsheet for real-time cell updates
+            team_answers = Answer.query.filter_by(team_id=team.id, round_id=round_obj.id).all()
+            answers_data = {}
+            round_points = 0
+            for ans in team_answers:
+                answers_data[ans.question_id] = {
+                    'text': ans.answer_text or '',
+                    'points': ans.points or 0,
+                    'bonus': ans.bonus_points or 0,
+                    'penalty': ans.penalty_points or 0
+                }
+                round_points += (ans.points or 0)
+
+            # Calculate team's total score
+            all_answers = Answer.query.filter_by(team_id=team.id).all()
+            total_score = sum((a.points or 0) + (a.bonus_points or 0) - (a.penalty_points or 0) for a in all_answers)
+            custom_scores = team.get_custom_scores()
+            custom_total = sum(custom_scores.values()) if custom_scores else 0
+            total_score += custom_total - team.tab_penalty_points
+
+            socketio.emit('submission_update', {
+                'team_id': team.id,
+                'team_name': team.name,
+                'round_id': round_obj.id,
+                'answers': answers_data,
+                'round_points': round_points,
+                'total_score': int(total_score)
+            }, room=f'spreadsheet_{game.id}')
+
         except Exception:
             pass  # Socket.IO not available or error
 
