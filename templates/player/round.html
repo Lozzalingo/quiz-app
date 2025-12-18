@@ -822,7 +822,7 @@ body.timer-active {
             {% endif %}
         {% endif %}
         <div class="question-card {{ correctness_class }}" data-question-id="{{ question.id }}">
-            {% if read_only and has_answer %}
+            {% if read_only and has_answer and question.type != 'ordering' %}
             <div class="answer-indicator {{ indicator_class }}" data-question-id="{{ question.id }}">{{ indicator_symbol }}</div>
             {% endif %}
             <div class="question-number">Question {{ loop.index }}</div>
@@ -1227,9 +1227,13 @@ function updateQuestionCorrectness(questionId, points) {
     const card = document.querySelector(`.question-card[data-question-id="${questionId}"]`);
     if (!card) return;
 
-    // For ordering questions, also update slot indicators
+    // For ordering questions, only update slot indicators (no top indicator)
     if (isOrderingQuestion(questionId)) {
         updateOrderingSlots(questionId);
+        // Update card class but skip the top indicator
+        card.classList.remove('is-correct', 'is-incorrect', 'is-pending');
+        card.classList.add(points > 0 ? 'is-correct' : 'is-incorrect');
+        return;
     }
 
     // Remove existing classes
