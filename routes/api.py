@@ -3,6 +3,7 @@ API routes for Quiz App.
 
 JSON endpoints for AJAX requests and real-time updates.
 """
+import json
 import os
 import uuid
 from datetime import datetime
