@@ -197,6 +197,13 @@ body {
     color: #202124;
 }
 
+.qr-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
 /* Mobile responsive styles */
 @media (max-width: 600px) {
     .game-page {
@@ -238,16 +245,37 @@ body {
     .game-meta {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 8px;
+        gap: 6px 12px;
+    }
+
+    .game-meta .scores-link {
+        order: 10;
+        width: 100%;
+        justify-content: center;
+        margin-top: 8px;
     }
 
     .qr-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         margin: 0 auto;
     }
 
     .qr-section img {
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
+    }
+
+    .qr-section small {
+        margin: 0;
+    }
+
+    .qr-section .qr-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
 
     .section-card {
@@ -308,7 +336,8 @@ body {
     }
 
     .round-actions .add-sub-btn {
-        display: none;
+        font-size: 10px;
+        padding: 2px 6px;
     }
 
     .round-actions .icon-btn {
@@ -1239,8 +1268,10 @@ body {
         {% if game.qr_code_path %}
         <div class="qr-section">
             <img src="{{ url_for('static', filename=game.qr_code_path) }}" alt="QR Code" id="qr-code-img">
-            <small>Scan to join</small>
-            <button type="button" class="qr-regenerate-btn" onclick="regenerateQRCode()" title="Regenerate QR code">↻</button>
+            <div class="qr-info">
+                <small>Scan to join</small>
+                <button type="button" class="qr-regenerate-btn" onclick="regenerateQRCode()" title="Regenerate QR code">↻</button>
+            </div>
         </div>
         {% endif %}
     </div>
