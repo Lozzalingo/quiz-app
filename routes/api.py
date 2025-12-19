@@ -322,6 +322,7 @@ def get_game_answers(game_id):
 
             for q in questions:
                 q_id = q.get('id', '')
+                q_type = q.get('type', 'text')
                 answer = Answer.query.filter_by(
                     team_id=team.id,
                     round_id=round_obj.id,
@@ -329,9 +330,21 @@ def get_game_answers(game_id):
                 ).first()
 
                 if answer:
+                    # For betting questions, parse JSON and show bet amount in text column
+                    display_text = answer.answer_text or ''
+                    if q_type == 'betting' and display_text:
+                        try:
+                            bet_data = json.loads(display_text)
+                            # Show bet amount and choice for display
+                            bet_amount = bet_data.get('bet_amount', 0)
+                            choice = bet_data.get('choice', '')
+                            display_text = f"{bet_amount} on {choice}" if choice else str(bet_amount)
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+
                     round_data['answers'][q_id] = {
                         'answer_id': answer.id,
-                        'text': answer.answer_text or '',
+                        'text': display_text,
                         'points': answer.points or 0,
                         'bonus': answer.bonus_points or 0,
                         'penalty': answer.penalty_points or 0,
