@@ -276,9 +276,11 @@ def register_socketio_handlers(sio):
         """Admin joins spreadsheet room for real-time sync."""
         game_id = data.get('game_id')
         if game_id:
-            room = f'spreadsheet_{game_id}'
-            join_room(room)
-            print(f'Admin {request.sid} joined spreadsheet room {room}')
+            spreadsheet_room = f'spreadsheet_{game_id}'
+            game_room = f'game_{game_id}'
+            join_room(spreadsheet_room)
+            join_room(game_room)  # Also join game room to receive score_updated events
+            print(f'Admin {request.sid} joined rooms: {spreadsheet_room}, {game_room}')
             emit('joined_spreadsheet', {'game_id': game_id})
 
     @sio.on('team_away_status_changed')

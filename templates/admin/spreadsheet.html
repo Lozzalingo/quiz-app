@@ -847,10 +847,6 @@ socket.on('tab_penalty_updated', (data) => {
     if (!isLocalUpdate) loadDataPreserveScroll();
 });
 
-socket.on('manual_penalty_updated', (data) => {
-    // Refresh data when manual penalty changes
-    if (!isLocalUpdate) loadDataPreserveScroll();
-});
 
 async function loadData() {
     try {
@@ -1006,24 +1002,6 @@ function buildColumns(config, customCols = []) {
                 const newSeconds = parseTabTime(String(inputVal));
                 isLocalUpdate = true;
                 updateTabAwaySeconds(row.team_id, newSeconds)
-                    .then(() => updateRowTotal(cell.getRow()))
-                    .finally(resetLocalUpdateFlag);
-            }
-        },
-        {
-            title: "Minus",
-            field: "manual_penalty_points",
-            width: savedWidths["manual_penalty_points"] || 70,
-            minWidth: 60,
-            cssClass: "col-minus-penalty",
-            hozAlign: "center",
-            headerTooltip: "Manual penalty points (subtracted from score)",
-            editor: "number",
-            cellEdited: function(cell) {
-                const row = cell.getRow().getData();
-                const points = parseFloat(cell.getValue()) || 0;
-                isLocalUpdate = true;
-                updateManualPenalty(row.team_id, points)
                     .then(() => updateRowTotal(cell.getRow()))
                     .finally(resetLocalUpdateFlag);
             }
