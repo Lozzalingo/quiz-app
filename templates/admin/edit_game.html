@@ -381,78 +381,6 @@ body {
     }
 }
 
-/* Mobile portrait only: 2-row grid layout for round items */
-@media (max-width: 480px) {
-    .round-item {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        grid-template-rows: auto auto;
-        gap: 6px 8px;
-    }
-
-    .round-item .drag-handle {
-        display: none;
-    }
-
-    .round-item .round-order {
-        grid-row: 1;
-        grid-column: 1;
-        width: 24px;
-        height: 24px;
-        font-size: 11px;
-    }
-
-    .round-item .round-name {
-        grid-row: 1;
-        grid-column: 2;
-        font-size: 14px;
-        font-weight: 500;
-        padding: 2px 4px;
-        margin: 0;
-    }
-
-    .round-item .round-questions {
-        grid-row: 1;
-        grid-column: 3;
-        font-size: 11px;
-        white-space: nowrap;
-    }
-
-    .round-item .toggle-round-btn {
-        grid-row: 2;
-        grid-column: 1;
-        padding: 4px 10px;
-        font-size: 11px;
-    }
-
-    .round-item .round-actions {
-        grid-row: 2;
-        grid-column: 2 / 4;
-        justify-content: flex-end;
-    }
-
-    .round-actions .add-sub-btn {
-        font-size: 10px;
-        padding: 3px 8px;
-    }
-
-    .round-actions .icon-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 13px;
-    }
-
-    .round-item.nested {
-        padding-left: 12px;
-        margin-left: 8px;
-    }
-
-    .round-item.nested .round-order {
-        font-size: 9px;
-        width: 28px;
-    }
-}
-
 .section-card {
     background: white;
     border-radius: 8px;
@@ -563,6 +491,78 @@ body {
 
 .round-item.drag-over {
     border-top: 2px solid #673ab7;
+}
+
+/* Mobile portrait only: 2-row grid layout for round items */
+@media (max-width: 480px) {
+    .round-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 6px 8px;
+    }
+
+    .round-item .drag-handle {
+        display: none;
+    }
+
+    .round-item .round-order {
+        grid-row: 1;
+        grid-column: 1;
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
+
+    .round-item .round-name {
+        grid-row: 1;
+        grid-column: 2;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 2px 4px;
+        margin: 0;
+    }
+
+    .round-item .round-questions {
+        grid-row: 1;
+        grid-column: 3;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    .round-item .toggle-round-btn {
+        grid-row: 2;
+        grid-column: 1;
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+
+    .round-item .round-actions {
+        grid-row: 2;
+        grid-column: 2 / 4;
+        justify-content: flex-end;
+    }
+
+    .round-actions .add-sub-btn {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .round-actions .icon-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
+
+    .round-item.nested {
+        padding-left: 12px;
+        margin-left: 8px;
+    }
+
+    .round-item.nested .round-order {
+        font-size: 9px;
+        width: 28px;
+    }
 }
 
 .round-order {
