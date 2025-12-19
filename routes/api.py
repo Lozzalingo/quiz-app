@@ -895,6 +895,50 @@ def clear_team_submission(round_id, team_id):
     })
 
 
+@bp.route('/round/<int:round_id>/reset-all', methods=['POST'])
+@admin_required_api
+def reset_round_all_teams(round_id):
+    """Allow ALL teams to resubmit their answers for a round."""
+    round_obj = Round.query.get_or_404(round_id)
+    game = round_obj.game
+
+    # Get all teams in this game
+    teams = Team.query.filter_by(game_id=game.id).all()
+
+    count = 0
+    for team in teams:
+        # Create resubmit permission if doesn't exist
+        existing = ResubmitPermission.query.filter_by(
+            team_id=team.id,
+            round_id=round_id
+        ).first()
+
+        if not existing:
+            permission = ResubmitPermission(
+                team_id=team.id,
+                round_id=round_id
+            )
+            db.session.add(permission)
+            count += 1
+
+    db.session.commit()
+
+    # Emit Socket.IO event to notify all teams
+    try:
+        from app import socketio
+        socketio.emit('round_reset', {
+            'round_id': round_id
+        }, room=f'game_{game.id}')
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'message': f'Allowed {count} teams to resubmit',
+        'count': count
+    })
+
+
 def team_required_api(f):
     """Decorator to require team authentication for API endpoints."""
     @wraps(f)

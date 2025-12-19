@@ -432,6 +432,26 @@ body {
     background: #ffe0b2 !important;
 }
 
+.submissions-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.reset-all-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 4px;
+    color: #1565c0;
+    cursor: pointer;
+}
+
+.reset-all-btn:hover {
+    background: #bbdefb;
+}
+
 .no-teams {
     font-size: 12px;
     color: #5f6368;
@@ -745,6 +765,9 @@ body {
                 </button>
             </div>
             <div class="submissions-panel" id="submissions-panel-{{ r.id }}">
+                <div class="submissions-header">
+                    <button class="reset-all-btn" onclick="resetAllTeams({{ r.id }})">🔄 Reset All</button>
+                </div>
                 <div id="submissions-list-{{ r.id }}">
                     <span class="no-teams">Loading...</span>
                 </div>
@@ -795,6 +818,9 @@ body {
                 </button>
             </div>
             <div class="submissions-panel" id="submissions-panel-{{ r.id }}">
+                <div class="submissions-header">
+                    <button class="reset-all-btn" onclick="resetAllTeams({{ r.id }})">🔄 Reset All</button>
+                </div>
                 <div id="submissions-list-{{ r.id }}">
                     <span class="no-teams">Loading...</span>
                 </div>
@@ -1188,6 +1214,30 @@ async function confirmResubmit() {
             });
         } else {
             showError('Could not allow edit: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Error: ' + error.message);
+    }
+}
+
+async function resetAllTeams(roundId) {
+    if (!confirm('Allow ALL teams to re-edit their answers for this round?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/round/${roundId}/reset-all`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // Reload the submissions panel
+            await loadSubmissions(roundId);
+            alert(data.message);
+        } else {
+            showError('Could not reset round: ' + (data.error || 'Unknown error'));
         }
     } catch (error) {
         showError('Error: ' + error.message);
