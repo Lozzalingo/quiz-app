@@ -199,54 +199,215 @@ body {
 
 /* Mobile responsive styles */
 @media (max-width: 600px) {
+    .game-page {
+        padding: 12px;
+    }
+
     .game-header {
         flex-direction: column;
         gap: 16px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .game-info {
+        text-align: center;
+    }
+
+    .game-info h1 {
+        font-size: 18px;
+        margin-left: 0;
+        padding: 4px;
+    }
+
+    .game-code {
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .join-link-row {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .join-link {
+        font-size: 11px;
+        text-align: center;
     }
 
     .game-meta {
         flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .qr-section {
+        margin: 0 auto;
+    }
+
+    .qr-section img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .section-card {
+        padding: 12px;
+    }
+
+    .section-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .section-header h2 {
+        font-size: 14px;
+    }
+
+    .add-btn {
+        padding: 5px 12px;
+        font-size: 12px;
     }
 
     .round-item {
         flex-wrap: wrap;
+        padding: 12px 0;
+        gap: 8px;
     }
 
     .round-item .round-name {
         flex: none;
         width: 100%;
         order: -1;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .round-item .drag-handle {
+        display: none;
+    }
+
+    .round-item .round-order {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+
+    .round-item .round-questions {
+        font-size: 11px;
+        margin-right: 4px;
+    }
+
+    .toggle-round-btn {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    .round-actions {
+        gap: 2px;
+    }
+
+    .round-actions .add-sub-btn {
+        display: none;
+    }
+
+    .round-actions .icon-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
 
     .round-item.nested {
-        padding-left: 16px;
+        padding-left: 12px;
         margin-left: 8px;
     }
 
     .round-item.nested .round-name {
-        width: calc(100% - 40px);
+        width: calc(100% - 20px);
     }
 
     .team-item {
         flex-wrap: wrap;
         gap: 8px;
+        padding: 10px;
     }
 
     .team-name {
         flex: none;
         width: 100%;
         margin-bottom: 4px;
+        font-size: 14px;
+    }
+
+    .team-score {
+        padding: 3px 10px;
+        font-size: 12px;
+        min-width: 45px;
+    }
+
+    .team-tab-penalty {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+
+    .team-tab-penalty .timer-display {
+        font-size: 11px;
+        min-width: 38px;
+    }
+
+    .team-login-count {
+        font-size: 11px;
+        padding: 3px 6px;
     }
 
     .action-bar {
         flex-wrap: wrap;
+        gap: 6px;
     }
 
     .action-bar .action-btn,
     .action-bar form {
         flex: 1 1 45%;
-        min-width: 120px;
+        min-width: 100px;
+    }
+
+    .action-btn {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+    }
+
+    .pause-controls {
+        padding: 12px;
+    }
+
+    .pause-buttons {
+        gap: 6px;
+    }
+
+    .pause-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .tab-penalty-controls {
+        padding: 8px 0;
+    }
+
+    .tab-penalty-controls-info h4 {
+        font-size: 13px;
+    }
+
+    .tab-penalty-controls-info p {
+        font-size: 11px;
+    }
+
+    .tab-penalty-buttons {
+        gap: 6px;
+    }
+
+    .tab-penalty-btn {
+        padding: 5px 14px;
+        font-size: 11px;
     }
 }
 
