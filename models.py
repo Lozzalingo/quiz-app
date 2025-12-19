@@ -152,6 +152,7 @@ class Team(UserMixin, db.Model):
     tab_switch_count = db.Column(db.Integer, default=0)  # Track number of tab switches
     login_count = db.Column(db.Integer, default=0)  # Track number of sign-ins
     logout_count = db.Column(db.Integer, default=0)  # Track number of sign-outs
+    manual_penalty_points = db.Column(db.Float, default=0)  # Manual penalty points (subtracted from score)
 
     # Relationships
     answers = db.relationship('Answer', backref='team', lazy='dynamic',

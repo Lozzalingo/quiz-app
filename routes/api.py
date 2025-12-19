@@ -304,6 +304,7 @@ def get_game_answers(game_id):
             'custom_scores': custom_scores,
             'tab_away_seconds': team.tab_away_seconds or 0,
             'tab_penalty_points': team.tab_penalty_points,
+            'manual_penalty_points': team.manual_penalty_points or 0,
             'tab_switch_count': team.tab_switch_count or 0,
             'login_count': team.login_count or 0,
             'logout_count': team.logout_count or 0,
@@ -354,7 +355,7 @@ def get_game_answers(game_id):
             row['rounds'][round_obj.id] = round_data
             grand_total += round_data['round_points']
 
-        row['total_score'] = grand_total + total_bonus - total_penalty + custom_total - team.tab_penalty_points
+        row['total_score'] = grand_total + total_bonus - total_penalty + custom_total - team.tab_penalty_points - (team.manual_penalty_points or 0)
         row['total_bonus'] = total_bonus
         row['total_penalty'] = total_penalty
 
@@ -1309,6 +1310,45 @@ def set_tab_away_seconds(team_id):
         'success': True,
         'tab_away_seconds': team.tab_away_seconds,
         'penalty_points': team.tab_penalty_points
+    })
+
+
+@bp.route('/team/<int:team_id>/manual-penalty', methods=['PUT'])
+@admin_required_api
+def set_manual_penalty(team_id):
+    """Set a team's manual penalty points (admin only)."""
+    team = Team.query.get_or_404(team_id)
+    data = request.get_json()
+
+    if not data or 'points' not in data:
+        return jsonify({'success': False, 'error': 'Points value required'}), 400
+
+    try:
+        points = float(data['points'])
+        if points < 0:
+            points = 0
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Invalid points value'}), 400
+
+    team.manual_penalty_points = points
+    db.session.commit()
+
+    # Emit Socket.IO events
+    try:
+        from app import socketio
+        socketio.emit('manual_penalty_updated', {
+            'team_id': team.id,
+            'manual_penalty_points': team.manual_penalty_points
+        }, room=f'spreadsheet_{team.game_id}')
+        socketio.emit('score_updated', {
+            'team_id': team.id
+        }, room=f'game_{team.game_id}')
+    except Exception as e:
+        print(f'[API] set_manual_penalty: Error emitting socket events: {e}')
+
+    return jsonify({
+        'success': True,
+        'manual_penalty_points': team.manual_penalty_points
     })
 
 
