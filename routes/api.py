@@ -48,14 +48,71 @@ def get_questions(round_id):
 @admin_required_api
 def update_questions(round_id):
     """Update questions for a round."""
+    from utils import calculate_points_for_answer
+
     round_obj = Round.query.get_or_404(round_id)
 
     data = request.get_json()
     if not data or 'questions' not in data:
         return jsonify({'success': False, 'error': 'No questions provided'}), 400
 
-    round_obj.set_questions(data['questions'])
+    # Get old questions to compare estimate configs
+    old_questions = round_obj.get_questions()
+    old_questions_map = {q.get('id'): q for q in old_questions}
+
+    new_questions = data['questions']
+
+    # Track questions that need re-scoring
+    questions_to_rescore = []
+
+    for new_q in new_questions:
+        q_id = new_q.get('id')
+        q_type = new_q.get('type', 'text')
+
+        if q_type == 'estimate' and q_id in old_questions_map:
+            old_q = old_questions_map[q_id]
+            old_estimate = old_q.get('estimate', {})
+            new_estimate = new_q.get('estimate', {})
+
+            # Check if estimate config changed (correct answer or point values)
+            if (old_estimate.get('correct_answer') != new_estimate.get('correct_answer') or
+                old_estimate.get('points_exact') != new_estimate.get('points_exact') or
+                old_estimate.get('points_10') != new_estimate.get('points_10') or
+                old_estimate.get('points_20') != new_estimate.get('points_20') or
+                old_estimate.get('points_30') != new_estimate.get('points_30')):
+                questions_to_rescore.append(new_q)
+
+    round_obj.set_questions(new_questions)
+
+    # Re-score answers for estimate questions with changed configs
+    rescored_teams = set()
+    for q in questions_to_rescore:
+        q_id = q.get('id')
+        answers = Answer.query.filter_by(round_id=round_id, question_id=q_id).all()
+        for answer in answers:
+            new_points = calculate_points_for_answer(q, answer.answer_text)
+            if answer.points != new_points:
+                answer.points = new_points
+                rescored_teams.add(answer.team_id)
+
     db.session.commit()
+
+    # Emit socket events if any answers were rescored
+    if rescored_teams:
+        try:
+            from app import socketio
+            game_id = round_obj.game_id
+            # Notify spreadsheet room to refresh
+            socketio.emit('answers_rescored', {
+                'round_id': round_id,
+                'team_ids': list(rescored_teams)
+            }, room=f'spreadsheet_{game_id}')
+            # Notify game room for score updates
+            socketio.emit('score_updated', {
+                'team_ids': list(rescored_teams)
+            }, room=f'game_{game_id}')
+        except Exception as e:
+            print(f'[API] Error emitting rescore events: {e}')
 
     return jsonify({'success': True})
 

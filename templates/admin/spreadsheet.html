@@ -833,6 +833,11 @@ socket.on('betting_results_set', () => {
     loadDataPreserveScroll();
 });
 
+socket.on('answers_rescored', (data) => {
+    // Refresh when estimate answers are rescored (correct answer changed)
+    loadDataPreserveScroll();
+});
+
 socket.on('tab_penalty_updated', (data) => {
     // Refresh data when tab penalty changes
     if (!isLocalUpdate) loadDataPreserveScroll();

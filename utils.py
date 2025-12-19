@@ -263,5 +263,42 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
             return float(base_points)
         return 0.0
 
+    elif q_type == 'estimate':
+        # Estimate question - points based on percentage distance from correct answer
+        estimate_config = question_config.get('estimate', {})
+        correct_answer = estimate_config.get('correct_answer')
+        points_exact = estimate_config.get('points_exact', 4)
+        points_10 = estimate_config.get('points_10', 3)
+        points_20 = estimate_config.get('points_20', 2)
+        points_30 = estimate_config.get('points_30', 1)
+
+        if not answer_text or correct_answer is None:
+            return 0.0
+
+        try:
+            player_answer = float(answer_text)
+            correct_val = float(correct_answer)
+
+            if correct_val == 0:
+                # Special case: if correct answer is 0, exact match only
+                if player_answer == 0:
+                    return float(points_exact)
+                return 0.0
+
+            # Calculate percentage difference
+            pct_diff = abs(player_answer - correct_val) / abs(correct_val)
+
+            if pct_diff == 0:
+                return float(points_exact)
+            elif pct_diff <= 0.10:
+                return float(points_10)
+            elif pct_diff <= 0.20:
+                return float(points_20)
+            elif pct_diff <= 0.30:
+                return float(points_30)
+            return 0.0
+        except (ValueError, TypeError):
+            return 0.0
+
     # Unknown type
     return 0.0
