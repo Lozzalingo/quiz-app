@@ -80,6 +80,28 @@
             background: rgba(255,255,255,0.3);
         }
 
+        /* Mobile nav layout */
+        @media (max-width: 768px) {
+            nav.site-nav {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            nav.site-nav > ul:first-child {
+                justify-content: center;
+                width: 100%;
+            }
+            nav.site-nav .nav-links {
+                justify-content: center;
+                width: 100%;
+                flex-wrap: wrap;
+            }
+            nav.site-nav .nav-links li {
+                margin: 0;
+            }
+        }
+
         /* Footer styling */
         footer.site-footer {
             text-align: center;
