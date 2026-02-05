@@ -302,3 +302,34 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
 
     # Unknown type
     return 0.0
+
+
+def apply_round_deduplication(team_id, round_id, questions, Answer):
+    """
+    Apply duplicate answer deduction for a team's answers in a round.
+
+    If a team gives the same text answer for multiple questions in the same
+    round, only the first one (by question order) keeps its points.
+
+    Args:
+        team_id: The team's database ID
+        round_id: The round's database ID
+        questions: List of question config dicts (in order)
+        Answer: The Answer model class
+    """
+    answers = Answer.query.filter_by(team_id=team_id, round_id=round_id).all()
+    answer_by_qid = {a.question_id: a for a in answers}
+
+    seen_texts = set()
+    for q in questions:
+        q_id = q.get('id', '')
+        if q.get('type', 'text') != 'text':
+            continue
+        answer = answer_by_qid.get(q_id)
+        if not answer or not answer.answer_text or answer.points <= 0:
+            continue
+        normalized = answer.answer_text.strip().lower()
+        if normalized in seen_texts:
+            answer.points = 0
+        else:
+            seen_texts.add(normalized)

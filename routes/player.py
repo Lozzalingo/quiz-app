@@ -399,6 +399,7 @@ def submit_round(round_id):
     # Process answers
     questions = round_obj.get_questions()
     all_answers = {}
+    scored_answer_texts = set()  # Track answers that already earned points (dedup)
     import json
 
     for q in questions:
@@ -500,6 +501,14 @@ def submit_round(round_id):
 
             # Calculate points
             points = calculate_points_for_answer(q, answer_text, all_answers)
+
+            # Deduplicate: same answer text in same round only scores once
+            if points > 0 and answer_text:
+                normalized = answer_text.strip().lower()
+                if normalized in scored_answer_texts:
+                    points = 0
+                else:
+                    scored_answer_texts.add(normalized)
 
         # Update existing or create new answer
         if q_id in existing_by_question:

@@ -233,10 +233,17 @@ def update_question(round_id, question_id):
 
     # Re-score all existing answers for this question if validation changed
     if updated_question and ('validation' in data or 'correct_answer' in data):
+        from utils import apply_round_deduplication
         answers = Answer.query.filter_by(round_id=round_id, question_id=question_id).all()
+        affected_teams = set()
         for answer in answers:
             new_points = calculate_points_for_answer(updated_question, answer.answer_text)
             answer.points = new_points
+            affected_teams.add(answer.team_id)
+
+        # Re-apply deduplication for affected teams
+        for tid in affected_teams:
+            apply_round_deduplication(tid, round_id, questions, Answer)
 
     db.session.commit()
 
@@ -397,6 +404,10 @@ def update_answer_text(answer_id):
             answer.points = calculate_points_for_answer(q, answer.answer_text)
             break
 
+    # Re-apply deduplication for this team in this round
+    from utils import apply_round_deduplication
+    apply_round_deduplication(answer.team_id, round_obj.id, questions, Answer)
+
     db.session.commit()
 
     # Emit Socket.IO event
@@ -468,6 +479,11 @@ def create_answer():
             if q.get('id') == question_id:
                 answer.points = calculate_points_for_answer(q, text)
                 break
+
+        # Re-apply deduplication for this team in this round
+        from utils import apply_round_deduplication
+        db.session.flush()
+        apply_round_deduplication(team_id, round_id, questions, Answer)
 
     db.session.commit()
 
