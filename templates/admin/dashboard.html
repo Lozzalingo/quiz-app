@@ -166,6 +166,156 @@ body {
     margin-bottom: 16px;
     opacity: 0.5;
 }
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.duplicate-btn {
+    background: white;
+    color: #673ab7 !important;
+    border: 2px solid #673ab7;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.duplicate-btn:hover {
+    background: #f9f5ff;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.modal-header h2 {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0 0 12px 0;
+    color: #202124;
+}
+
+.modal-search {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.modal-search:focus {
+    border-color: #673ab7;
+    box-shadow: 0 0 0 2px rgba(103,58,183,0.15);
+}
+
+.modal-body {
+    overflow-y: auto;
+    padding: 8px 0;
+    flex: 1;
+}
+
+.game-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+
+.game-list-item:hover {
+    background: #f9f5ff;
+}
+
+.game-list-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+}
+
+.game-list-meta {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 2px;
+}
+
+.game-list-code {
+    font-family: monospace;
+    font-size: 12px;
+    color: #5f6368;
+    background: #f1f3f4;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.modal-footer {
+    padding: 12px 24px;
+    border-top: 1px solid #f1f3f4;
+    text-align: right;
+}
+
+.modal-cancel {
+    background: none;
+    border: 1px solid #dadce0;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #5f6368;
+}
+
+.modal-cancel:hover {
+    background: #f1f3f4;
+}
+
+.no-results {
+    padding: 24px;
+    text-align: center;
+    color: #5f6368;
+    font-size: 14px;
+}
 </style>
 {% endblock %}
 
@@ -173,7 +323,10 @@ body {
 <div class="dashboard">
     <div class="dashboard-header">
         <h1>Your Games</h1>
-        <a href="{{ url_for('admin.create_game') }}" class="create-btn">+ New Game</a>
+        <div class="header-actions">
+            <button type="button" class="duplicate-btn" onclick="openDuplicateModal()">Duplicate Game</button>
+            <a href="{{ url_for('admin.create_game') }}" class="create-btn">+ New Game</a>
+        </div>
     </div>
 
     {% if games %}
@@ -197,10 +350,6 @@ body {
                 <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="action-link">Edit</a>
                 <a href="{{ url_for('admin.live_control', game_id=game.id) }}" class="action-link">Control</a>
                 <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="action-link">Scores</a>
-                <form method="POST" action="{{ url_for('admin.duplicate_game', game_id=game.id) }}" style="flex: 1; margin: 0;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="action-link" style="width: 100%; border: none; background: none; cursor: pointer;">Duplicate</button>
-                </form>
             </div>
         </div>
         {% endfor %}
@@ -213,4 +362,67 @@ body {
     </div>
     {% endif %}
 </div>
+
+<!-- Duplicate Game Modal -->
+<div class="modal-overlay" id="duplicate-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Duplicate Game</h2>
+            <input type="text" class="modal-search" id="game-search" placeholder="Search games..." autocomplete="off">
+        </div>
+        <div class="modal-body" id="game-list">
+            {% for game in games %}
+            <form method="POST" action="{{ url_for('admin.duplicate_game', game_id=game.id) }}" style="margin: 0;" class="game-list-form" data-name="{{ game.name|lower }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="game-list-item">
+                    <div>
+                        <div class="game-list-name">{{ game.name }}</div>
+                        <div class="game-list-meta">{{ game.rounds.count() }} rounds &middot; {{ game.created_at.strftime('%b %d, %Y') }}</div>
+                    </div>
+                    <span class="game-list-code">{{ game.code }}</span>
+                </button>
+            </form>
+            {% endfor %}
+            <div class="no-results" id="no-results" style="display: none;">No games found</div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="modal-cancel" onclick="closeDuplicateModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDuplicateModal() {
+    document.getElementById('duplicate-modal').classList.add('active');
+    document.getElementById('game-search').value = '';
+    filterGames();
+    document.getElementById('game-search').focus();
+}
+
+function closeDuplicateModal() {
+    document.getElementById('duplicate-modal').classList.remove('active');
+}
+
+document.getElementById('duplicate-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeDuplicateModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDuplicateModal();
+});
+
+document.getElementById('game-search').addEventListener('input', filterGames);
+
+function filterGames() {
+    var query = document.getElementById('game-search').value.toLowerCase();
+    var forms = document.querySelectorAll('.game-list-form');
+    var visible = 0;
+    forms.forEach(function(form) {
+        var match = form.dataset.name.indexOf(query) !== -1;
+        form.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    document.getElementById('no-results').style.display = visible === 0 ? '' : 'none';
+}
+</script>
 {% endblock %}
