@@ -197,6 +197,10 @@ body {
                 <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="action-link">Edit</a>
                 <a href="{{ url_for('admin.live_control', game_id=game.id) }}" class="action-link">Control</a>
                 <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="action-link">Scores</a>
+                <form method="POST" action="{{ url_for('admin.duplicate_game', game_id=game.id) }}" style="flex: 1; margin: 0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="action-link" style="width: 100%; border: none; background: none; cursor: pointer;">Duplicate</button>
+                </form>
             </div>
         </div>
         {% endfor %}

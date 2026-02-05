@@ -239,6 +239,54 @@ def toggle_game_active(game_id):
     return redirect(url_for('admin.edit_game', game_id=game.id))
 
 
+@bp.route('/game/<int:game_id>/duplicate', methods=['POST'])
+@admin_required
+def duplicate_game(game_id):
+    """Duplicate a game's structure (rounds and questions) without teams or answers."""
+    original = Game.query.get_or_404(game_id)
+
+    # Generate unique code
+    code = generate_unique_code()
+    while Game.query.filter_by(code=code).first():
+        code = generate_unique_code()
+
+    # Create new game
+    new_game = Game(
+        name=f'{original.name} (Copy)',
+        code=code,
+        custom_columns_json=original.custom_columns_json,
+        tab_penalty_enabled=original.tab_penalty_enabled,
+    )
+    db.session.add(new_game)
+    db.session.flush()
+
+    # Generate QR code
+    base_url = current_app.config.get('BASE_URL', 'http://localhost:5777')
+    new_game.qr_code_path = generate_qr_code(code, new_game.id, base_url)
+
+    # Deep copy rounds (top-level first, then children)
+    def copy_rounds(parent_id_old, parent_id_new):
+        rounds = Round.query.filter_by(game_id=original.id, parent_id=parent_id_old).order_by(Round.order).all()
+        for r in rounds:
+            new_round = Round(
+                game_id=new_game.id,
+                parent_id=parent_id_new,
+                name=r.name,
+                order=r.order,
+                is_open=True,
+                questions_json=r.questions_json,
+            )
+            db.session.add(new_round)
+            db.session.flush()
+            copy_rounds(r.id, new_round.id)
+
+    copy_rounds(None, None)
+    db.session.commit()
+
+    flash(f'Game duplicated as "{new_game.name}" with code {new_game.code}', 'success')
+    return redirect(url_for('admin.edit_game', game_id=new_game.id))
+
+
 @bp.route('/game/<int:game_id>/delete', methods=['POST'])
 @admin_required
 def delete_game(game_id):
