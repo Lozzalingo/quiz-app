@@ -39,21 +39,18 @@ body {
     border: 1px solid #673ab7;
     padding: 10px 20px;
     border-radius: 4px;
-    font-family: inherit;
     font-size: 14px;
     font-weight: 500;
-    line-height: 1;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-sizing: border-box;
 }
 
 .create-btn:hover {
     background: #5e35a1;
-    border-color: #5e35a1;
+    color: white !important;
 }
 
 .games-grid {
@@ -174,43 +171,26 @@ body {
 .header-actions {
     display: flex;
     gap: 8px;
-    align-items: center;
 }
 
-.header-actions button.duplicate-btn,
-.header-actions a.create-btn {
-    all: unset !important;
-    background: white !important;
+.duplicate-btn {
+    background: white;
     color: #673ab7 !important;
-    border: 1px solid #673ab7 !important;
-    padding: 10px 20px !important;
-    border-radius: 4px !important;
-    font-family: inherit !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    line-height: 1 !important;
-    cursor: pointer !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    box-sizing: border-box !important;
-    width: auto !important;
-    margin: 0 !important;
+    border: 1px solid #673ab7;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.header-actions a.create-btn {
-    background: #673ab7 !important;
-    color: white !important;
-    border: 1px solid #673ab7 !important;
-}
-
-.header-actions button.duplicate-btn:hover {
-    background: #f9f5ff !important;
-}
-
-.header-actions a.create-btn:hover {
-    background: #5e35a1 !important;
-    border-color: #5e35a1 !important;
+.duplicate-btn:hover {
+    background: #f9f5ff;
+    color: #673ab7 !important;
 }
 
 .modal-overlay {
@@ -346,7 +326,7 @@ body {
     <div class="dashboard-header">
         <h1>Your Games</h1>
         <div class="header-actions">
-            <button type="button" class="duplicate-btn" onclick="openDuplicateModal()">Duplicate Game</button>
+            <a href="#" class="duplicate-btn" onclick="openDuplicateModal(); return false;">Duplicate Game</a>
             <a href="{{ url_for('admin.create_game') }}" class="create-btn">+ New Game</a>
         </div>
     </div>
