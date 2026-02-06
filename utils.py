@@ -238,11 +238,15 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
     q_type = question_config.get('type', 'text')
     validation = question_config.get('validation', '')
     base_points = question_config.get('points', 1)
+    penalty_points = question_config.get('penalty_points', 0)
 
     if q_type == 'text':
         # Text question - check regex pattern
         if validate_text_answer(answer_text, validation):
             return float(base_points)
+        # Wrong answer - apply penalty if answer was attempted
+        if answer_text and answer_text.strip() and penalty_points:
+            return -float(penalty_points)
         return 0.0
 
     elif q_type == 'number':
@@ -254,6 +258,8 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
             float(answer_text)
             return float(base_points)
         except (ValueError, TypeError):
+            if answer_text and answer_text.strip() and penalty_points:
+                return -float(penalty_points)
             return 0.0
 
     elif q_type == 'radio':
@@ -261,6 +267,9 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
         correct_answer = question_config.get('correct_answer', '')
         if str(answer_text).strip().lower() == str(correct_answer).strip().lower():
             return float(base_points)
+        # Wrong answer - apply penalty if answer was attempted
+        if answer_text and answer_text.strip() and penalty_points:
+            return -float(penalty_points)
         return 0.0
 
     elif q_type == 'estimate':

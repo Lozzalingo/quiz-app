@@ -1030,6 +1030,12 @@ function renderQuestions() {
                            value="${q.points || 1}"
                            onchange="updateQuestion(${index}, 'points', parseFloat(this.value))"
                            min="0" step="0.5">
+                    <span class="field-label" style="margin: 0; margin-left: 8px;">Wrong:</span>
+                    <input type="number" class="points-input"
+                           value="${q.penalty_points || 0}"
+                           onchange="updateQuestion(${index}, 'penalty_points', parseFloat(this.value))"
+                           min="0" step="0.5"
+                           title="Points deducted for wrong answers">
                 </div>
                 ` : '<div style="margin-right: auto;"></div>'}
                 <button type="button" class="icon-btn" onclick="duplicateQuestion(${index})" title="Duplicate">⧉</button>
