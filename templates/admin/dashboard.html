@@ -173,7 +173,7 @@ body {
     gap: 8px;
 }
 
-.duplicate-btn {
+.dup-game-action {
     --pico-background-color: white;
     --pico-border-color: #673ab7;
     --pico-color: #673ab7;
@@ -195,7 +195,7 @@ body {
     gap: 8px;
 }
 
-.duplicate-btn:hover {
+.dup-game-action:hover {
     --pico-background-color: #f9f5ff;
     background: #f9f5ff;
     color: #673ab7 !important;
@@ -334,7 +334,7 @@ body {
     <div class="dashboard-header">
         <h1>Your Games</h1>
         <div class="header-actions">
-            <button type="button" class="duplicate-btn" onclick="openDuplicateModal()">Duplicate Game</button>
+            <button type="button" class="dup-game-action" onclick="openDuplicateModal()">Duplicate Game</button>
             <a href="{{ url_for('admin.create_game') }}" class="create-btn">+ New Game</a>
         </div>
     </div>
