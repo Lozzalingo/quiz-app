@@ -39,18 +39,21 @@ body {
     border: 1px solid #673ab7;
     padding: 10px 20px;
     border-radius: 4px;
+    font-family: inherit;
     font-size: 14px;
     font-weight: 500;
+    line-height: 1;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    box-sizing: border-box;
 }
 
 .create-btn:hover {
     background: #5e35a1;
-    color: white !important;
+    border-color: #5e35a1;
 }
 
 .games-grid {
@@ -173,32 +176,26 @@ body {
     gap: 8px;
 }
 
-.dup-game-action {
-    --pico-background-color: white;
-    --pico-border-color: #673ab7;
-    --pico-color: #673ab7;
-    --pico-form-element-spacing-vertical: 10px;
-    --pico-form-element-spacing-horizontal: 20px;
-    --pico-line-height: 1;
+.header-actions button.dup-game-action {
+    all: unset;
     background: white;
-    color: #673ab7 !important;
+    color: #673ab7;
     border: 1px solid #673ab7;
     padding: 10px 20px;
     border-radius: 4px;
+    font-family: inherit;
     font-size: 14px;
     font-weight: 500;
     line-height: 1;
     cursor: pointer;
-    text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    box-sizing: border-box;
 }
 
-.dup-game-action:hover {
-    --pico-background-color: #f9f5ff;
+.header-actions button.dup-game-action:hover {
     background: #f9f5ff;
-    color: #673ab7 !important;
 }
 
 .modal-overlay {
