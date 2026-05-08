@@ -12,7 +12,8 @@ from flask import Blueprint, jsonify, request, current_app
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 
-from models import db, Game, Round, Team, Answer, ResubmitPermission
+from models import db, Game, Round, Team, Answer, ResubmitPermission, BetaRequest
+from email_service import send_admin_list_notification
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -1892,3 +1893,131 @@ def get_active_timers(game_id):
         'success': True,
         'timers': timers
     })
+
+
+@bp.route('/beta-request', methods=['POST', 'OPTIONS'])
+def submit_beta_request():
+    """Submit a beta access request (public endpoint, CORS enabled for fatbigquiz.com)."""
+    # Handle CORS preflight
+    allowed_origins = [
+        'https://fatbigquiz.com',
+        'https://www.fatbigquiz.com',
+        'http://localhost:3000',
+    ]
+    origin = request.headers.get('Origin', '')
+    cors_origin = origin if origin in allowed_origins else allowed_origins[0]
+
+    if request.method == 'OPTIONS':
+        response = jsonify({'ok': True})
+        response.headers['Access-Control-Allow-Origin'] = cors_origin
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
+
+    data = request.get_json()
+    if not data:
+        print('[API] Beta request: No data provided')
+        resp = jsonify({'success': False, 'error': 'No data provided'})
+        resp.headers['Access-Control-Allow-Origin'] = cors_origin
+        return resp, 400
+
+    name = (data.get('name') or '').strip()
+    email = (data.get('email') or '').strip().lower()
+    source = (data.get('source') or 'quiz-app').strip()
+
+    if not name or not email:
+        print(f'[API] Beta request: Missing fields - name={name}, email={email}')
+        resp = jsonify({'success': False, 'error': 'Name and email are required'})
+        resp.headers['Access-Control-Allow-Origin'] = cors_origin
+        return resp, 400
+
+    # Basic email validation
+    if '@' not in email or '.' not in email.split('@')[-1]:
+        print(f'[API] Beta request: Invalid email - {email}')
+        resp = jsonify({'success': False, 'error': 'Please enter a valid email address'})
+        resp.headers['Access-Control-Allow-Origin'] = cors_origin
+        return resp, 400
+
+    # Check for duplicate
+    existing = BetaRequest.query.filter_by(email=email).first()
+    if existing:
+        print(f'[API] Beta request: Duplicate email - {email}')
+        resp = jsonify({'success': True, 'message': 'You are already on the list!'})
+        resp.headers['Access-Control-Allow-Origin'] = cors_origin
+        return resp
+
+    try:
+        beta_req = BetaRequest(name=name, email=email, source=source)
+        db.session.add(beta_req)
+        db.session.commit()
+        print(f'[API] Beta request: Success - {name} ({email}) [source={source}]')
+
+        # Send admin notification email
+        try:
+            send_admin_list_notification(email=email, name=name, source=source)
+        except Exception as notify_err:
+            print(f'[API] Beta request: Admin notification failed - {notify_err}')
+
+        resp = jsonify({'success': True, 'message': 'Thanks! We will be in touch soon.'})
+        resp.headers['Access-Control-Allow-Origin'] = cors_origin
+        return resp
+    except Exception as e:
+        db.session.rollback()
+        print(f'[API] Beta request: Error - {e}')
+        resp = jsonify({'success': False, 'error': 'Something went wrong. Please try again.'})
+        resp.headers['Access-Control-Allow-Origin'] = cors_origin
+        return resp, 500
+
+
+# ===== Product Embed for Ecosystem Ads =====
+
+EMBED_CORS_ORIGINS = [
+    'https://laurence.computer',
+    'https://aiblogbuilder.laurence.computer',
+    'https://promptnews.laurence.computer',
+    'https://crowdsauced.laurence.computer',
+    'https://www.mariopintomma.com',
+    'https://fatbigquiz.com',
+    'https://coffeegoblin.co.uk',
+    'http://localhost:3000',
+    'http://localhost:5001',
+]
+
+
+@bp.route('/products/embed', methods=['GET', 'OPTIONS'])
+def products_embed():
+    """Public endpoint for cross-site product ads.
+    Returns the Fat Big Quiz App as an embeddable product card."""
+    origin = request.headers.get('Origin', '')
+    cors_origin = origin if origin in EMBED_CORS_ORIGINS else EMBED_CORS_ORIGINS[0]
+
+    if request.method == 'OPTIONS':
+        resp = jsonify({})
+        resp.headers['Access-Control-Allow-Origin'] = cors_origin
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+
+    products = [
+        {
+            'id': 'quiz-app',
+            'name': 'Fat Big Quiz App',
+            'description': 'Host your own pub quiz. Create rounds, manage teams, live scoring, and instant results.',
+            'price_display': 'Free',
+            'image_url': 'https://fatbigquiz.com/logo.png',
+            'product_url': 'https://app.fatbigquiz.com',
+            'limited_edition': False,
+            'is_preorder': False,
+            'category': 'Quiz App',
+            'shop_name': 'Fat Big Quiz',
+        },
+    ]
+
+    import random
+    random.shuffle(products)
+    limit = min(request.args.get('limit', 6, type=int), 20)
+    products = products[:limit]
+
+    resp = jsonify({'success': True, 'count': len(products), 'products': products})
+    resp.headers['Access-Control-Allow-Origin'] = cors_origin
+    return resp
