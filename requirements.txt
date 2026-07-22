@@ -28,8 +28,17 @@ WTForms
 email-validator
 
 # Production server
-gunicorn
-eventlet
+gunicorn==22.0.0
+eventlet==0.36.1
+
+# Payments
+stripe
 
 # Security
 Flask-Limiter
+
+# File storage (DO Spaces / S3)
+boto3
+
+# HTTP client (for downloading files from CDN)
+requests
