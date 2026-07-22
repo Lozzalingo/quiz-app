@@ -12,14 +12,14 @@
 .team-avatar {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 36px;
     margin: 0 auto 16px;
-    box-shadow: 0 4px 12px rgba(103, 58, 183, 0.3);
+    box-shadow: 0 4px 12px var(--brand-shadow);
 }
 
 .team-name-display {
@@ -51,7 +51,7 @@
 .stat-value {
     font-size: 28px;
     font-weight: 600;
-    color: #673ab7;
+    color: var(--brand-primary);
     margin-bottom: 4px;
 }
 
@@ -121,12 +121,12 @@
 }
 
 .action-btn-primary {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
 }
 
 .action-btn-primary:hover {
-    background: #5e35a1;
+    background: var(--brand-primary-hover);
 }
 
 .action-btn-secondary {
@@ -166,7 +166,7 @@
 .member-avatar {
     width: 36px;
     height: 36px;
-    background: #673ab7;
+    background: var(--brand-primary);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -191,7 +191,7 @@
 .edit-section-title {
     font-size: 14px;
     font-weight: 600;
-    color: #673ab7;
+    color: var(--brand-primary);
     margin-bottom: 16px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -231,14 +231,14 @@
 
 .form-input:focus {
     outline: none;
-    border-color: #673ab7;
-    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 2px var(--brand-shadow);
 }
 
 .save-btn {
     width: 100%;
     padding: 12px;
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
     border: none;
     border-radius: 8px;
@@ -249,7 +249,7 @@
 }
 
 .save-btn:hover {
-    background: #5e35a1;
+    background: var(--brand-primary-hover);
 }
 
 .form-divider {
@@ -346,7 +346,7 @@
                 <label class="form-label">Team Name</label>
                 <input type="text" id="team-name" class="form-input" value="{{ team.name }}" required>
             </div>
-            <button type="submit" class="save-btn">Update Name</button>
+            <button type="submit" class="save-btn" name="team_update_name">Update Name</button>
         </form>
 
         <div class="form-divider"></div>
@@ -364,19 +364,19 @@
                 <label class="form-label">Confirm New Password</label>
                 <input type="password" id="confirm-password" class="form-input" placeholder="Confirm new password" required>
             </div>
-            <button type="submit" class="save-btn">Update Password</button>
+            <button type="submit" class="save-btn" name="team_update_password">Update Password</button>
         </form>
     </div>
 
     <div class="card">
         <div class="action-buttons">
-            <button onclick="showSwapPhonePopup()" class="action-btn action-btn-secondary">
+            <button onclick="showSwapPhonePopup()" class="action-btn action-btn-secondary" name="team_swap_phone">
                 <span>📱 Swap Phone</span>
             </button>
-            <a href="{{ url_for('player.instructions', game_code=game.code) }}" class="action-btn action-btn-primary">
+            <a href="{{ url_for('player.instructions', game_code=game.code) }}" class="action-btn action-btn-primary" name="team_view_instructions">
                 <span>View Instructions</span>
             </a>
-            <a href="{{ url_for('auth.logout') }}" class="action-btn action-btn-outline">
+            <a href="{{ url_for('auth.logout') }}" class="action-btn action-btn-outline" name="team_sign_out">
                 <span>Sign Out</span>
             </a>
         </div>

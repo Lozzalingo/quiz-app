@@ -35,7 +35,7 @@
 
 .ready-subtitle {
     font-size: 18px;
-    color: #673ab7;
+    color: var(--brand-primary);
     font-weight: 500;
     margin: 0 0 16px;
 }
@@ -51,25 +51,25 @@
 .start-btn {
     display: inline-block;
     padding: 18px 48px;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     color: white;
     border-radius: 30px;
     font-size: 18px;
     font-weight: 600;
     text-decoration: none;
-    box-shadow: 0 8px 20px rgba(103, 58, 183, 0.4);
+    box-shadow: 0 8px 20px var(--brand-shadow);
     transition: all 0.3s;
     animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .start-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 28px rgba(103, 58, 183, 0.5);
+    box-shadow: 0 12px 28px var(--brand-shadow);
 }
 
 @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 8px 20px rgba(103, 58, 183, 0.4); }
-    50% { box-shadow: 0 8px 30px rgba(103, 58, 183, 0.6); }
+    0%, 100% { box-shadow: 0 8px 20px var(--brand-shadow); }
+    50% { box-shadow: 0 8px 30px var(--brand-shadow); }
 }
 
 .waiting-indicator {
@@ -87,7 +87,7 @@
 .waiting-dot {
     width: 8px;
     height: 8px;
-    background: #673ab7;
+    background: var(--brand-primary);
     border-radius: 50%;
     animation: blink 1.5s ease-in-out infinite;
 }
@@ -114,7 +114,7 @@
 .team-badge-icon {
     width: 28px;
     height: 28px;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -145,7 +145,7 @@
     position: absolute;
     width: 10px;
     height: 10px;
-    background: #673ab7;
+    background: var(--brand-primary);
     opacity: 0;
     animation: confetti-fall 3s ease-out forwards;
 }
@@ -180,7 +180,7 @@
         You've joined {{ game.name }}. Wait for the quiz master to start, then tap the button below to begin answering questions.
     </p>
 
-    <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="start-btn">
+    <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="start-btn" name="ready_start_playing">
         Start Playing
     </a>
 

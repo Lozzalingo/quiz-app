@@ -272,6 +272,11 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
             return -float(penalty_points)
         return 0.0
 
+    elif q_type == 'photo_video':
+        # Photo/video task - points awarded on upload, handled by media upload endpoint
+        # If this is called directly (e.g. during re-score), check if media was uploaded
+        return 0.0
+
     elif q_type == 'estimate':
         # Estimate question - points based on percentage distance from correct answer
         estimate_config = question_config.get('estimate', {})

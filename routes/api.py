@@ -12,7 +12,7 @@ from flask import Blueprint, jsonify, request, current_app
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 
-from models import db, Game, Round, Team, Answer, ResubmitPermission, BetaRequest
+from models import db, Game, Round, Team, Answer, ResubmitPermission, BetaRequest, MediaUpload, ChatMessage, RoundBonus
 from email_service import send_admin_list_notification
 
 bp = Blueprint('api', __name__, url_prefix='/api')
@@ -2021,3 +2021,882 @@ def products_embed():
     resp = jsonify({'success': True, 'count': len(products), 'products': products})
     resp.headers['Access-Control-Allow-Origin'] = cors_origin
     return resp
+
+
+# =============================================================================
+# GAME TIMER
+# =============================================================================
+
+@bp.route('/game/<int:game_id>/timer', methods=['PUT'])
+@admin_required_api
+def set_game_timer(game_id):
+    """Start or stop the game-level timer."""
+    game = Game.query.get_or_404(game_id)
+    data = request.get_json()
+    action = data.get('action', 'start')
+    seconds = data.get('seconds', 3600)
+
+    if action == 'start':
+        import time
+        game.timer_end_time = time.time() + seconds
+        db.session.commit()
+
+        try:
+            from app import socketio
+            socketio.emit('game_timer_started', {
+                'game_id': game_id,
+                'seconds': seconds,
+                'end_time': game.timer_end_time,
+            }, room=f'game_{game_id}')
+        except Exception:
+            pass
+
+        print(f'[API] Game timer started: game={game_id}, seconds={seconds}')
+        return jsonify({'success': True, 'end_time': game.timer_end_time})
+
+    elif action == 'stop':
+        game.timer_end_time = None
+        db.session.commit()
+
+        try:
+            from app import socketio
+            socketio.emit('game_timer_stopped', {
+                'game_id': game_id,
+            }, room=f'game_{game_id}')
+        except Exception:
+            pass
+
+        print(f'[API] Game timer stopped: game={game_id}')
+        return jsonify({'success': True})
+
+    return jsonify({'success': False, 'error': 'Invalid action'}), 400
+
+
+@bp.route('/game/<int:game_id>/timer/expire', methods=['POST'])
+@admin_required_api
+def expire_game_timer(game_id):
+    """Called when game timer expires - close all rounds."""
+    game = Game.query.get_or_404(game_id)
+    game.timer_end_time = None
+
+    # Close all open rounds
+    rounds = Round.query.filter_by(game_id=game_id, is_open=True).all()
+    for round_obj in rounds:
+        round_obj.is_open = False
+        round_obj.timer_end_time = None
+
+    db.session.commit()
+
+    try:
+        from app import socketio
+        for round_obj in rounds:
+            socketio.emit('round_closed', {'round_id': round_obj.id}, room=f'game_{game_id}')
+        socketio.emit('game_timer_expired', {'game_id': game_id}, room=f'game_{game_id}')
+    except Exception:
+        pass
+
+    print(f'[API] Game timer expired: game={game_id}, closed {len(rounds)} rounds')
+    return jsonify({'success': True, 'rounds_closed': len(rounds)})
+
+
+# =============================================================================
+# GAME SETTINGS (type, round label, gallery)
+# =============================================================================
+
+@bp.route('/game/<int:game_id>/settings', methods=['PUT'])
+@admin_required_api
+def update_game_settings(game_id):
+    """Update game settings (type, round label, gallery visibility)."""
+    game = Game.query.get_or_404(game_id)
+    data = request.get_json()
+
+    if 'game_type' in data:
+        game.game_type = data['game_type']
+    if 'round_label' in data:
+        game.round_label = data['round_label']
+    if 'is_gallery_public' in data:
+        game.is_gallery_public = data['is_gallery_public']
+
+    db.session.commit()
+    print(f'[API] Game settings updated: game={game_id}')
+    return jsonify({'success': True})
+
+
+# =============================================================================
+# ROUND SUBMISSION MODE + BONUS THRESHOLDS + BRANCHING
+# =============================================================================
+
+@bp.route('/round/<int:round_id>/settings', methods=['PUT'])
+@admin_required_api
+def update_round_settings(round_id):
+    """Update round settings (submission mode, bonus thresholds, branching)."""
+    round_obj = Round.query.get_or_404(round_id)
+    data = request.get_json()
+
+    if 'submission_mode' in data:
+        if data['submission_mode'] in ('all_at_once', 'one_by_one'):
+            round_obj.submission_mode = data['submission_mode']
+
+    if 'bonus_thresholds' in data:
+        round_obj.set_bonus_thresholds(data['bonus_thresholds'])
+
+    if 'branching_rules' in data:
+        round_obj.set_branching_rules(data['branching_rules'])
+
+    db.session.commit()
+    print(f'[API] Round settings updated: round={round_id}')
+    return jsonify({'success': True})
+
+
+# =============================================================================
+# ONE-BY-ONE QUESTION SUBMISSION
+# =============================================================================
+
+@bp.route('/round/<int:round_id>/submit-question', methods=['POST'])
+def submit_single_question(round_id):
+    """Submit a single question answer (one-by-one mode)."""
+    if not current_user.is_authenticated or not current_user.get_id().startswith('team_'):
+        return jsonify({'success': False, 'error': 'Not authenticated as team'}), 401
+
+    round_obj = Round.query.get_or_404(round_id)
+    game = round_obj.game
+    team_id = int(current_user.get_id().split('_')[1])
+    team = Team.query.get(team_id)
+
+    if not team or team.game_id != game.id:
+        return jsonify({'success': False, 'error': 'Team not in this game'}), 403
+
+    if not round_obj.is_open:
+        return jsonify({'success': False, 'error': 'Round is closed'}), 400
+
+    data = request.get_json()
+    question_id = data.get('question_id')
+    answer_text = data.get('answer_text', '').strip()
+
+    if not question_id:
+        return jsonify({'success': False, 'error': 'Missing question_id'}), 400
+
+    # Find question config
+    questions = round_obj.get_questions()
+    question_config = None
+    for q in questions:
+        if q.get('id') == question_id:
+            question_config = q
+            break
+
+    if not question_config:
+        return jsonify({'success': False, 'error': 'Question not found'}), 404
+
+    # Calculate points
+    from utils import calculate_points_for_answer
+    points = calculate_points_for_answer(question_config, answer_text)
+
+    # Check for existing answer
+    existing = Answer.query.filter_by(
+        team_id=team_id, round_id=round_id, question_id=question_id
+    ).first()
+
+    if existing:
+        # Check if resubmit allowed (rejected_resubmit on media, or admin permission)
+        resubmit_perm = ResubmitPermission.query.filter_by(
+            team_id=team_id, round_id=round_id
+        ).first()
+        if not resubmit_perm:
+            return jsonify({'success': False, 'error': 'Already submitted'}), 400
+        existing.answer_text = answer_text
+        existing.points = points
+        existing.submitted_at = datetime.utcnow()
+    else:
+        answer = Answer(
+            team_id=team_id,
+            round_id=round_id,
+            question_id=question_id,
+            answer_text=answer_text,
+            points=points,
+        )
+        db.session.add(answer)
+
+    db.session.commit()
+
+    # Calculate and update round bonus
+    bonus_points = _calculate_round_bonus(team_id, round_id)
+
+    # Emit socket events
+    try:
+        from app import socketio
+        socketio.emit('question_submitted', {
+            'team_id': team_id,
+            'round_id': round_id,
+            'question_id': question_id,
+            'points': points,
+        }, room=f'game_{game.id}')
+
+        socketio.emit('submission_update', {
+            'team_id': team_id,
+            'team_name': team.name,
+            'round_id': round_id,
+            'question_id': question_id,
+            'answer_text': answer_text,
+            'points': points,
+        }, room=f'spreadsheet_{game.id}')
+    except Exception:
+        pass
+
+    return jsonify({
+        'success': True,
+        'points': points,
+        'bonus_points': bonus_points,
+    })
+
+
+# =============================================================================
+# ROUND BONUS CALCULATION
+# =============================================================================
+
+def _calculate_round_bonus(team_id, round_id):
+    """
+    Calculate and store bonus points for a team in a round.
+
+    Returns the current bonus points value.
+    """
+    round_obj = Round.query.get(round_id)
+    if not round_obj:
+        return 0
+
+    thresholds = round_obj.get_bonus_thresholds()
+    if not thresholds:
+        return 0
+
+    # Count correct answers (points > 0)
+    correct_count = Answer.query.filter(
+        Answer.team_id == team_id,
+        Answer.round_id == round_id,
+        Answer.points > 0,
+    ).count()
+
+    # Also count completed media uploads for this round
+    completed_uploads = MediaUpload.query.filter(
+        MediaUpload.team_id == team_id,
+        MediaUpload.round_id == round_id,
+        MediaUpload.upload_status == 'complete',
+        MediaUpload.audit_status != 'rejected_final',
+    ).count()
+
+    total_correct = correct_count + completed_uploads
+
+    # Find highest applicable threshold
+    bonus_points = 0
+    for threshold in sorted(thresholds, key=lambda t: t.get('correct_count', 0)):
+        if total_correct >= threshold.get('correct_count', 0):
+            bonus_points = threshold.get('bonus_points', 0)
+
+    # Update or create RoundBonus record
+    round_bonus = RoundBonus.query.filter_by(team_id=team_id, round_id=round_id).first()
+    if round_bonus:
+        round_bonus.bonus_points = bonus_points
+        round_bonus.correct_count = total_correct
+    else:
+        round_bonus = RoundBonus(
+            team_id=team_id,
+            round_id=round_id,
+            bonus_points=bonus_points,
+            correct_count=total_correct,
+        )
+        db.session.add(round_bonus)
+
+    db.session.commit()
+    return bonus_points
+
+
+@bp.route('/round/<int:round_id>/bonus-thresholds', methods=['GET'])
+@admin_required_api
+def get_bonus_thresholds(round_id):
+    """Get bonus thresholds for a round."""
+    round_obj = Round.query.get_or_404(round_id)
+    return jsonify({
+        'success': True,
+        'thresholds': round_obj.get_bonus_thresholds(),
+    })
+
+
+@bp.route('/round/<int:round_id>/bonus-thresholds', methods=['PUT'])
+@admin_required_api
+def set_bonus_thresholds(round_id):
+    """Set bonus thresholds for a round."""
+    round_obj = Round.query.get_or_404(round_id)
+    data = request.get_json()
+    thresholds = data.get('thresholds', [])
+    round_obj.set_bonus_thresholds(thresholds)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+# =============================================================================
+# BRANCHING RULES
+# =============================================================================
+
+@bp.route('/round/<int:round_id>/branching-rules', methods=['GET'])
+@admin_required_api
+def get_branching_rules(round_id):
+    """Get branching rules for a round."""
+    round_obj = Round.query.get_or_404(round_id)
+    return jsonify({
+        'success': True,
+        'rules': round_obj.get_branching_rules(),
+    })
+
+
+@bp.route('/round/<int:round_id>/branching-rules', methods=['PUT'])
+@admin_required_api
+def set_branching_rules(round_id):
+    """Set branching rules for a round."""
+    round_obj = Round.query.get_or_404(round_id)
+    data = request.get_json()
+    rules = data.get('rules', [])
+    round_obj.set_branching_rules(rules)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+# =============================================================================
+# MEDIA UPLOAD (Photo/Video)
+# =============================================================================
+
+MEDIA_ALLOWED_EXTENSIONS = {
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif',
+    'mp4', 'mov', 'avi', 'webm', '3gp', 'mkv', 'm4v',
+}
+
+MEDIA_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'}
+MEDIA_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi', 'webm', '3gp', 'mkv', 'm4v'}
+
+
+@bp.route('/round/<int:round_id>/question/<question_id>/upload', methods=['POST'])
+def upload_media(round_id, question_id):
+    """
+    Upload a photo or video for a task question.
+
+    Creates a MediaUpload record and queues background processing.
+    Points are auto-awarded on successful upload.
+    """
+    if not current_user.is_authenticated or not current_user.get_id().startswith('team_'):
+        return jsonify({'success': False, 'error': 'Not authenticated as team'}), 401
+
+    round_obj = Round.query.get_or_404(round_id)
+    game = round_obj.game
+    team_id = int(current_user.get_id().split('_')[1])
+    team = Team.query.get(team_id)
+
+    if not team or team.game_id != game.id:
+        return jsonify({'success': False, 'error': 'Team not in this game'}), 403
+
+    if not round_obj.is_open:
+        return jsonify({'success': False, 'error': 'Round is closed'}), 400
+
+    # Check for existing upload that's rejected_resubmit (allow re-upload)
+    existing_upload = MediaUpload.query.filter_by(
+        team_id=team_id, round_id=round_id, question_id=question_id,
+    ).first()
+
+    if existing_upload:
+        if existing_upload.audit_status == 'rejected_final':
+            return jsonify({'success': False, 'error': 'Submission permanently rejected'}), 400
+        if existing_upload.upload_status == 'complete' and existing_upload.audit_status != 'rejected_resubmit':
+            return jsonify({'success': False, 'error': 'Already uploaded. Awaiting audit.'}), 400
+
+    # Get the file
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'}), 400
+
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({'success': False, 'error': 'Empty filename'}), 400
+
+    # Check extension
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in MEDIA_ALLOWED_EXTENSIONS:
+        return jsonify({'success': False, 'error': f'File type .{ext} not supported'}), 400
+
+    # Determine file type
+    file_type = 'image' if ext in MEDIA_IMAGE_EXTENSIONS else 'video'
+
+    # Check file size
+    max_size = current_app.config.get('MAX_UPLOAD_SIZE_MB', 100) * 1024 * 1024
+    file.seek(0, 2)
+    file_size = file.tell()
+    file.seek(0)
+    if file_size > max_size:
+        return jsonify({'success': False, 'error': f'File too large. Maximum {current_app.config.get("MAX_UPLOAD_SIZE_MB", 100)}MB.'}), 400
+
+    # Save to temp file
+    import tempfile
+    temp_dir = tempfile.mkdtemp(prefix='fbq_upload_')
+    temp_path = os.path.join(temp_dir, secure_filename(file.filename))
+    file.save(temp_path)
+
+    # Create or update MediaUpload record
+    if existing_upload and existing_upload.audit_status == 'rejected_resubmit':
+        # Re-upload after rejection
+        upload = existing_upload
+        upload.original_filename = file.filename
+        upload.file_type = file_type
+        upload.mime_type = file.content_type
+        upload.file_size_bytes = file_size
+        upload.upload_status = 'queued'
+        upload.upload_progress = 0
+        upload.error_message = None
+        upload.audit_status = 'unaudited'
+        upload.audit_notes = None
+        upload.audited_at = None
+    else:
+        upload = MediaUpload(
+            team_id=team_id,
+            round_id=round_id,
+            question_id=question_id,
+            game_id=game.id,
+            original_filename=file.filename,
+            file_type=file_type,
+            mime_type=file.content_type,
+            file_size_bytes=file_size,
+            upload_status='queued',
+        )
+        db.session.add(upload)
+
+    db.session.commit()
+
+    # Auto-award points
+    questions = round_obj.get_questions()
+    points = 0
+    for q in questions:
+        if q.get('id') == question_id:
+            points = q.get('points', 1)
+            break
+
+    # Create/update answer record with points
+    answer = Answer.query.filter_by(
+        team_id=team_id, round_id=round_id, question_id=question_id
+    ).first()
+    if answer:
+        answer.points = points
+        answer.answer_text = f'[media:{upload.id}]'
+        answer.submitted_at = datetime.utcnow()
+    else:
+        answer = Answer(
+            team_id=team_id,
+            round_id=round_id,
+            question_id=question_id,
+            answer_text=f'[media:{upload.id}]',
+            points=points,
+        )
+        db.session.add(answer)
+    db.session.commit()
+
+    # Calculate round bonus
+    _calculate_round_bonus(team_id, round_id)
+
+    # Queue background processing
+    from upload_worker import enqueue_upload
+    from flask import current_app
+    enqueue_upload(upload.id, temp_path, current_app._get_current_object())
+
+    print(f'[API] Media upload queued: upload={upload.id}, team={team_id}, type={file_type}')
+    return jsonify({
+        'success': True,
+        'upload_id': upload.id,
+        'status': 'queued',
+        'points_awarded': points,
+    })
+
+
+@bp.route('/upload/<int:upload_id>/status', methods=['GET'])
+def get_upload_status(upload_id):
+    """Get the current status of a media upload (polling endpoint)."""
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    upload = MediaUpload.query.get_or_404(upload_id)
+
+    # Verify access (team owns it or admin)
+    if current_user.get_id().startswith('team_'):
+        team_id = int(current_user.get_id().split('_')[1])
+        if upload.team_id != team_id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+
+    return jsonify({
+        'success': True,
+        'upload_id': upload.id,
+        'status': upload.upload_status,
+        'progress': upload.upload_progress,
+        'error': upload.error_message,
+        'url': upload.storage_url,
+        'audit_status': upload.audit_status,
+        'audit_notes': upload.audit_notes,
+    })
+
+
+@bp.route('/game/<int:game_id>/uploads', methods=['GET'])
+@admin_required_api
+def get_game_uploads(game_id):
+    """Get all media uploads for a game (admin view)."""
+    game = Game.query.get_or_404(game_id)
+    uploads = MediaUpload.query.filter_by(game_id=game_id).order_by(MediaUpload.created_at.desc()).all()
+
+    return jsonify({
+        'success': True,
+        'uploads': [{
+            'id': u.id,
+            'team_id': u.team_id,
+            'team_name': u.team.name,
+            'round_id': u.round_id,
+            'question_id': u.question_id,
+            'file_type': u.file_type,
+            'upload_status': u.upload_status,
+            'audit_status': u.audit_status,
+            'audit_notes': u.audit_notes,
+            'storage_url': u.storage_url,
+            'created_at': u.created_at.isoformat() if u.created_at else None,
+        } for u in uploads],
+    })
+
+
+@bp.route('/team/uploads', methods=['GET'])
+def get_team_uploads():
+    """Get current team's uploads."""
+    if not current_user.is_authenticated or not current_user.get_id().startswith('team_'):
+        return jsonify({'success': False, 'error': 'Not authenticated as team'}), 401
+
+    team_id = int(current_user.get_id().split('_')[1])
+    uploads = MediaUpload.query.filter_by(team_id=team_id).order_by(MediaUpload.created_at.desc()).all()
+
+    return jsonify({
+        'success': True,
+        'uploads': [{
+            'id': u.id,
+            'round_id': u.round_id,
+            'question_id': u.question_id,
+            'file_type': u.file_type,
+            'upload_status': u.upload_status,
+            'upload_progress': u.upload_progress,
+            'error_message': u.error_message,
+            'audit_status': u.audit_status,
+            'audit_notes': u.audit_notes,
+            'storage_url': u.storage_url,
+            'created_at': u.created_at.isoformat() if u.created_at else None,
+        } for u in uploads],
+    })
+
+
+# =============================================================================
+# AUDIT SYSTEM
+# =============================================================================
+
+@bp.route('/game/<int:game_id>/audit-queue', methods=['GET'])
+@admin_required_api
+def get_audit_queue(game_id):
+    """Get unaudited media uploads for a game (Tinder-style queue)."""
+    game = Game.query.get_or_404(game_id)
+    uploads = MediaUpload.query.filter_by(
+        game_id=game_id,
+        upload_status='complete',
+        audit_status='unaudited',
+    ).order_by(MediaUpload.created_at.asc()).all()
+
+    return jsonify({
+        'success': True,
+        'count': len(uploads),
+        'uploads': [{
+            'id': u.id,
+            'team_id': u.team_id,
+            'team_name': u.team.name,
+            'round_id': u.round_id,
+            'round_name': u.round.name,
+            'question_id': u.question_id,
+            'file_type': u.file_type,
+            'storage_url': u.storage_url,
+            'created_at': u.created_at.isoformat() if u.created_at else None,
+        } for u in uploads],
+    })
+
+
+@bp.route('/upload/<int:upload_id>/audit', methods=['POST'])
+@admin_required_api
+def audit_upload(upload_id):
+    """
+    Audit a media upload (accept/reject).
+
+    Actions:
+    - accept: marks as accepted, points stay
+    - reject_resubmit: marks as rejected, points removed, resubmission allowed
+    - reject_final: marks as permanently rejected, points removed
+    """
+    upload = MediaUpload.query.get_or_404(upload_id)
+    data = request.get_json()
+    action = data.get('action')
+    notes = data.get('notes', '')
+
+    if action not in ('accept', 'reject_resubmit', 'reject_final'):
+        return jsonify({'success': False, 'error': 'Invalid action'}), 400
+
+    admin_id = int(current_user.get_id().split('_')[1])
+
+    if action == 'accept':
+        upload.audit_status = 'accepted'
+    elif action == 'reject_resubmit':
+        upload.audit_status = 'rejected_resubmit'
+    elif action == 'reject_final':
+        upload.audit_status = 'rejected_final'
+
+    upload.audit_notes = notes
+    upload.audited_at = datetime.utcnow()
+    upload.audited_by = admin_id
+
+    # Handle points for rejections
+    if action in ('reject_resubmit', 'reject_final'):
+        # Remove points from the answer
+        answer = Answer.query.filter_by(
+            team_id=upload.team_id,
+            round_id=upload.round_id,
+            question_id=upload.question_id,
+        ).first()
+        if answer:
+            answer.points = 0
+
+    db.session.commit()
+
+    # Recalculate round bonus after audit change
+    _calculate_round_bonus(upload.team_id, upload.round_id)
+
+    # Emit socket event to notify team
+    try:
+        from app import socketio
+        socketio.emit('audit_result', {
+            'upload_id': upload.id,
+            'question_id': upload.question_id,
+            'round_id': upload.round_id,
+            'audit_status': upload.audit_status,
+            'audit_notes': notes,
+            'can_resubmit': upload.can_resubmit,
+        }, room=f'game_{upload.game_id}')
+    except Exception:
+        pass
+
+    print(f'[API] Audit: upload={upload_id}, action={action}')
+    return jsonify({'success': True, 'audit_status': upload.audit_status})
+
+
+# =============================================================================
+# GALLERY
+# =============================================================================
+
+@bp.route('/game/<int:game_id>/gallery', methods=['GET'])
+def get_gallery(game_id):
+    """
+    Get gallery data for a game.
+
+    Admin sees all uploads. Teams see only accepted uploads (after game ends).
+    """
+    game = Game.query.get_or_404(game_id)
+
+    is_admin = (current_user.is_authenticated and
+                current_user.get_id().startswith('admin_'))
+
+    if is_admin:
+        # Admin sees everything
+        uploads = MediaUpload.query.filter_by(
+            game_id=game_id,
+            upload_status='complete',
+        ).order_by(MediaUpload.created_at.desc()).all()
+    else:
+        # Teams only see accepted uploads, and only after game ends
+        if not game.is_finished and not game.is_gallery_public:
+            return jsonify({'success': False, 'error': 'Gallery not available yet'}), 403
+
+        uploads = MediaUpload.query.filter_by(
+            game_id=game_id,
+            upload_status='complete',
+            audit_status='accepted',
+        ).order_by(MediaUpload.created_at.desc()).all()
+
+    # Optional filters
+    team_filter = request.args.get('team_id', type=int)
+    round_filter = request.args.get('round_id', type=int)
+
+    if team_filter:
+        uploads = [u for u in uploads if u.team_id == team_filter]
+    if round_filter:
+        uploads = [u for u in uploads if u.round_id == round_filter]
+
+    return jsonify({
+        'success': True,
+        'count': len(uploads),
+        'uploads': [{
+            'id': u.id,
+            'team_id': u.team_id,
+            'team_name': u.team.name,
+            'round_id': u.round_id,
+            'round_name': u.round.name,
+            'question_id': u.question_id,
+            'file_type': u.file_type,
+            'storage_url': u.storage_url,
+            'audit_status': u.audit_status,
+            'created_at': u.created_at.isoformat() if u.created_at else None,
+        } for u in uploads],
+    })
+
+
+# =============================================================================
+# CHAT
+# =============================================================================
+
+@bp.route('/game/<int:game_id>/chats', methods=['GET'])
+@admin_required_api
+def get_chat_threads(game_id):
+    """Get all chat threads for a game (admin inbox view)."""
+    game = Game.query.get_or_404(game_id)
+
+    # Get distinct teams that have messages
+    from sqlalchemy import func as sqla_func
+    threads = db.session.query(
+        ChatMessage.team_id,
+        sqla_func.max(ChatMessage.created_at).label('last_message_at'),
+        sqla_func.count(ChatMessage.id).filter(
+            ChatMessage.is_read == False,
+            ChatMessage.sender_type == 'team',
+        ).label('unread_count'),
+    ).filter_by(game_id=game_id).group_by(ChatMessage.team_id).order_by(
+        sqla_func.max(ChatMessage.created_at).desc()
+    ).all()
+
+    result = []
+    for team_id, last_message_at, unread_count in threads:
+        team = Team.query.get(team_id)
+        last_msg = ChatMessage.query.filter_by(
+            game_id=game_id, team_id=team_id
+        ).order_by(ChatMessage.created_at.desc()).first()
+
+        result.append({
+            'team_id': team_id,
+            'team_name': team.name if team else 'Unknown',
+            'last_message': last_msg.message_text[:100] if last_msg else '',
+            'last_message_at': last_message_at.isoformat() if last_message_at else None,
+            'unread_count': unread_count,
+        })
+
+    return jsonify({'success': True, 'threads': result})
+
+
+@bp.route('/game/<int:game_id>/chat/<int:team_id>', methods=['GET'])
+def get_chat_messages(game_id, team_id):
+    """Get chat messages between admin and a team."""
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    # Verify access
+    is_admin = current_user.get_id().startswith('admin_')
+    if not is_admin:
+        user_team_id = int(current_user.get_id().split('_')[1])
+        if user_team_id != team_id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+
+    messages = ChatMessage.query.filter_by(
+        game_id=game_id, team_id=team_id
+    ).order_by(ChatMessage.created_at.asc()).all()
+
+    # Mark as read if admin is viewing
+    if is_admin:
+        unread = ChatMessage.query.filter_by(
+            game_id=game_id, team_id=team_id, sender_type='team', is_read=False
+        ).all()
+        for msg in unread:
+            msg.is_read = True
+        db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'messages': [{
+            'id': m.id,
+            'sender_type': m.sender_type,
+            'message_text': m.message_text,
+            'is_read': m.is_read,
+            'created_at': m.created_at.isoformat() if m.created_at else None,
+        } for m in messages],
+    })
+
+
+@bp.route('/game/<int:game_id>/chat/<int:team_id>', methods=['POST'])
+def send_chat_message(game_id, team_id):
+    """Send a chat message (works for both admin and team)."""
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    is_admin = current_user.get_id().startswith('admin_')
+    if not is_admin:
+        user_team_id = int(current_user.get_id().split('_')[1])
+        if user_team_id != team_id:
+            return jsonify({'success': False, 'error': 'Access denied'}), 403
+
+    data = request.get_json()
+    message_text = data.get('message', '').strip()
+
+    if not message_text:
+        return jsonify({'success': False, 'error': 'Empty message'}), 400
+
+    if len(message_text) > 2000:
+        return jsonify({'success': False, 'error': 'Message too long (max 2000 chars)'}), 400
+
+    sender_type = 'admin' if is_admin else 'team'
+
+    msg = ChatMessage(
+        game_id=game_id,
+        team_id=team_id,
+        sender_type=sender_type,
+        message_text=message_text,
+    )
+    db.session.add(msg)
+    db.session.commit()
+
+    # Emit socket event for real-time delivery
+    try:
+        from app import socketio
+        msg_data = {
+            'id': msg.id,
+            'game_id': game_id,
+            'team_id': team_id,
+            'sender_type': sender_type,
+            'message_text': message_text,
+            'created_at': msg.created_at.isoformat(),
+        }
+
+        if sender_type == 'team':
+            # Send to admin room
+            socketio.emit('chat_message', msg_data, room=f'admin_{game_id}')
+        else:
+            # Send to game room (team will filter by their ID)
+            socketio.emit('chat_reply', msg_data, room=f'game_{game_id}')
+    except Exception:
+        pass
+
+    return jsonify({'success': True, 'message_id': msg.id})
+
+
+@bp.route('/game/<int:game_id>/chat/unread-count', methods=['GET'])
+def get_unread_count(game_id):
+    """Get unread message count (for badge display)."""
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    is_admin = current_user.get_id().startswith('admin_')
+
+    if is_admin:
+        # Count all unread messages from teams in this game
+        count = ChatMessage.query.filter_by(
+            game_id=game_id, sender_type='team', is_read=False
+        ).count()
+    else:
+        # Count unread messages from admin to this team
+        team_id = int(current_user.get_id().split('_')[1])
+        count = ChatMessage.query.filter_by(
+            game_id=game_id, team_id=team_id, sender_type='admin', is_read=False
+        ).count()
+
+    return jsonify({'success': True, 'unread_count': count})

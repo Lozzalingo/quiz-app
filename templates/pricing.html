@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing - Fat Big Quiz{% endblock %}
+
+{% block extra_css %}
+<style>
+.pricing-header {
+    text-align: center;
+    padding: 40px 0 20px;
+}
+.pricing-header h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #202124;
+    margin: 0 0 8px;
+}
+.pricing-header p {
+    color: #5f6368;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Current plan badge */
+.current-plan-badge {
+    display: inline-block;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 12px;
+}
+
+/* Tab switcher */
+.plan-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 24px auto;
+    max-width: 360px;
+    background: #f1f3f4;
+    border-radius: 10px;
+    padding: 4px;
+}
+.plan-tab {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: #5f6368;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+.plan-tab.active {
+    background: var(--brand-primary);
+    color: white;
+    box-shadow: 0 2px 8px var(--brand-shadow);
+}
+
+/* Billing toggle */
+.billing-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0 32px;
+}
+.billing-toggle label {
+    font-size: 14px;
+    color: #5f6368;
+    cursor: pointer;
+    font-weight: 500;
+}
+.billing-toggle label.active {
+    color: var(--brand-primary);
+    font-weight: 600;
+}
+.billing-toggle .save-badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Toggle switch */
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--brand-primary);
+    border-radius: 26px;
+    transition: 0.3s;
+}
+.toggle-slider:before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+/* Cards grid */
+.pricing-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.pricing-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: center;
+    transition: all 0.2s;
+}
+.pricing-card:hover {
+    border-color: var(--brand-primary);
+    box-shadow: 0 4px 20px rgba(var(--brand-primary-rgb), 0.15);
+    transform: translateY(-2px);
+}
+
+.pricing-card .card-teams {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 4px;
+    font-weight: 500;
+}
+.pricing-card .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #202124;
+    margin: 0 0 16px;
+}
+.pricing-card .card-price {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--brand-primary);
+    margin: 0;
+    white-space: nowrap;
+}
+.pricing-card .card-price .period {
+    font-size: 14px;
+    font-weight: 400;
+    color: #9e9e9e;
+}
+.pricing-card .card-price .original-price {
+    text-decoration: line-through;
+    color: #bdbdbd;
+    font-size: 16px;
+    font-weight: 400;
+    margin-right: 4px;
+}
+.pricing-card .card-saving {
+    font-size: 13px;
+    color: #2e7d32;
+    margin: 4px 0 0;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+/* Team dropdown in pro cards */
+.team-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    margin: 16px 0;
+    background: white;
+    cursor: pointer;
+}
+.team-select:focus {
+    border-color: var(--brand-primary);
+    outline: none;
+}
+
+/* Buy button */
+.buy-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 16px;
+}
+.buy-btn:hover {
+    background: var(--brand-primary-hover);
+}
+
+/* Features list */
+.features-included {
+    text-align: left;
+    margin: 20px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid #f0f0f0;
+}
+.features-included li {
+    font-size: 13px;
+    color: #5f6368;
+    margin: 6px 0;
+    list-style: none;
+    padding-left: 20px;
+    position: relative;
+}
+.features-included li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #2e7d32;
+    font-weight: 700;
+}
+
+/* Contact card */
+.contact-card {
+    background: #f9f5ff;
+    border: 2px dashed var(--brand-primary);
+}
+.contact-card .buy-btn {
+    background: white;
+    color: var(--brand-primary);
+    border: 2px solid var(--brand-primary);
+}
+.contact-card .buy-btn:hover {
+    background: var(--brand-bg-tint);
+}
+
+/* Section spacing */
+.pricing-section {
+    display: none;
+}
+.pricing-section.active {
+    display: block;
+}
+
+/* Free tier callout */
+.free-callout {
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.free-callout h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+.free-callout p {
+    margin: 0;
+    color: #5f6368;
+    font-size: 14px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pricing-header">
+    <h1>Choose your plan</h1>
+    <p>Run quizzes for pub nights, schools, parties, and more</p>
+    {% if current_plan %}
+    <div class="current-plan-badge">Current plan: {{ current_plan }}</div>
+    {% endif %}
+</div>
+
+<!-- Tab switcher -->
+<div class="plan-tabs">
+    <button class="plan-tab active" onclick="switchTab('event')" id="tabEvent" name="pricing_tab_event">One-off Event</button>
+    <button class="plan-tab" onclick="switchTab('pro')" id="tabPro" name="pricing_tab_subscription">Subscription</button>
+</div>
+
+<!-- ===== Event section ===== -->
+<div class="pricing-section active" id="sectionEvent">
+    <p style="text-align:center;color:#5f6368;margin-bottom:24px;">Pay once, run one game. No subscription needed.</p>
+
+    <div class="pricing-cards">
+        {% for tier in event_tiers %}
+        <div class="pricing-card">
+            <p class="card-teams">Up to</p>
+            <h3 class="card-title">{{ tier.teams }} teams</h3>
+            <p class="card-price">£{{ '%.2f' % (tier.price_monthly / 100) }}</p>
+            <p class="card-saving">&nbsp;</p>
+
+            <form method="POST" action="{{ url_for('payments.create_checkout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="price_id" value="{{ tier.price_id }}">
+                <input type="hidden" name="plan_type" value="event">
+                <input type="hidden" name="max_teams" value="{{ tier.teams }}">
+                <input type="hidden" name="games_per_month" value="0">
+                <button type="submit" class="buy-btn" name="buy_event_{{ tier.teams }}">Buy Now</button>
+            </form>
+
+            <ul class="features-included">
+                <li>1 quiz game</li>
+                <li>Up to {{ tier.teams }} teams</li>
+                <li>Custom branding</li>
+                <li>CSV export</li>
+                <li>All features included</li>
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ===== Pro section ===== -->
+<div class="pricing-section" id="sectionPro">
+    <!-- Billing toggle -->
+    <div class="billing-toggle">
+        <label id="labelMonthly" class="active" onclick="setBilling('monthly')">Monthly</label>
+        <div class="toggle-switch">
+            <input type="checkbox" id="billingToggle" onchange="toggleBilling()">
+            <span class="toggle-slider"></span>
+        </div>
+        <label id="labelYearly" onclick="setBilling('yearly')">Yearly</label>
+        <span class="save-badge">Save 20%</span>
+    </div>
+
+    <div class="pricing-cards">
+        {% for tier in pro_tiers %}
+        <div class="pricing-card" data-games="{{ tier.games }}">
+            <p class="card-teams">Per month</p>
+            <h3 class="card-title">{{ tier.games }} {% if tier.games == 1 %}quiz{% else %}quizzes{% endif %}</h3>
+
+            <p class="card-price">
+                <span class="original-price" style="display:none;"></span>
+                <span class="price-amount" data-prices='{{ tier.team_options | tojson }}'>
+                    £{{ '%.2f' % (tier.team_options[0].monthly_price / 100) }}
+                </span>
+                <span class="period">/mo</span>
+            </p>
+            <p class="card-saving">&nbsp;</p>
+
+            <form method="POST" action="{{ url_for('payments.create_checkout') }}" class="pro-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="price_id" value="{{ tier.team_options[0].monthly_price_id }}" class="price-id-input">
+                <input type="hidden" name="plan_type" value="pro_monthly" class="plan-type-input">
+                <input type="hidden" name="max_teams" value="5" class="max-teams-input">
+                <input type="hidden" name="games_per_month" value="{{ tier.games }}">
+
+                <select class="team-select" onchange="updateProPrice(this)" name="team_select_{{ tier.games }}">
+                    {% for opt in tier.team_options %}
+                    <option value="{{ loop.index0 }}"
+                            data-monthly-price="{{ opt.monthly_price }}"
+                            data-monthly-id="{{ opt.monthly_price_id }}"
+                            data-yearly-price="{{ opt.yearly_price }}"
+                            data-yearly-id="{{ opt.yearly_price_id }}"
+                            data-teams="{{ opt.teams }}">
+                        {{ opt.teams }} teams
+                    </option>
+                    {% endfor %}
+                    <option value="contact" data-teams="100+">100+ teams - Contact us</option>
+                </select>
+
+                <button type="submit" class="buy-btn" name="buy_pro_{{ tier.games }}">Subscribe</button>
+            </form>
+
+            <ul class="features-included">
+                <li>{{ tier.games }} {% if tier.games == 1 %}quiz{% else %}quizzes{% endif %} per month</li>
+                <li>Custom branding</li>
+                <li>CSV export</li>
+                <li>All features included</li>
+            </ul>
+        </div>
+        {% endfor %}
+
+        <!-- Contact card -->
+        <div class="pricing-card contact-card">
+            <p class="card-teams">Enterprise</p>
+            <h3 class="card-title">Custom</h3>
+            <p class="card-price" style="font-size:20px;color:#5f6368;">Need more?</p>
+            <p class="card-saving">&nbsp;</p>
+            <a href="mailto:laurencedotcomputer@gmail.com?subject=Fat Big Quiz Enterprise" class="buy-btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px;" name="contact_enterprise">Get in Touch</a>
+            <ul class="features-included">
+                <li>32+ quizzes per month</li>
+                <li>100+ teams</li>
+                <li>Dedicated support</li>
+                <li>Custom features</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Free tier -->
+<div class="free-callout">
+    <h3>Try it free first</h3>
+    <p>Every account gets 1 free game with up to 5 teams. No card required.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('[Pricing] Page loaded');
+
+var currentBilling = 'monthly';
+
+function switchTab(tab) {
+    console.log('[Pricing] Switching to tab:', tab);
+    document.getElementById('tabEvent').classList.toggle('active', tab === 'event');
+    document.getElementById('tabPro').classList.toggle('active', tab === 'pro');
+    document.getElementById('sectionEvent').classList.toggle('active', tab === 'event');
+    document.getElementById('sectionPro').classList.toggle('active', tab === 'pro');
+}
+
+function setBilling(billing) {
+    console.log('[Pricing] Setting billing:', billing);
+    document.getElementById('billingToggle').checked = billing === 'yearly';
+    toggleBilling();
+}
+
+function toggleBilling() {
+    var isYearly = document.getElementById('billingToggle').checked;
+    currentBilling = isYearly ? 'yearly' : 'monthly';
+    console.log('[Pricing] Billing toggled to:', currentBilling);
+
+    document.getElementById('labelMonthly').classList.toggle('active', !isYearly);
+    document.getElementById('labelYearly').classList.toggle('active', isYearly);
+
+    // Update all pro card prices
+    var selects = document.querySelectorAll('.team-select');
+    selects.forEach(function(sel) { updateProPrice(sel); });
+}
+
+function updateProPrice(selectEl) {
+    var card = selectEl.closest('.pricing-card');
+    var form = card.querySelector('.pro-form');
+    var option = selectEl.options[selectEl.selectedIndex];
+
+    // Handle "Contact us" option
+    if (option.value === 'contact') {
+        card.querySelector('.price-amount').textContent = 'Contact us';
+        card.querySelector('.original-price').style.display = 'none';
+        card.querySelector('.card-saving').innerHTML = '&nbsp;';
+        card.querySelector('.period').style.display = 'none';
+        form.querySelector('.buy-btn').textContent = 'Get in Touch';
+        form.querySelector('.buy-btn').type = 'button';
+        form.querySelector('.buy-btn').onclick = function() {
+            window.location.href = 'mailto:laurencedotcomputer@gmail.com?subject=Fat Big Quiz Enterprise';
+        };
+        return;
+    }
+
+    // Reset button
+    form.querySelector('.buy-btn').textContent = 'Subscribe';
+    form.querySelector('.buy-btn').type = 'submit';
+    form.querySelector('.buy-btn').onclick = null;
+    card.querySelector('.period').style.display = '';
+
+    var monthlyPrice = parseInt(option.dataset.monthlyPrice);
+    var yearlyPrice = parseInt(option.dataset.yearlyPrice);
+    var teams = option.dataset.teams;
+
+    var isYearly = currentBilling === 'yearly';
+    var priceId, displayPrice, period;
+
+    if (isYearly) {
+        priceId = option.dataset.yearlyId;
+        var monthlyEquiv = yearlyPrice / 12;
+        displayPrice = (monthlyEquiv / 100).toFixed(2);
+        period = '/mo';
+
+        // Show original price and saving
+        var originalMonthly = (monthlyPrice / 100).toFixed(2);
+        card.querySelector('.original-price').textContent = '£' + originalMonthly;
+        card.querySelector('.original-price').style.display = '';
+        var saving = ((monthlyPrice * 12 - yearlyPrice) / 100).toFixed(2);
+        card.querySelector('.card-saving').textContent = 'Save £' + saving + '/year';
+
+        form.querySelector('.plan-type-input').value = 'pro_yearly';
+    } else {
+        priceId = option.dataset.monthlyId;
+        displayPrice = (monthlyPrice / 100).toFixed(2);
+        period = '/mo';
+
+        card.querySelector('.original-price').style.display = 'none';
+        card.querySelector('.card-saving').innerHTML = '&nbsp;';
+
+        form.querySelector('.plan-type-input').value = 'pro_monthly';
+    }
+
+    card.querySelector('.price-amount').textContent = '£' + displayPrice;
+    card.querySelector('.period').textContent = period;
+    form.querySelector('.price-id-input').value = priceId;
+    form.querySelector('.max-teams-input').value = teams;
+
+    console.log('[Pricing] Updated: games=' + card.dataset.games + ', teams=' + teams + ', billing=' + currentBilling + ', price=£' + displayPrice);
+}
+</script>
+{% endblock %}

@@ -8,7 +8,7 @@ Contains form classes for:
 - Round creation
 """
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 
 
@@ -90,6 +90,12 @@ class CreateGameForm(FlaskForm):
         DataRequired(message='Game name is required'),
         Length(min=3, max=200, message='Game name must be 3-200 characters')
     ])
+
+    game_type = SelectField('Game Type', choices=[
+        ('quiz', 'Quiz'),
+        ('treasure_hunt', 'Treasure Hunt'),
+        ('adventure', 'Choose Your Own Adventure'),
+    ], default='quiz')
 
     submit = SubmitField('Create Game')
 

@@ -1,0 +1,167 @@
+{% extends "player/base_player.html" %}
+
+{% block title %}My Submissions - {{ game.name }}{% endblock %}
+
+{% block player_css %}
+<style>
+.submissions-page {
+    padding: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.submissions-page h2 {
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 16px;
+    color: #202124;
+}
+
+.submission-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.submission-media {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+}
+
+.submission-info {
+    padding: 12px 16px;
+}
+
+.submission-info .question {
+    font-weight: 500;
+    font-size: 14px;
+    color: #202124;
+    margin-bottom: 4px;
+}
+
+.submission-info .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.queued { background: var(--brand-bg-tint); color: var(--brand-accent); }
+.status-badge.uploading { background: #e3f2fd; color: #1565c0; }
+.status-badge.processing { background: #e3f2fd; color: #1565c0; }
+.status-badge.complete { background: #e8f5e9; color: #2e7d32; }
+.status-badge.failed { background: #ffebee; color: #c62828; }
+.status-badge.unaudited { background: #fff3e0; color: #e65100; }
+.status-badge.accepted { background: #e8f5e9; color: #2e7d32; }
+.status-badge.rejected { background: #ffebee; color: #c62828; }
+
+.audit-notes {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #fff3e0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #e65100;
+}
+
+.resubmit-btn {
+    display: inline-block;
+    margin-top: 8px;
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.no-submissions {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+</style>
+{% endblock %}
+
+{% block player_content %}
+<div class="submissions-page">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin-bottom: 0;">My Submissions</h2>
+        {% if game.is_finished or game.is_gallery_public %}
+        <a href="{{ url_for('player.download_submissions', game_code=game.code) }}"
+           name="download_all_submissions"
+           style="display: inline-block; padding: 8px 16px; background: #4CAF50; color: white; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px;">
+            Download All
+        </a>
+        {% endif %}
+    </div>
+
+    {% if uploads %}
+        {% for upload in uploads %}
+        <div class="submission-card">
+            {% if upload.storage_url %}
+                {% if upload.file_type == 'video' %}
+                    <video class="submission-media" controls playsinline>
+                        <source src="{{ upload.storage_url }}" type="video/mp4">
+                    </video>
+                {% else %}
+                    <img class="submission-media" src="{{ upload.storage_url }}" alt="Submission">
+                {% endif %}
+            {% endif %}
+            <div class="submission-info">
+                <div class="question">{{ upload.round.name }} - Question {{ upload.question_id }}</div>
+
+                <div class="status">
+                    {% if upload.upload_status != 'complete' %}
+                        <span class="status-badge {{ upload.upload_status }}">
+                            {% if upload.upload_status == 'queued' %}Queued for upload
+                            {% elif upload.upload_status == 'uploading' %}Uploading {{ upload.upload_progress }}%
+                            {% elif upload.upload_status == 'processing' %}Processing
+                            {% elif upload.upload_status == 'failed' %}Failed
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        <span class="status-badge {{ 'rejected' if upload.is_rejected else upload.audit_status }}">
+                            {% if upload.audit_status == 'unaudited' %}Awaiting review
+                            {% elif upload.audit_status == 'accepted' %}Accepted
+                            {% elif upload.audit_status == 'rejected_resubmit' %}Rejected - resubmit
+                            {% elif upload.audit_status == 'rejected_final' %}Rejected
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if upload.error_message %}
+                <div class="audit-notes">{{ upload.error_message }}</div>
+                {% endif %}
+
+                {% if upload.audit_notes %}
+                <div class="audit-notes">{{ upload.audit_notes }}</div>
+                {% endif %}
+
+                {% if upload.can_resubmit %}
+                <a href="{{ url_for('player.view_round', round_id=upload.round_id) }}" class="resubmit-btn" name="submissions_resubmit">Re-upload</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-submissions">
+            <p>No submissions yet. Upload photos or videos when completing tasks.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

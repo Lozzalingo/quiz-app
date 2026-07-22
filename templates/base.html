@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Fat Big Quiz{% endblock %}</title>
 
+    <!-- Google Analytics (GA4) -->
+    {% if config.get('GA_MEASUREMENT_ID') %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config['GA_MEASUREMENT_ID'] }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ config["GA_MEASUREMENT_ID"] }}');
+    </script>
+    {% endif %}
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon.ico') }}">
@@ -26,12 +37,21 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
+    <!-- Theme CSS (toggled via JS) -->
+    <link rel="stylesheet" id="theme-css" href="">
+    <script>
+    (function() {
+        var theme = localStorage.getItem('quiz-theme') || 'fat-big-quiz';
+        document.getElementById('theme-css').href = '/static/css/style-' + theme + '.css';
+    })();
+    </script>
+
     <style>
         /* Global nav styling */
         nav.site-nav {
-            background: linear-gradient(135deg, #673ab7, #512da8);
+            background: linear-gradient(135deg, var(--brand-nav-start), var(--brand-nav-end));
             padding: 12px 24px;
-            box-shadow: 0 2px 8px rgba(103, 58, 183, 0.3);
+            box-shadow: 0 2px 8px var(--brand-shadow);
         }
         nav.site-nav ul {
             margin: 0;
@@ -118,24 +138,26 @@
     <nav class="container-fluid site-nav">
         <ul>
             <li>
-                <a href="{{ url_for('index') }}" class="nav-logo">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-                    <span>Fat Big Quiz</span>
+                <a href="{{ url_for('index') }}" class="nav-logo" name="nav_home_logo">
+                    <img id="nav-logo-img" src="" alt="Logo">
+                    <span id="nav-brand-name"></span>
                 </a>
             </li>
         </ul>
         <ul class="nav-links">
             {% if current_user.is_authenticated %}
                 {% if current_user.get_id().startswith('admin_') %}
-                    <li><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-                    <li><a href="{{ url_for('admin.settings') }}">Settings</a></li>
+                    <li><a href="{{ url_for('admin.dashboard') }}" name="nav_dashboard">Dashboard</a></li>
+                    <li><a href="{{ url_for('payments.pricing') }}" name="nav_pricing">Pricing</a></li>
+                    <li><a href="{{ url_for('admin.settings') }}" name="nav_settings">Settings</a></li>
                 {% else %}
-                    <li><a href="{{ url_for('player.quiz', game_code=current_user.game.code) }}">My Quiz</a></li>
+                    <li><a href="{{ url_for('player.quiz', game_code=current_user.game.code) }}" name="nav_my_quiz">My Quiz</a></li>
                 {% endif %}
-                <li><a href="{{ url_for('auth.logout') }}" class="nav-btn">Logout</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="nav-btn" name="nav_logout">Logout</a></li>
             {% else %}
-                <li><a href="{{ url_for('auth.player_login') }}">Join Game</a></li>
-                <li><a href="{{ url_for('auth.admin_login') }}" class="nav-btn">Admin</a></li>
+                <li><a href="{{ url_for('auth.player_login') }}" name="nav_join_game">Join Game</a></li>
+                <li><a href="{{ url_for('payments.pricing') }}" name="nav_pricing">Pricing</a></li>
+                <li><a href="{{ url_for('auth.admin_login') }}" class="nav-btn" name="nav_admin_login">Admin</a></li>
             {% endif %}
         </ul>
     </nav>
@@ -156,7 +178,10 @@
     </main>
 
     <footer class="container site-footer">
-        Fat Big Quiz
+        <span id="footer-brand-name"></span>
+        <div style="margin-top:12px;">
+            <button id="theme-toggle-btn" name="theme_toggle" onclick="toggleTheme()" style="background:none;border:1px solid #ccc;border-radius:16px;padding:4px 14px;font-size:12px;color:#9e9e9e;cursor:pointer;">Switch theme</button>
+        </div>
     </footer>
 
     <!-- Socket.IO client -->
@@ -164,5 +189,38 @@
 
     <!-- Custom scripts -->
     {% block extra_js %}{% endblock %}
+
+    <!-- Theme toggle -->
+    <script>
+    var THEMES = {
+        'fat-big-quiz': { name: 'Fat Big Quiz', logo: '/static/images/logo.png' },
+        'bucketrace': { name: 'BucketRace', logo: '/static/images/logo-bucketrace.png' }
+    };
+    function applyThemeBranding() {
+        var theme = localStorage.getItem('quiz-theme') || 'fat-big-quiz';
+        var cfg = THEMES[theme];
+        var logoEl = document.getElementById('nav-logo-img');
+        var nameEl = document.getElementById('nav-brand-name');
+        var footerEl = document.getElementById('footer-brand-name');
+        if (logoEl) logoEl.src = cfg.logo;
+        if (nameEl) nameEl.textContent = cfg.name;
+        if (footerEl) footerEl.textContent = cfg.name;
+    }
+    function toggleTheme() {
+        var current = localStorage.getItem('quiz-theme') || 'fat-big-quiz';
+        var next = current === 'fat-big-quiz' ? 'bucketrace' : 'fat-big-quiz';
+        localStorage.setItem('quiz-theme', next);
+        document.getElementById('theme-css').href = '/static/css/style-' + next + '.css';
+        applyThemeBranding();
+        console.log('[THEME] Switched to:', next);
+    }
+    applyThemeBranding();
+    </script>
+
+    <!-- Client error logging -->
+    <script>
+    window.onerror=function(m,s,l,c,e){fetch('/api/client-error',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m,stack:e&&e.stack,source:s,line:l,column:c,url:location.href,userAgent:navigator.userAgent,project:'quiz-app'})}).catch(function(){})};
+    window.onunhandledrejection=function(e){var r=e.reason;fetch('/api/client-error',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:'Unhandled rejection: '+(r&&r.message||String(r)),stack:r&&r.stack,url:location.href,userAgent:navigator.userAgent,project:'quiz-app'})}).catch(function(){})};
+    </script>
 </body>
 </html>

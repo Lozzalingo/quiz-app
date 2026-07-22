@@ -6,7 +6,7 @@
 <style>
 /* Google Forms-like styling */
 body {
-    background: #f0ebf8;
+    background: var(--brand-bg);
 }
 
 /* Override Pico CSS defaults */
@@ -32,7 +32,7 @@ body {
     padding: 20px 24px;
     margin-bottom: 12px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    border-top: 10px solid #673ab7;
+    border-top: 10px solid var(--brand-primary);
 }
 
 .form-header h1 {
@@ -56,7 +56,7 @@ body {
 }
 
 .form-header h1.editing {
-    border: 2px solid #673ab7 !important;
+    border: 2px solid var(--brand-primary) !important;
     background: white;
     outline: none;
 }
@@ -79,11 +79,11 @@ body {
 }
 
 .question-card:hover {
-    border-left-color: #673ab7;
+    border-left-color: var(--brand-primary);
 }
 
 .question-card.focused {
-    border-left-color: #673ab7;
+    border-left-color: var(--brand-primary);
 }
 
 .question-row {
@@ -105,7 +105,7 @@ body {
 }
 
 .question-input:focus {
-    border-bottom-color: #673ab7 !important;
+    border-bottom-color: var(--brand-primary) !important;
     border-bottom-width: 2px !important;
 }
 
@@ -130,7 +130,7 @@ body {
 
 .type-select:focus {
     outline: none !important;
-    border-color: #673ab7 !important;
+    border-color: var(--brand-primary) !important;
 }
 
 .field-group {
@@ -169,7 +169,7 @@ body {
 
 .field-input:focus {
     outline: none !important;
-    border-color: #673ab7 !important;
+    border-color: var(--brand-primary) !important;
 }
 
 .field-hint {
@@ -239,7 +239,7 @@ body {
     padding: 16px;
     width: 100%;
     cursor: pointer;
-    color: #673ab7;
+    color: var(--brand-primary);
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 12px;
@@ -247,7 +247,7 @@ body {
 }
 
 .add-btn:hover {
-    border-color: #673ab7;
+    border-color: var(--brand-primary);
     background: #f9f5ff;
 }
 
@@ -274,7 +274,7 @@ body {
 }
 
 .save-btn {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
     border: none;
     padding: 10px 24px;
@@ -285,7 +285,7 @@ body {
 }
 
 .save-btn:hover {
-    background: #5e35a1;
+    background: var(--brand-primary-hover);
 }
 
 .radio-options {
@@ -318,7 +318,7 @@ body {
 }
 
 .radio-option input:focus {
-    border-color: #673ab7;
+    border-color: var(--brand-primary);
 }
 
 .correct-marker {
@@ -472,12 +472,12 @@ body {
 }
 
 .modal-btn-primary {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
 }
 
 .modal-btn-primary:hover {
-    background: #5e35a1;
+    background: var(--brand-primary-hover);
 }
 
 /* Image upload styles */
@@ -536,8 +536,8 @@ body {
 
 .image-upload-btn:hover {
     background: #e8eaed !important;
-    border-color: #673ab7 !important;
-    color: #673ab7 !important;
+    border-color: var(--brand-primary) !important;
+    color: var(--brand-primary) !important;
 }
 
 .image-upload-btn input[type="file"] {
@@ -576,7 +576,7 @@ body {
 .betting-choice-num {
     width: 24px;
     height: 24px;
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -601,8 +601,8 @@ body {
 }
 
 .betting-choice input:focus {
-    border-color: #673ab7 !important;
-    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1) !important;
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 0 0 2px var(--brand-shadow) !important;
 }
 
 .multipliers-section {
@@ -821,6 +821,170 @@ body {
     background: rgba(21, 101, 192, 0.1);
     border-radius: 4px;
 }
+
+/* Photo/Video question styles */
+.photo-video-config {
+    margin-top: 16px;
+    padding: 16px;
+    background: #fce4ec;
+    border-radius: 8px;
+}
+
+.photo-video-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.photo-video-row > div {
+    flex: 1;
+}
+
+.photo-video-hint {
+    font-size: 12px;
+    color: #880e4f;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(136, 14, 79, 0.1);
+    border-radius: 4px;
+}
+
+/* Round settings section */
+.round-settings-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 4px solid #ff9800;
+}
+
+.round-settings-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 16px;
+}
+
+.settings-section {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.settings-section h4 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 8px;
+}
+
+.settings-section p {
+    font-size: 12px;
+    color: #5f6368;
+    margin: 0 0 12px;
+}
+
+.toggle-group {
+    display: flex;
+    gap: 8px;
+}
+
+.toggle-btn {
+    padding: 8px 16px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 13px;
+    background: white;
+    color: #5f6368;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-btn.active {
+    background: var(--brand-primary);
+    color: white;
+    border-color: var(--brand-primary);
+}
+
+.toggle-btn:hover:not(.active) {
+    background: #f1f3f4;
+}
+
+.threshold-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.threshold-row input {
+    width: 60px !important;
+    padding: 6px 8px !important;
+    font-size: 13px !important;
+    text-align: center !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    background: white !important;
+    margin: 0 !important;
+}
+
+.threshold-row span {
+    color: #5f6368;
+}
+
+.add-threshold-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    background: #f1f3f4;
+    border: 1px dashed #dadce0;
+    border-radius: 4px;
+    color: var(--brand-primary);
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.add-threshold-btn:hover {
+    background: #e8eaed;
+    border-color: var(--brand-primary);
+}
+
+.branching-rule-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    flex-wrap: wrap;
+}
+
+.branching-rule-row select,
+.branching-rule-row input[type="text"] {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    background: white !important;
+    margin: 0 !important;
+}
+
+.branching-rule-row select {
+    min-width: 120px;
+}
+
+.branching-rule-row input[type="text"] {
+    width: 100px !important;
+}
 </style>
 {% endblock %}
 
@@ -848,13 +1012,56 @@ body {
         <!-- Questions rendered here -->
     </div>
 
-    <button type="button" class="add-btn" onclick="addQuestion()">
+    <button type="button" class="add-btn" name="add_question" onclick="addQuestion()">
         <span style="font-size: 20px;">+</span> Add question
     </button>
 
+    <!-- Round Settings -->
+    <div class="round-settings-card">
+        <h3>Round Settings</h3>
+
+        <!-- Submission Mode -->
+        <div class="settings-section">
+            <h4>Submission Mode</h4>
+            <p>How players submit their answers for this round.</p>
+            <div class="toggle-group">
+                <button type="button" class="toggle-btn {{ 'active' if not round.submission_mode or round.submission_mode == 'all_at_once' else '' }}"
+                        name="submission_mode_all_at_once"
+                        onclick="setSubmissionMode('all_at_once', this)"
+                        id="toggle-all-at-once">Submit all at once</button>
+                <button type="button" class="toggle-btn {{ 'active' if round.submission_mode == 'one_by_one' else '' }}"
+                        name="submission_mode_one_by_one"
+                        onclick="setSubmissionMode('one_by_one', this)"
+                        id="toggle-one-by-one">Submit one by one</button>
+            </div>
+        </div>
+
+        <!-- Bonus Thresholds -->
+        <div class="settings-section">
+            <h4>Bonus Thresholds</h4>
+            <p>Award bonus points when teams reach a certain number of correct answers.</p>
+            <div id="bonus-thresholds-container">
+                <!-- Rendered by JS -->
+            </div>
+            <button type="button" class="add-threshold-btn" name="add_bonus_threshold" onclick="addBonusThreshold()">+ Add threshold</button>
+        </div>
+
+        <!-- Branching Rules (only for adventure game type) -->
+        {% if game.game_type == 'adventure' %}
+        <div class="settings-section">
+            <h4>Branching Rules</h4>
+            <p>Route teams to different rounds based on their answers.</p>
+            <div id="branching-rules-container">
+                <!-- Rendered by JS -->
+            </div>
+            <button type="button" class="add-threshold-btn" name="add_branching_rule" onclick="addBranchingRule()">+ Add rule</button>
+        </div>
+        {% endif %}
+    </div>
+
     <div class="save-bar">
-        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}">← Back to Game</a>
-        <button type="button" class="save-btn" onclick="saveQuestions()">Save</button>
+        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" name="back_to_game">← Back to Game</a>
+        <button type="button" class="save-btn" name="save_questions" onclick="saveQuestions()">Save</button>
     </div>
 </div>
 {% endblock %}
@@ -1017,13 +1224,14 @@ function renderQuestions() {
                     <option value="betting" ${q.type === 'betting' ? 'selected' : ''}>Betting</option>
                     <option value="ordering" ${q.type === 'ordering' ? 'selected' : ''}>Ordering</option>
                     <option value="estimate" ${q.type === 'estimate' ? 'selected' : ''}>Estimate</option>
+                    <option value="photo_video" ${q.type === 'photo_video' ? 'selected' : ''}>Photo/Video Task</option>
                 </select>
             </div>
 
-            ${q.type === 'radio' ? renderRadioOptions(q, index) : q.type === 'betting' ? renderBettingOptions(q, index) : q.type === 'ordering' ? renderOrderingOptions(q, index) : q.type === 'estimate' ? renderEstimateOptions(q, index) : renderValidation(q, index)}
+            ${q.type === 'radio' ? renderRadioOptions(q, index) : q.type === 'betting' ? renderBettingOptions(q, index) : q.type === 'ordering' ? renderOrderingOptions(q, index) : q.type === 'estimate' ? renderEstimateOptions(q, index) : q.type === 'photo_video' ? renderPhotoVideoOptions(q, index) : renderValidation(q, index)}
 
             <div class="card-actions">
-                ${(q.type !== 'betting' && q.type !== 'ordering' && q.type !== 'estimate') ? `
+                ${(q.type !== 'betting' && q.type !== 'ordering' && q.type !== 'estimate' && q.type !== 'photo_video') ? `
                 <div style="margin-right: auto; display: flex; align-items: center; gap: 6px;">
                     <span class="field-label" style="margin: 0;">Pts:</span>
                     <input type="number" class="points-input"
@@ -1038,10 +1246,10 @@ function renderQuestions() {
                            title="Points deducted for wrong answers">
                 </div>
                 ` : '<div style="margin-right: auto;"></div>'}
-                <button type="button" class="icon-btn" onclick="duplicateQuestion(${index})" title="Duplicate">⧉</button>
-                <button type="button" class="icon-btn" onclick="moveQuestion(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="Move up">↑</button>
-                <button type="button" class="icon-btn" onclick="moveQuestion(${index}, 1)" ${index === questions.length - 1 ? 'disabled' : ''} title="Move down">↓</button>
-                <button type="button" class="icon-btn" onclick="removeQuestion(${index})" title="Delete">🗑</button>
+                <button type="button" class="icon-btn" name="duplicate_question_${index}" onclick="duplicateQuestion(${index})" title="Duplicate">⧉</button>
+                <button type="button" class="icon-btn" name="move_question_up_${index}" onclick="moveQuestion(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="Move up">↑</button>
+                <button type="button" class="icon-btn" name="move_question_down_${index}" onclick="moveQuestion(${index}, 1)" ${index === questions.length - 1 ? 'disabled' : ''} title="Move down">↓</button>
+                <button type="button" class="icon-btn" name="delete_question_${index}" onclick="removeQuestion(${index})" title="Delete">🗑</button>
             </div>
         `;
         container.appendChild(div);
@@ -1449,6 +1657,50 @@ function updateEstimateConfig(index, field, value) {
     }
 }
 
+function renderPhotoVideoOptions(q, index) {
+    // Initialize photo_video config if not present
+    if (!q.photo_video) {
+        q.photo_video = {
+            points: 1,
+            max_duration: 60
+        };
+    }
+
+    const pv = q.photo_video;
+
+    return `
+        <div class="photo-video-config">
+            <div class="photo-video-row">
+                <div>
+                    <div class="field-label">Points Awarded on Upload</div>
+                    <input type="number" class="field-input"
+                           value="${pv.points || 1}"
+                           onchange="updatePhotoVideoConfig(${index}, 'points', parseFloat(this.value))"
+                           min="0" step="0.5">
+                </div>
+                <div>
+                    <div class="field-label">Max Video Duration (seconds)</div>
+                    <input type="number" class="field-input"
+                           value="${pv.max_duration || 60}"
+                           onchange="updatePhotoVideoConfig(${index}, 'max_duration', parseInt(this.value))"
+                           min="5" max="300">
+                </div>
+            </div>
+
+            <div class="photo-video-hint">
+                Teams will be asked to photograph or film something. Points are awarded automatically when they upload their submission. No correct answer is required.
+            </div>
+        </div>
+    `;
+}
+
+function updatePhotoVideoConfig(index, field, value) {
+    if (!questions[index].photo_video) {
+        questions[index].photo_video = { points: 1, max_duration: 60 };
+    }
+    questions[index].photo_video[field] = value;
+}
+
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -1606,7 +1858,7 @@ async function saveQuestions() {
             btn.style.background = '#0d904f';
             setTimeout(() => {
                 btn.textContent = 'Save';
-                btn.style.background = '#673ab7';
+                btn.style.background = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim();
             }, 1500);
         } else {
             showError('Save failed: ' + (data.error || 'Unknown error'));
@@ -1616,7 +1868,164 @@ async function saveQuestions() {
     }
 }
 
+// --- Round Settings ---
+
+// Submission Mode
+async function setSubmissionMode(mode, btn) {
+    try {
+        const response = await fetch(`/api/round/${roundId}/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ submission_mode: mode })
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.querySelectorAll('.toggle-group .toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        } else {
+            showError('Failed to update submission mode: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Failed to update submission mode: ' + error.message);
+    }
+}
+
+// Bonus Thresholds
+let bonusThresholds = {{ (round.bonus_thresholds or [])|tojson|safe }};
+
+function renderBonusThresholds() {
+    const container = document.getElementById('bonus-thresholds-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    bonusThresholds.forEach((t, i) => {
+        const row = document.createElement('div');
+        row.className = 'threshold-row';
+        row.innerHTML = `
+            <span>If</span>
+            <input type="number" value="${t.correct_count || 0}" min="1"
+                   onchange="updateBonusThreshold(${i}, 'correct_count', parseInt(this.value))">
+            <span>correct answers, award</span>
+            <input type="number" value="${t.bonus_points || 0}" min="1" step="0.5"
+                   onchange="updateBonusThreshold(${i}, 'bonus_points', parseFloat(this.value))">
+            <span>bonus points</span>
+            <button type="button" class="option-delete-btn" name="remove_bonus_threshold_${i}" onclick="removeBonusThreshold(${i})" title="Remove">×</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function addBonusThreshold() {
+    bonusThresholds.push({ correct_count: 5, bonus_points: 2 });
+    renderBonusThresholds();
+    saveBonusThresholds();
+}
+
+function updateBonusThreshold(index, field, value) {
+    bonusThresholds[index][field] = value;
+    saveBonusThresholds();
+}
+
+function removeBonusThreshold(index) {
+    bonusThresholds.splice(index, 1);
+    renderBonusThresholds();
+    saveBonusThresholds();
+}
+
+async function saveBonusThresholds() {
+    try {
+        const response = await fetch(`/api/round/${roundId}/bonus-thresholds`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ thresholds: bonusThresholds })
+        });
+        const data = await response.json();
+        if (!data.success) {
+            showError('Failed to save bonus thresholds: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Failed to save bonus thresholds: ' + error.message);
+    }
+}
+
+// Branching Rules (adventure mode)
+{% if game.game_type == 'adventure' %}
+let branchingRules = {{ (round.branching_rules or [])|tojson|safe }};
+const allRounds = {{ game.rounds|map(attribute='id')|list|tojson|safe }};
+const allRoundNames = {{ game.rounds|map(attribute='name')|list|tojson|safe }};
+
+function renderBranchingRules() {
+    const container = document.getElementById('branching-rules-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    branchingRules.forEach((rule, i) => {
+        const questionOptions = questions.map((q, qi) =>
+            `<option value="${qi}" ${rule.question_index == qi ? 'selected' : ''}>Q${qi + 1}: ${escapeHtml((q.text || '').substring(0, 30))}</option>`
+        ).join('');
+
+        const roundOptions = allRounds.map((rid, ri) =>
+            `<option value="${rid}" ${rule.target_round_id == rid ? 'selected' : ''}>${escapeHtml(allRoundNames[ri])}</option>`
+        ).join('');
+
+        const row = document.createElement('div');
+        row.className = 'branching-rule-row';
+        row.innerHTML = `
+            <span>If answer to</span>
+            <select onchange="updateBranchingRule(${i}, 'question_index', parseInt(this.value))">
+                ${questionOptions}
+            </select>
+            <span>equals</span>
+            <input type="text" value="${escapeHtml(rule.answer_value || '')}"
+                   onchange="updateBranchingRule(${i}, 'answer_value', this.value)">
+            <span>go to</span>
+            <select onchange="updateBranchingRule(${i}, 'target_round_id', parseInt(this.value))">
+                ${roundOptions}
+            </select>
+            <button type="button" class="option-delete-btn" name="remove_branching_rule_${i}" onclick="removeBranchingRule(${i})" title="Remove">×</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function addBranchingRule() {
+    branchingRules.push({ question_index: 0, answer_value: '', target_round_id: allRounds[0] || null });
+    renderBranchingRules();
+    saveBranchingRules();
+}
+
+function updateBranchingRule(index, field, value) {
+    branchingRules[index][field] = value;
+    saveBranchingRules();
+}
+
+function removeBranchingRule(index) {
+    branchingRules.splice(index, 1);
+    renderBranchingRules();
+    saveBranchingRules();
+}
+
+async function saveBranchingRules() {
+    try {
+        const response = await fetch(`/api/round/${roundId}/branching-rules`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rules: branchingRules })
+        });
+        const data = await response.json();
+        if (!data.success) {
+            showError('Failed to save branching rules: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Failed to save branching rules: ' + error.message);
+    }
+}
+
+renderBranchingRules();
+{% endif %}
+
 // Initialize
 renderQuestions();
+renderBonusThresholds();
 </script>
 {% endblock %}

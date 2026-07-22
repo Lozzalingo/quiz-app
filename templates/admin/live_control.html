@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
 body {
-    background: #f0ebf8;
+    background: var(--brand-bg);
 }
 
 .control-page {
@@ -20,7 +20,7 @@ body {
     padding: 20px 24px;
     margin-bottom: 12px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    border-top: 10px solid #673ab7;
+    border-top: 10px solid var(--brand-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -52,7 +52,7 @@ body {
 
 .teams-count strong {
     font-size: 20px;
-    color: #673ab7;
+    color: var(--brand-primary);
 }
 
 .card {
@@ -148,7 +148,7 @@ body {
 
 .round-card.nested {
     margin-left: 24px;
-    border-left: 4px solid #673ab7;
+    border-left: 4px solid var(--brand-primary);
     background: #fafafa;
 }
 
@@ -219,7 +219,7 @@ body {
 }
 
 .preset-btn.active {
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
 }
 
@@ -270,13 +270,13 @@ body {
 }
 
 .toggle-btn.open {
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
-    border-color: #673ab7 !important;
+    border-color: var(--brand-primary) !important;
 }
 
 .toggle-btn.open:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .toggle-btn.close {
@@ -297,13 +297,13 @@ body {
     cursor: pointer;
     margin: 0 !important;
     border: none !important;
-    background: linear-gradient(135deg, #673ab7, #9c27b0) !important;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end)) !important;
     color: white !important;
 }
 
 .end-round-btn:hover {
-    background: linear-gradient(135deg, #5e35a1, #7b1fa2) !important;
-    box-shadow: 0 2px 8px rgba(103, 58, 183, 0.4);
+    background: linear-gradient(135deg, var(--brand-primary-hover), var(--brand-accent)) !important;
+    box-shadow: 0 2px 8px var(--brand-shadow);
 }
 
 .nav-bar {
@@ -330,13 +330,13 @@ body {
 }
 
 .nav-bar .nav-btn.primary {
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
-    border-color: #673ab7 !important;
+    border-color: var(--brand-primary) !important;
 }
 
 .nav-bar .nav-btn.primary:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .empty-state {
@@ -348,7 +348,7 @@ body {
 
 .submissions-toggle {
     font-size: 12px;
-    color: #673ab7;
+    color: var(--brand-primary);
     background: none;
     border: none;
     cursor: pointer;
@@ -358,7 +358,7 @@ body {
 }
 
 .submissions-toggle:hover {
-    color: #5e35a1;
+    color: var(--brand-primary-hover);
 }
 
 .submissions-panel {
@@ -524,13 +524,13 @@ body {
 }
 
 .modal-btn-confirm {
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     border: none !important;
     color: white !important;
 }
 
 .modal-btn-confirm:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 /* Betting section */
@@ -545,7 +545,7 @@ body {
 .betting-section-title {
     font-size: 12px;
     font-weight: 500;
-    color: #673ab7;
+    color: var(--brand-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: 0 0 8px 0;
@@ -596,7 +596,7 @@ body {
 
 .betting-multiplier {
     font-size: 11px;
-    color: #673ab7;
+    color: var(--brand-primary);
     min-width: 40px;
     text-align: right;
 }
@@ -606,7 +606,7 @@ body {
     padding: 6px 16px !important;
     font-size: 12px !important;
     font-weight: 500 !important;
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
     border: none !important;
     border-radius: 4px !important;
@@ -615,7 +615,7 @@ body {
 }
 
 .betting-save-btn:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .betting-status {
@@ -626,6 +626,139 @@ body {
 
 .betting-status.error {
     color: #c5221f;
+}
+
+/* Game Timer styles */
+.game-timer-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 4px solid #ff5722;
+}
+
+.game-timer-card.timer-active {
+    border-top-width: 6px;
+    box-shadow: 0 2px 8px rgba(255, 87, 34, 0.2);
+}
+
+.game-timer-card.game-over {
+    border-top-color: #c5221f;
+}
+
+.game-timer-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ff5722;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 16px 0;
+}
+
+.game-timer-display {
+    font-size: 48px;
+    font-weight: 500;
+    font-family: 'Roboto Mono', monospace;
+    color: #202124;
+    text-align: center;
+    padding: 12px 0;
+}
+
+.game-timer-display.warning {
+    color: #ea8600;
+}
+
+.game-timer-display.danger {
+    color: #c5221f;
+    animation: pulse 1s infinite;
+}
+
+.game-timer-display.game-over-text {
+    font-size: 28px;
+    color: #c5221f;
+    font-family: inherit;
+}
+
+.game-timer-presets {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.game-timer-presets .preset-btn {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    background: #fff3e0 !important;
+    border: 1px solid #ff5722 !important;
+    color: #e64a19 !important;
+}
+
+.game-timer-presets .preset-btn:hover {
+    background: #ffe0b2 !important;
+}
+
+.game-timer-stop {
+    display: block;
+    margin: 12px auto 0;
+    padding: 10px 24px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    background: #fce8e6 !important;
+    border: 1px solid #c5221f !important;
+    border-radius: 4px !important;
+    color: #c5221f !important;
+    cursor: pointer;
+}
+
+.game-timer-stop:hover {
+    background: #f8d7da !important;
+}
+
+.game-timer-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.game-timer-custom .custom-input {
+    width: 80px !important;
+    padding: 6px 10px !important;
+    font-size: 14px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    margin: 0 !important;
+}
+
+/* Admin tools bar */
+.admin-tools-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.admin-tools-bar .tool-btn {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    text-decoration: none;
+    border-radius: 6px !important;
+    background: white !important;
+    color: #5f6368 !important;
+    border: 1px solid #dadce0 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-tools-bar .tool-btn:hover {
+    background: #f8f9fa !important;
+    color: #202124 !important;
 }
 
 /* Mobile responsive styles */
@@ -695,6 +828,23 @@ body {
     .round-card.nested {
         margin-left: 12px;
     }
+
+    .game-timer-display {
+        font-size: 40px;
+    }
+
+    .game-timer-presets {
+        gap: 6px;
+    }
+
+    .admin-tools-bar {
+        flex-direction: column;
+    }
+
+    .admin-tools-bar .tool-btn {
+        text-align: center;
+        justify-content: center;
+    }
 }
 </style>
 {% endblock %}
@@ -706,8 +856,8 @@ body {
         <h3 class="modal-title" id="modal-title">Allow Edit</h3>
         <p class="modal-message" id="modal-message">Allow this team to edit and resubmit their answers?</p>
         <div class="modal-actions">
-            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
-            <button class="modal-btn modal-btn-confirm" id="modal-confirm-btn">Allow</button>
+            <button class="modal-btn modal-btn-cancel" name="modal_cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-confirm" name="modal_confirm" id="modal-confirm-btn">Allow</button>
         </div>
     </div>
 </div>
@@ -721,6 +871,33 @@ body {
         <div class="teams-count">
             <strong id="team-count">{{ teams|length }}</strong> teams connected
         </div>
+    </div>
+
+    <!-- Admin Tools -->
+    <div class="admin-tools-bar">
+        <a href="{{ url_for('admin.audit', game_id=game.id) }}" class="tool-btn" name="admin_tool_audit">Audit Log</a>
+        <a href="{{ url_for('admin.admin_gallery', game_id=game.id) }}" class="tool-btn" name="admin_tool_gallery">Gallery</a>
+        <a href="{{ url_for('admin.chat', game_id=game.id) }}" class="tool-btn" name="admin_tool_chat">Chat</a>
+    </div>
+
+    <!-- Game Timer -->
+    <div class="game-timer-card" id="game-timer-card">
+        <h3 class="game-timer-title">Game Timer</h3>
+        <div class="game-timer-display" id="game-timer-display">--:--:--</div>
+        <div class="game-timer-presets" id="game-timer-presets">
+            <button class="preset-btn" name="game_timer_15m" onclick="startGameTimer(900)">15m</button>
+            <button class="preset-btn" name="game_timer_30m" onclick="startGameTimer(1800)">30m</button>
+            <button class="preset-btn" name="game_timer_45m" onclick="startGameTimer(2700)">45m</button>
+            <button class="preset-btn" name="game_timer_1h" onclick="startGameTimer(3600)">1h</button>
+            <button class="preset-btn" name="game_timer_2h" onclick="startGameTimer(7200)">2h</button>
+            <button class="preset-btn" name="game_timer_custom" onclick="showGameTimerCustom()">Custom</button>
+        </div>
+        <div class="game-timer-custom" id="game-timer-custom" style="display: none;">
+            <input type="number" class="custom-input" id="game-timer-custom-input" placeholder="minutes" min="1" max="300">
+            <button class="preset-btn" name="game_timer_custom_start" onclick="startGameTimerCustom()">Start</button>
+            <button class="preset-btn" name="game_timer_custom_cancel" onclick="hideGameTimerCustom()">Cancel</button>
+        </div>
+        <button class="game-timer-stop" id="game-timer-stop" name="game_timer_stop" onclick="stopGameTimer()" style="display: none;">Stop Game Timer</button>
     </div>
 
     {% if rounds %}
@@ -758,10 +935,10 @@ body {
                     <button class="stop-btn" id="stop-btn-{{ r.id }}" onclick="stopRoundTimer({{ r.id }})" style="display: none;">Stop</button>
                 </div>
                 <button class="toggle-btn {{ 'close' if r.is_open else 'open' }}" onclick="toggleRound({{ r.id }})" id="toggle-btn-{{ r.id }}">
-                    {{ 'Close Round' if r.is_open else 'Open Round' }}
+                    {{ 'Close ' + game.round_label if r.is_open else 'Open ' + game.round_label }}
                 </button>
                 <button class="end-round-btn" onclick="endRound({{ r.id }})" id="end-btn-{{ r.id }}" style="{{ '' if r.is_open else 'display: none;' }}">
-                    End Round
+                    End {{ game.round_label }}
                 </button>
             </div>
             <div class="submissions-panel" id="submissions-panel-{{ r.id }}">
@@ -811,10 +988,10 @@ body {
                     <button class="stop-btn" id="stop-btn-{{ r.id }}" onclick="stopRoundTimer({{ r.id }})" style="display: none;">Stop</button>
                 </div>
                 <button class="toggle-btn {{ 'close' if r.is_open else 'open' }}" onclick="toggleRound({{ r.id }})" id="toggle-btn-{{ r.id }}">
-                    {{ 'Close Round' if r.is_open else 'Open Round' }}
+                    {{ 'Close ' + game.round_label if r.is_open else 'Open ' + game.round_label }}
                 </button>
                 <button class="end-round-btn" onclick="endRound({{ r.id }})" id="end-btn-{{ r.id }}" style="{{ '' if r.is_open else 'display: none;' }}">
-                    End Round
+                    End {{ game.round_label }}
                 </button>
             </div>
             <div class="submissions-panel" id="submissions-panel-{{ r.id }}">
@@ -842,9 +1019,9 @@ body {
     {% endif %}
 
     <div class="nav-bar">
-        <a href="{{ url_for('admin.scoreboard', game_id=game.id) }}" class="nav-btn primary">Scoreboard</a>
-        <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="nav-btn">Spreadsheet</a>
-        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="nav-btn">Back to Game</a>
+        <a href="{{ url_for('admin.scoreboard', game_id=game.id) }}" class="nav-btn primary" name="nav_scoreboard">Scoreboard</a>
+        <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="nav-btn" name="nav_spreadsheet">Spreadsheet</a>
+        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="nav-btn" name="nav_back_to_game">Back to Game</a>
     </div>
 </div>
 {% endblock %}
@@ -886,19 +1063,19 @@ function updateRoundStatus(roundId, isOpen) {
         statusEl.className = 'status-badge ' + (isOpen ? 'status-open' : 'status-closed');
     }
     if (btnEl) {
-        btnEl.textContent = isOpen ? 'Close Round' : 'Open Round';
+        btnEl.textContent = isOpen ? 'Close {{ game.round_label }}' : 'Open {{ game.round_label }}';
         btnEl.className = 'toggle-btn ' + (isOpen ? 'close' : 'open');
     }
     if (cardEl) {
         cardEl.classList.toggle('is-open', isOpen);
     }
 
-    // Show/hide and reset the End Round button
+    // Show/hide and reset the End {{ game.round_label }} button
     if (endBtn) {
         if (isOpen) {
             endBtn.style.display = 'inline-block';
             endBtn.disabled = false;
-            endBtn.textContent = 'End Round';
+            endBtn.textContent = 'End {{ game.round_label }}';
         } else {
             endBtn.style.display = 'none';
         }
@@ -986,7 +1163,7 @@ async function endRound(roundId) {
     // Reset button - round stays open for new players
     if (btn) {
         btn.disabled = false;
-        btn.textContent = 'End Round';
+        btn.textContent = 'End {{ game.round_label }}';
     }
 
     // Reload submissions to show updated count
@@ -1365,6 +1542,230 @@ document.addEventListener('DOMContentLoaded', function() {
         const roundId = el.dataset.roundId;
         loadBettingQuestions(roundId);
     });
+
+    // Resume game timer if active
+    resumeGameTimer();
+});
+
+// --- Game Timer ---
+let gameTimerInterval = null;
+let gameTimerEndTime = null;
+
+function resumeGameTimer() {
+    const endTime = {{ game.timer_end_time or 'null' }};
+    if (endTime) {
+        const now = Date.now() / 1000;
+        const remaining = endTime - now;
+        if (remaining > 0) {
+            gameTimerEndTime = endTime;
+            showGameTimerRunning();
+            startGameTimerCountdown();
+        } else {
+            // Timer already expired
+            showGameOver();
+        }
+    }
+}
+
+function showGameTimerCustom() {
+    document.getElementById('game-timer-presets').style.display = 'none';
+    document.getElementById('game-timer-custom').style.display = 'flex';
+    document.getElementById('game-timer-custom-input').focus();
+}
+
+function hideGameTimerCustom() {
+    document.getElementById('game-timer-custom').style.display = 'none';
+    document.getElementById('game-timer-presets').style.display = 'flex';
+}
+
+function startGameTimerCustom() {
+    const input = document.getElementById('game-timer-custom-input');
+    const minutes = parseInt(input.value, 10);
+
+    if (!minutes || minutes < 1) {
+        showError('Please enter at least 1 minute');
+        return;
+    }
+
+    if (minutes > 300) {
+        showError('Maximum time is 300 minutes (5 hours)');
+        return;
+    }
+
+    hideGameTimerCustom();
+    startGameTimer(minutes * 60);
+}
+
+async function startGameTimer(seconds) {
+    try {
+        const response = await fetch(`/api/game/${gameId}/timer`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'start', seconds: seconds })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success || data.end_time) {
+            gameTimerEndTime = data.end_time;
+            showGameTimerRunning();
+            startGameTimerCountdown();
+        } else {
+            showError('Failed to start game timer: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showError('Error starting game timer: ' + error.message);
+    }
+}
+
+async function stopGameTimer() {
+    if (gameTimerInterval) {
+        clearInterval(gameTimerInterval);
+        gameTimerInterval = null;
+    }
+
+    try {
+        const response = await fetch(`/api/game/${gameId}/timer`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'stop' })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    } catch (error) {
+        showError('Error stopping game timer: ' + error.message);
+    }
+
+    gameTimerEndTime = null;
+    showGameTimerIdle();
+}
+
+function showGameTimerRunning() {
+    const card = document.getElementById('game-timer-card');
+    const presets = document.getElementById('game-timer-presets');
+    const stopBtn = document.getElementById('game-timer-stop');
+
+    card.classList.add('timer-active');
+    card.classList.remove('game-over');
+    presets.style.display = 'none';
+    stopBtn.style.display = 'block';
+}
+
+function showGameTimerIdle() {
+    const card = document.getElementById('game-timer-card');
+    const presets = document.getElementById('game-timer-presets');
+    const stopBtn = document.getElementById('game-timer-stop');
+    const display = document.getElementById('game-timer-display');
+
+    card.classList.remove('timer-active', 'game-over');
+    presets.style.display = 'flex';
+    stopBtn.style.display = 'none';
+    display.textContent = '--:--:--';
+    display.classList.remove('warning', 'danger', 'game-over-text');
+}
+
+function startGameTimerCountdown() {
+    if (gameTimerInterval) {
+        clearInterval(gameTimerInterval);
+    }
+
+    updateGameTimerDisplay();
+    gameTimerInterval = setInterval(function() {
+        const remaining = gameTimerEndTime - (Date.now() / 1000);
+        if (remaining <= 0) {
+            clearInterval(gameTimerInterval);
+            gameTimerInterval = null;
+            onGameTimerExpired();
+        } else {
+            updateGameTimerDisplay();
+        }
+    }, 1000);
+}
+
+function updateGameTimerDisplay() {
+    const display = document.getElementById('game-timer-display');
+    if (!gameTimerEndTime) return;
+
+    const remaining = Math.max(0, Math.ceil(gameTimerEndTime - (Date.now() / 1000)));
+    const hours = Math.floor(remaining / 3600);
+    const minutes = Math.floor((remaining % 3600) / 60);
+    const secs = remaining % 60;
+
+    if (hours > 0) {
+        display.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        display.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    display.classList.remove('warning', 'danger', 'game-over-text');
+    if (remaining <= 60) {
+        display.classList.add('danger');
+    } else if (remaining <= 300) {
+        display.classList.add('warning');
+    }
+}
+
+async function onGameTimerExpired() {
+    // Call the expire endpoint
+    try {
+        await fetch(`/api/game/${gameId}/timer/expire`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        });
+    } catch (error) {
+        console.error('Error calling timer expire:', error);
+    }
+
+    showGameOver();
+}
+
+function showGameOver() {
+    const card = document.getElementById('game-timer-card');
+    const display = document.getElementById('game-timer-display');
+    const presets = document.getElementById('game-timer-presets');
+    const stopBtn = document.getElementById('game-timer-stop');
+
+    card.classList.remove('timer-active');
+    card.classList.add('game-over');
+    display.textContent = 'Game Over - All rounds closed';
+    display.classList.remove('warning', 'danger');
+    display.classList.add('game-over-text');
+    presets.style.display = 'none';
+    stopBtn.style.display = 'none';
+
+    // Update all round statuses to closed
+    document.querySelectorAll('[data-round-id]').forEach(el => {
+        const roundId = el.dataset.roundId;
+        updateRoundStatus(parseInt(roundId), false);
+    });
+}
+
+// Listen for game timer socket events
+socket.on('game_timer_started', function(data) {
+    if (data.game_id === gameId) {
+        gameTimerEndTime = data.end_time;
+        showGameTimerRunning();
+        startGameTimerCountdown();
+    }
+});
+
+socket.on('game_timer_stopped', function(data) {
+    if (data.game_id === gameId) {
+        if (gameTimerInterval) {
+            clearInterval(gameTimerInterval);
+            gameTimerInterval = null;
+        }
+        gameTimerEndTime = null;
+        showGameTimerIdle();
+    }
 });
 </script>
 {% endblock %}

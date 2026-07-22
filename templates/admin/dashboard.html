@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
 body {
-    background: #f0ebf8;
+    background: var(--brand-bg);
 }
 
 .dashboard {
@@ -20,7 +20,7 @@ body {
     padding: 20px 24px;
     margin-bottom: 16px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    border-top: 10px solid #673ab7;
+    border-top: 10px solid var(--brand-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -34,9 +34,9 @@ body {
 }
 
 .create-btn {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white !important;
-    border: 1px solid #673ab7;
+    border: 1px solid var(--brand-primary);
     padding: 10px 20px;
     border-radius: 4px;
     font-family: inherit;
@@ -52,8 +52,8 @@ body {
 }
 
 .create-btn:hover {
-    background: #5e35a1;
-    border-color: #5e35a1;
+    background: var(--brand-primary-hover);
+    border-color: var(--brand-primary-hover);
 }
 
 .games-grid {
@@ -141,7 +141,7 @@ body {
     text-align: center;
     padding: 6px 8px;
     font-size: 12px;
-    color: #673ab7;
+    color: var(--brand-primary);
     text-decoration: none;
     border-radius: 4px;
     transition: background 0.2s;
@@ -179,8 +179,8 @@ body {
 .header-actions button.dup-game-action {
     all: unset;
     background: white;
-    color: #673ab7;
-    border: 1px solid #673ab7;
+    color: var(--brand-primary);
+    border: 1px solid var(--brand-primary);
     padding: 10px 20px;
     border-radius: 4px;
     font-family: inherit;
@@ -249,8 +249,8 @@ body {
 }
 
 .modal-search:focus {
-    border-color: #673ab7;
-    box-shadow: 0 0 0 2px rgba(103,58,183,0.15);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb), 0.15);
 }
 
 .modal-body {

@@ -469,12 +469,12 @@ body {
 }
 
 .modal-btn-primary {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
 }
 
 .modal-btn-primary:hover {
-    background: #5e35a1;
+    background: var(--brand-primary-hover);
 }
 
 /* Betting side panel */
@@ -502,7 +502,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
 }
 
@@ -579,7 +579,7 @@ body {
 
 .betting-multiplier-label {
     font-size: 11px;
-    color: #673ab7;
+    color: var(--brand-primary);
     min-width: 35px;
     text-align: right;
 }
@@ -589,7 +589,7 @@ body {
     padding: 10px 16px !important;
     font-size: 13px !important;
     font-weight: 500 !important;
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
     border: none !important;
     border-radius: 4px !important;
@@ -598,7 +598,7 @@ body {
 }
 
 .betting-save-btn:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .betting-status {
@@ -620,13 +620,13 @@ body {
 }
 
 .betting-toggle-btn {
-    background: linear-gradient(135deg, #673ab7, #9c27b0) !important;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end)) !important;
     color: white !important;
     border: none !important;
 }
 
 .betting-toggle-btn:hover {
-    background: linear-gradient(135deg, #5e35a1, #7b1fa2) !important;
+    background: linear-gradient(135deg, var(--brand-primary-hover), var(--brand-accent)) !important;
 }
 </style>
 {% endblock %}

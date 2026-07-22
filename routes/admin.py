@@ -3,11 +3,13 @@ Admin routes for Quiz App.
 
 Handles game management, round creation, and administrative functions.
 """
+import io
+import zipfile
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, send_file
 from flask_login import login_required, current_user
 
-from models import db, Admin, Game, Round, Team, Answer
+from models import db, Admin, Game, Round, Team, Answer, Subscription, MediaUpload, ChatMessage
 from sqlalchemy import func
 from forms import CreateGameForm, CreateRoundForm, AdminSettingsForm
 from utils import generate_unique_code, generate_qr_code
@@ -52,6 +54,19 @@ def create_game():
 
     Generates unique code and QR code for the game.
     """
+    admin_id = int(current_user.get_id().split('_')[1])
+
+    # Check game creation limits
+    sub = Subscription.query.filter_by(admin_id=admin_id).first()
+    if not sub:
+        sub = Subscription(admin_id=admin_id, plan_type='free', max_teams=5)
+        db.session.add(sub)
+        db.session.commit()
+
+    if not sub.can_create_game:
+        flash('You have reached your game limit. Upgrade your plan or purchase an event to create more games.', 'danger')
+        return redirect(url_for('payments.pricing'))
+
     form = CreateGameForm()
 
     if form.validate_on_submit():
@@ -60,10 +75,21 @@ def create_game():
         while Game.query.filter_by(code=code).first():
             code = generate_unique_code()
 
+        # Determine game type and defaults
+        game_type = form.game_type.data if hasattr(form, 'game_type') else 'quiz'
+        round_label = 'Round'
+        if game_type == 'treasure_hunt':
+            round_label = 'Task'
+        elif game_type == 'adventure':
+            round_label = 'Chapter'
+
         # Create game
         game = Game(
             name=form.name.data.strip(),
-            code=code
+            code=code,
+            admin_id=admin_id,
+            game_type=game_type,
+            round_label=round_label,
         )
 
         db.session.add(game)
@@ -74,12 +100,18 @@ def create_game():
         qr_path = generate_qr_code(code, game.id, base_url)
         game.qr_code_path = qr_path
 
+        # Update subscription counters
+        sub.total_games_created = (sub.total_games_created or 0) + 1
+        sub.games_created_this_period = (sub.games_created_this_period or 0) + 1
+        if sub.plan_type == 'event' and sub.event_games_remaining > 0:
+            sub.event_games_remaining -= 1
+
         db.session.commit()
 
         flash(f'Game "{game.name}" created with code {game.code}', 'success')
         return redirect(url_for('admin.edit_game', game_id=game.id))
 
-    return render_template('admin/create_game.html', form=form)
+    return render_template('admin/create_game.html', form=form, subscription=sub)
 
 
 @bp.route('/game/<int:game_id>/edit')
@@ -355,3 +387,113 @@ def settings():
         return redirect(url_for('admin.settings'))
 
     return render_template('admin/settings.html', form=form)
+
+
+@bp.route('/game/<int:game_id>/audit')
+@admin_required
+def audit(game_id):
+    """
+    Tinder-style audit page for reviewing photo/video submissions.
+    """
+    game = Game.query.get_or_404(game_id)
+    unaudited_count = MediaUpload.query.filter_by(
+        game_id=game_id,
+        upload_status='complete',
+        audit_status='unaudited',
+    ).count()
+
+    return render_template('admin/audit.html',
+                          game=game,
+                          unaudited_count=unaudited_count)
+
+
+@bp.route('/game/<int:game_id>/gallery')
+@admin_required
+def admin_gallery(game_id):
+    """
+    Admin gallery page showing all media submissions.
+    """
+    game = Game.query.get_or_404(game_id)
+    return render_template('admin/gallery.html', game=game)
+
+
+@bp.route('/game/<int:game_id>/gallery/download')
+@admin_required
+def download_gallery(game_id):
+    """
+    Download all accepted uploads for a game as a zip file.
+
+    Organises files into subfolders by team name.
+    """
+    import requests as http_requests
+
+    game = Game.query.get_or_404(game_id)
+
+    uploads = MediaUpload.query.filter_by(
+        game_id=game.id,
+        upload_status='complete',
+        audit_status='accepted'
+    ).order_by(MediaUpload.team_id, MediaUpload.created_at.asc()).all()
+
+    if not uploads:
+        flash('No accepted submissions to download.', 'info')
+        return redirect(url_for('admin.admin_gallery', game_id=game_id))
+
+    # Build zip in memory, organised by team
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for upload in uploads:
+            if not upload.storage_url:
+                continue
+
+            try:
+                response = http_requests.get(upload.storage_url, timeout=30)
+                if response.status_code == 200:
+                    # Organise by team name
+                    team = Team.query.get(upload.team_id)
+                    safe_team = ''.join(c for c in team.name if c.isalnum() or c in ' -_').strip()
+                    filename = upload.original_filename or upload.storage_key.split('/')[-1]
+                    zf.writestr(f'{safe_team}/{filename}', response.content)
+                else:
+                    current_app.logger.warning(
+                        f'[DOWNLOAD] Failed to fetch {upload.storage_url}: {response.status_code}'
+                    )
+            except Exception as e:
+                current_app.logger.error(
+                    f'[DOWNLOAD] Error fetching {upload.storage_url}: {e}'
+                )
+                continue
+
+    zip_buffer.seek(0)
+
+    safe_game_name = ''.join(c for c in game.name if c.isalnum() or c in ' -_').strip()
+    zip_filename = f'{safe_game_name} - All Submissions.zip'
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=zip_filename
+    )
+
+
+@bp.route('/game/<int:game_id>/chat')
+@admin_required
+def chat(game_id):
+    """
+    Admin chat inbox showing all team conversations.
+    """
+    game = Game.query.get_or_404(game_id)
+    teams = Team.query.filter_by(game_id=game_id).order_by(Team.name).all()
+
+    # Get unread counts per team
+    unread_counts = {}
+    for team in teams:
+        unread_counts[team.id] = ChatMessage.query.filter_by(
+            game_id=game_id, team_id=team.id, sender_type='team', is_read=False
+        ).count()
+
+    return render_template('admin/chat.html',
+                          game=game,
+                          teams=teams,
+                          unread_counts=unread_counts)

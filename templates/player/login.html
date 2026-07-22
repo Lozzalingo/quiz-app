@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
 body {
-    background: #f0ebf8;
+    background: var(--brand-bg);
 }
 
 .join-page {
@@ -19,7 +19,7 @@ body {
     border-radius: 8px;
     padding: 32px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    border-top: 10px solid #673ab7;
+    border-top: 10px solid var(--brand-primary);
 }
 
 .join-card h1 {
@@ -39,7 +39,7 @@ body {
 
 .game-code-display {
     background: #f9f5ff;
-    border: 2px solid #673ab7;
+    border: 2px solid var(--brand-primary);
     border-radius: 8px;
     padding: 12px;
     text-align: center;
@@ -57,7 +57,7 @@ body {
     font-size: 28px;
     font-weight: 500;
     font-family: monospace;
-    color: #673ab7;
+    color: var(--brand-primary);
     letter-spacing: 4px;
 }
 
@@ -87,8 +87,8 @@ body {
 
 .form-input:focus {
     outline: none !important;
-    border-color: #673ab7 !important;
-    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1) !important;
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 0 0 2px var(--brand-shadow) !important;
 }
 
 .form-input::placeholder {
@@ -112,7 +112,7 @@ body {
     padding: 12px 24px !important;
     font-size: 14px !important;
     font-weight: 500 !important;
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
     border: none !important;
     border-radius: 4px !important;
@@ -121,7 +121,7 @@ body {
 }
 
 .submit-btn:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .login-link {
@@ -132,7 +132,7 @@ body {
 }
 
 .login-link a {
-    color: #673ab7;
+    color: var(--brand-primary);
     text-decoration: none;
     font-size: 13px;
 }
@@ -267,13 +267,13 @@ body {
                 {% endfor %}
             </div>
 
-            <button type="submit" class="submit-btn">Join Game</button>
+            <button type="submit" class="submit-btn" name="login_join_game">Join Game</button>
         </form>
 
         {% if game_code %}
         <div class="login-link">
             <span>Already have a team? </span>
-            <a href="{{ url_for('auth.player_relogin', game_code=game_code) }}">Sign in</a>
+            <a href="{{ url_for('auth.player_relogin', game_code=game_code) }}" name="login_sign_in">Sign in</a>
         </div>
         {% endif %}
     </div>

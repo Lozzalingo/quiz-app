@@ -68,7 +68,7 @@
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #673ab7, #9c27b0);
+    background: linear-gradient(90deg, var(--brand-primary), var(--brand-gradient-end));
     border-radius: 4px;
     transition: width 0.5s ease;
 }
@@ -76,7 +76,7 @@
 .rounds-completed {
     font-size: 14px;
     font-weight: 500;
-    color: #673ab7;
+    color: var(--brand-primary);
     margin-top: 12px;
 }
 
@@ -90,7 +90,7 @@
 .waiting-dot {
     width: 12px;
     height: 12px;
-    background: #673ab7;
+    background: var(--brand-primary);
     border-radius: 50%;
     animation: bounce 1.4s ease-in-out infinite;
 }
@@ -109,9 +109,9 @@
     top: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     padding: 16px 24px;
-    box-shadow: 0 4px 20px rgba(103, 58, 183, 0.4);
+    box-shadow: 0 4px 20px var(--brand-shadow);
     text-align: center;
     display: none;
     z-index: 1000;
@@ -164,7 +164,7 @@ body.timer-active {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(103, 58, 183, 0.3);
+    background: var(--brand-shadow);
     z-index: 999;
     pointer-events: none;
     animation: flash 0.6s ease-out forwards;
@@ -182,7 +182,7 @@ body.timer-active {
 }
 
 .hint-text a {
-    color: #673ab7;
+    color: var(--brand-primary);
     text-decoration: none;
     font-weight: 500;
 }
@@ -195,7 +195,7 @@ body.timer-active {
         <div class="waiting-card">
             <div class="success-icon">✓</div>
             {% if rounds_completed >= total_rounds and total_rounds > 0 %}
-            <h1 class="waiting-title">All Rounds Complete!</h1>
+            <h1 class="waiting-title">All {{ game.round_label }}s Complete!</h1>
             <p class="waiting-subtitle">
                 Amazing work! You've answered all the questions.
                 Wait for the host to finalize the scores.
@@ -204,7 +204,7 @@ body.timer-active {
             <h1 class="waiting-title">Answers Submitted!</h1>
             <p class="waiting-subtitle">
                 Great job! Your answers for <strong>{{ last_round_name }}</strong> have been recorded.
-                Wait for the host to open the next round.
+                Wait for the host to open the next {{ game.round_label|lower }}.
             </p>
             {% endif %}
 
@@ -218,7 +218,7 @@ body.timer-active {
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: {{ (rounds_completed / total_rounds * 100) if total_rounds > 0 else 0 }}%"></div>
                 </div>
-                <div class="rounds-completed">{{ rounds_completed }} of {{ total_rounds }} rounds completed</div>
+                <div class="rounds-completed">{{ rounds_completed }} of {{ total_rounds }} {{ game.round_label|lower }}s completed</div>
             </div>
 
             <div class="waiting-animation">
@@ -229,7 +229,7 @@ body.timer-active {
 
             {% if rounds_completed < total_rounds or total_rounds == 0 %}
             <p class="hint-text">
-                Check the <a href="{{ url_for('player.scoreboard', game_code=game.code) }}">scoreboard</a>
+                Check the <a href="{{ url_for('player.scoreboard', game_code=game.code) }}" name="waiting_scoreboard">scoreboard</a>
                 to see how you're doing!
             </p>
             {% endif %}

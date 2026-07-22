@@ -36,7 +36,7 @@
 .step-number {
     width: 32px;
     height: 32px;
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -68,7 +68,7 @@
 .tutorial-title {
     font-size: 14px;
     font-weight: 600;
-    color: #673ab7;
+    color: var(--brand-primary);
     margin-bottom: 16px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -108,8 +108,8 @@
 }
 
 .preview-item.highlighted {
-    background: rgba(103, 58, 183, 0.15);
-    color: #673ab7;
+    background: rgba(var(--brand-primary-rgb), 0.15);
+    color: var(--brand-primary);
     transform: scale(1.1);
 }
 
@@ -121,7 +121,7 @@
     transform: translateX(-50%);
     width: 8px;
     height: 8px;
-    background: #673ab7;
+    background: var(--brand-primary);
     border-radius: 50%;
     animation: bounce 0.5s ease-in-out infinite;
 }
@@ -166,12 +166,12 @@
 }
 
 .tutorial-btn-next {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
 }
 
 .tutorial-btn-next:hover {
-    background: #5e35a1;
+    background: var(--brand-primary-hover);
 }
 
 .tutorial-dots {
@@ -190,14 +190,14 @@
 }
 
 .tutorial-dot.active {
-    background: #673ab7;
+    background: var(--brand-primary);
     transform: scale(1.2);
 }
 
 .ready-section {
     text-align: center;
     padding: 24px;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     border-radius: 12px;
     margin-top: 8px;
 }
@@ -219,7 +219,7 @@
     display: inline-block;
     padding: 14px 32px;
     background: white;
-    color: #673ab7;
+    color: var(--brand-primary);
     border-radius: 8px;
     font-size: 16px;
     font-weight: 600;
@@ -397,7 +397,7 @@
     <div class="ready-section">
         <h2>You're All Set!</h2>
         <p>Click below when the quiz master starts the game</p>
-        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="ready-btn">Start Playing</a>
+        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="ready-btn" name="instructions_start_playing">Start Playing</a>
     </div>
     {% endif %}
 </div>

@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
 body {
-    background: #f0ebf8;
+    background: var(--brand-bg);
 }
 
 .login-page {
@@ -19,7 +19,7 @@ body {
     border-radius: 8px;
     padding: 32px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    border-top: 10px solid #673ab7;
+    border-top: 10px solid var(--brand-primary);
 }
 
 .login-card h1 {
@@ -38,7 +38,7 @@ body {
 }
 
 .game-name {
-    color: #673ab7;
+    color: var(--brand-primary);
     font-weight: 500;
 }
 
@@ -68,8 +68,8 @@ body {
 
 .form-input:focus {
     outline: none !important;
-    border-color: #673ab7 !important;
-    box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.1) !important;
+    border-color: var(--brand-primary) !important;
+    box-shadow: 0 0 0 2px var(--brand-shadow) !important;
 }
 
 .form-input::placeholder {
@@ -87,7 +87,7 @@ body {
     padding: 12px 24px !important;
     font-size: 14px !important;
     font-weight: 500 !important;
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
     border: none !important;
     border-radius: 4px !important;
@@ -96,7 +96,7 @@ body {
 }
 
 .submit-btn:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .signup-link {
@@ -107,7 +107,7 @@ body {
 }
 
 .signup-link a {
-    color: #673ab7;
+    color: var(--brand-primary);
     text-decoration: none;
     font-size: 13px;
 }
@@ -148,12 +148,12 @@ body {
                 {% endfor %}
             </div>
 
-            <button type="submit" class="submit-btn">Sign In</button>
+            <button type="submit" class="submit-btn" name="relogin_sign_in">Sign In</button>
         </form>
 
         <div class="signup-link">
             <span>New team? </span>
-            <a href="{{ url_for('auth.player_login', game_code=game.code) }}">Create one here</a>
+            <a href="{{ url_for('auth.player_login', game_code=game.code) }}" name="relogin_create_team">Create one here</a>
         </div>
     </div>
 </div>

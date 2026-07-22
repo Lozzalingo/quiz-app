@@ -3,11 +3,13 @@ Player routes for Quiz App.
 
 Handles player/team quiz interface and answer submission.
 """
+import io
+import zipfile
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, current_app
 from flask_login import login_required, current_user
 
-from models import db, Game, Round, Team, Answer, ResubmitPermission
+from models import db, Game, Round, Team, Answer, ResubmitPermission, MediaUpload, ChatMessage, RoundBonus
 from utils import calculate_points_for_answer
 from sqlalchemy import func
 
@@ -346,6 +348,21 @@ def view_round(round_id):
     total_answerable_rounds = len(answerable_rounds)
     submitted_count = len(submitted_round_ids)
 
+    # Get media uploads for this team/round (for photo_video questions)
+    media_uploads = {}
+    uploads = MediaUpload.query.filter_by(team_id=team.id, round_id=round_obj.id).all()
+    for upload in uploads:
+        media_uploads[upload.question_id] = {
+            'id': upload.id,
+            'status': upload.upload_status,
+            'progress': upload.upload_progress,
+            'url': upload.storage_url,
+            'audit_status': upload.audit_status,
+            'audit_notes': upload.audit_notes,
+            'error': upload.error_message,
+            'can_resubmit': upload.can_resubmit,
+        }
+
     return render_template('player/round.html',
                           game=game,
                           round=round_obj,
@@ -354,6 +371,7 @@ def view_round(round_id):
                           existing_answers=existing_answers_dict,
                           answer_points=answer_points_dict,
                           ordering_results=ordering_results_dict,
+                          media_uploads=media_uploads,
                           is_resubmit=can_resubmit,
                           read_only=read_only,
                           is_potential_final=is_potential_final,
@@ -535,6 +553,13 @@ def submit_round(round_id):
 
         db.session.commit()
 
+        # Calculate round bonus after submission
+        try:
+            from routes.api import _calculate_round_bonus
+            _calculate_round_bonus(team.id, round_obj.id)
+        except Exception:
+            pass
+
         # Emit Socket.IO events for real-time update (if available)
         try:
             from app import socketio
@@ -584,6 +609,17 @@ def submit_round(round_id):
         db.session.rollback()
         flash('Error submitting answers. Please try again.', 'danger')
         return redirect(url_for('player.quiz', game_code=game.code))
+
+    # Check branching rules
+    branching_rules = round_obj.get_branching_rules()
+    if branching_rules:
+        # Evaluate branching based on answers
+        target_round_id = _evaluate_branching(branching_rules, team.id, round_obj.id)
+        if target_round_id:
+            target_round = Round.query.get(target_round_id)
+            if target_round and target_round.is_open:
+                flash(f'Answers recorded! Moving to next section...', 'success')
+                return redirect(url_for('player.view_round', round_id=target_round_id))
 
     # Check if this is a sub-round with more siblings to complete
     if round_obj.parent_id:
@@ -800,3 +836,153 @@ def game_over(game_code):
                           game=game,
                           team=team,
                           active_nav=None)
+
+
+@bp.route('/gallery/<game_code>')
+@team_required
+def gallery(game_code):
+    """
+    Gallery page showing accepted photo/video submissions.
+
+    Only available after game ends or when gallery is set to public.
+    """
+    game = Game.query.filter_by(code=game_code.upper()).first_or_404()
+    team = Team.query.get(int(current_user.get_id().split('_')[1]))
+
+    if team.game_id != game.id:
+        flash('You are not registered for this game.', 'danger')
+        return redirect(url_for('auth.player_login', game_code=game_code))
+
+    if not game.is_finished and not game.is_gallery_public:
+        flash('Gallery is not available yet.', 'info')
+        return redirect(url_for('player.quiz', game_code=game_code))
+
+    return render_template('player/gallery.html',
+                          game=game,
+                          team=team,
+                          active_nav='gallery')
+
+
+@bp.route('/submissions/<game_code>')
+@team_required
+def submissions(game_code):
+    """
+    Team submissions page showing their uploads and audit status.
+    """
+    game = Game.query.filter_by(code=game_code.upper()).first_or_404()
+    team = Team.query.get(int(current_user.get_id().split('_')[1]))
+
+    if team.game_id != game.id:
+        flash('You are not registered for this game.', 'danger')
+        return redirect(url_for('auth.player_login', game_code=game_code))
+
+    uploads = MediaUpload.query.filter_by(
+        team_id=team.id, game_id=game.id
+    ).order_by(MediaUpload.created_at.desc()).all()
+
+    return render_template('player/submissions.html',
+                          game=game,
+                          team=team,
+                          uploads=uploads,
+                          active_nav='submissions')
+
+
+@bp.route('/game/<game_code>/download-submissions')
+@login_required
+@team_required
+def download_submissions(game_code):
+    """
+    Download all accepted uploads for this team as a zip file.
+
+    Only available after game ends or when gallery is public.
+    Streams files from DO Spaces CDN into a zip archive.
+    """
+    import requests as http_requests
+
+    game = Game.query.filter_by(code=game_code.upper()).first_or_404()
+    team = Team.query.get(int(current_user.get_id().split('_')[1]))
+
+    if team.game_id != game.id:
+        flash('You are not registered for this game.', 'danger')
+        return redirect(url_for('auth.player_login', game_code=game_code))
+
+    if not game.is_finished and not game.is_gallery_public:
+        flash('Downloads are not available yet.', 'info')
+        return redirect(url_for('player.quiz', game_code=game_code))
+
+    # Get all accepted uploads for this team in this game
+    uploads = MediaUpload.query.filter_by(
+        team_id=team.id,
+        game_id=game.id,
+        audit_status='accepted'
+    ).order_by(MediaUpload.created_at.asc()).all()
+
+    if not uploads:
+        flash('No accepted submissions to download.', 'info')
+        return redirect(url_for('player.gallery', game_code=game_code))
+
+    # Build zip in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for upload in uploads:
+            if not upload.storage_url:
+                continue
+
+            try:
+                # Fetch file from CDN
+                response = http_requests.get(upload.storage_url, timeout=30)
+                if response.status_code == 200:
+                    # Use original filename or build one from storage key
+                    filename = upload.original_filename or upload.storage_key.split('/')[-1]
+                    zf.writestr(filename, response.content)
+                else:
+                    current_app.logger.warning(
+                        f'[DOWNLOAD] Failed to fetch {upload.storage_url}: {response.status_code}'
+                    )
+            except Exception as e:
+                current_app.logger.error(
+                    f'[DOWNLOAD] Error fetching {upload.storage_url}: {e}'
+                )
+                continue
+
+    zip_buffer.seek(0)
+
+    # Sanitise team name for filename
+    safe_team_name = ''.join(c for c in team.name if c.isalnum() or c in ' -_').strip()
+    safe_game_name = ''.join(c for c in game.name if c.isalnum() or c in ' -_').strip()
+    zip_filename = f'{safe_team_name} - {safe_game_name} Submissions.zip'
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=zip_filename
+    )
+
+
+def _evaluate_branching(branching_rules, team_id, round_id):
+    """
+    Evaluate branching rules based on team's answers.
+
+    Returns target_round_id if a rule matches, else None.
+    """
+    for rule in branching_rules:
+        question_id = rule.get('question_id')
+        answer_match = rule.get('answer_match', '').strip().lower()
+        target_round_id = rule.get('target_round_id')
+
+        if not question_id or not target_round_id:
+            continue
+
+        # Get the team's answer for this question
+        answer = Answer.query.filter_by(
+            team_id=team_id,
+            round_id=round_id,
+            question_id=question_id,
+        ).first()
+
+        if answer and answer.answer_text:
+            if answer.answer_text.strip().lower() == answer_match:
+                return target_round_id
+
+    return None

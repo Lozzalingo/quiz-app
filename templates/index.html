@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
 body {
-    background: #f0ebf8;
+    background: var(--brand-bg);
 }
 
 .hero {
@@ -13,7 +13,7 @@ body {
     padding: 60px 20px;
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(103, 58, 183, 0.1);
+    box-shadow: 0 4px 20px rgba(var(--brand-primary-rgb), 0.1);
     margin-top: 40px;
 }
 
@@ -26,7 +26,7 @@ body {
 .hero h1 {
     font-size: 42px;
     font-weight: 700;
-    color: #673ab7;
+    color: var(--brand-primary);
     margin: 0 0 12px 0;
 }
 
@@ -54,9 +54,9 @@ body {
 }
 
 .action-card:hover {
-    border-color: #673ab7;
+    border-color: var(--brand-primary);
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(103, 58, 183, 0.15);
+    box-shadow: 0 8px 24px rgba(var(--brand-primary-rgb), 0.15);
 }
 
 .action-card .icon {
@@ -89,17 +89,17 @@ body {
 }
 
 .action-card .btn-primary {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
 }
 
 .action-card .btn-primary:hover {
-    background: #5e35a1;
+    background: var(--brand-primary-hover);
 }
 
 .action-card .btn-secondary {
     background: #f1f3f4;
-    color: #673ab7;
+    color: var(--brand-primary);
 }
 
 .action-card .btn-secondary:hover {
@@ -146,6 +146,209 @@ body {
     margin: 0;
 }
 
+/* Beta banner */
+.beta-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin-top: 40px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.beta-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.beta-request-btn {
+    background: white;
+    color: var(--brand-primary);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.beta-request-btn:hover {
+    background: var(--brand-bg-tint);
+    transform: translateY(-1px);
+}
+
+/* Beta modal */
+.beta-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.beta-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 32px;
+    max-width: 420px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.beta-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.beta-modal-close:hover {
+    color: #333;
+}
+
+.beta-modal h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #202124;
+    margin: 0 0 8px 0;
+}
+
+.beta-modal p {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 24px 0;
+}
+
+.beta-modal input {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.beta-modal input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+}
+
+.beta-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 4px;
+}
+
+.beta-name-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.beta-checkboxes {
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.beta-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.beta-checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    margin-top: 2px;
+    accent-color: var(--brand-primary);
+    flex-shrink: 0;
+}
+
+.beta-checkbox-label a {
+    color: var(--brand-primary);
+    text-decoration: underline;
+}
+
+.beta-checkbox-label a:hover {
+    text-decoration: none;
+}
+
+.beta-field-error {
+    color: #d32f2f;
+    font-size: 13px;
+    margin: -4px 0 8px 26px;
+}
+
+.beta-submit-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 4px;
+}
+
+.beta-submit-btn:hover {
+    background: var(--brand-primary-hover);
+}
+
+.beta-submit-btn:disabled {
+    background: #b39ddb;
+    cursor: not-allowed;
+}
+
+.beta-message {
+    text-align: center;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 15px;
+    margin-top: 16px;
+}
+
+.beta-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.beta-error {
+    background: #fbe9e7;
+    color: #c62828;
+}
+
 footer {
     background: transparent !important;
     border-top: none !important;
@@ -158,6 +361,13 @@ footer small {
 {% endblock %}
 
 {% block content %}
+<!-- Beta Banner -->
+<div class="beta-banner">
+    <span class="beta-badge">BETA</span>
+    <span>We are currently in beta.</span>
+    <button onclick="openBetaModal()" class="beta-request-btn" data-action="beta_request_access" name="beta_request_access">Request Access</button>
+</div>
+
 <div class="hero">
     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fat Big Quiz" class="hero-logo">
     <h1>Fat Big Quiz</h1>
@@ -169,7 +379,7 @@ footer small {
         <div class="icon">🎮</div>
         <h3>Join a Game</h3>
         <p>Got a game code? Jump in with your team and compete in the quiz!</p>
-        <a href="{{ url_for('auth.player_login') }}" class="btn btn-primary">Play Now</a>
+        <a href="{{ url_for('auth.player_login') }}" class="btn btn-primary" name="hero_play_now">Play Now</a>
     </div>
 
     {% if current_user.is_authenticated and current_user.get_id().startswith('admin_') %}
@@ -177,14 +387,14 @@ footer small {
         <div class="icon">📊</div>
         <h3>Admin Dashboard</h3>
         <p>Manage your quizzes, create rounds, and track scores in real-time.</p>
-        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Go to Dashboard</a>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary" name="hero_go_to_dashboard">Go to Dashboard</a>
     </div>
     {% else %}
     <div class="action-card">
         <div class="icon">🎯</div>
         <h3>Host a Quiz</h3>
         <p>Create and manage quiz games with timed rounds and live scoring.</p>
-        <a href="{{ url_for('auth.admin_login') }}" class="btn btn-secondary">Admin Login</a>
+        <a href="{{ url_for('auth.admin_login') }}" class="btn btn-secondary" name="hero_admin_login">Admin Login</a>
     </div>
     {% endif %}
 </div>
@@ -214,4 +424,150 @@ footer small {
         </div>
     </div>
 </div>
+
+<!-- Beta Request Modal -->
+<div id="betaModal" class="beta-modal-overlay" style="display:none;">
+    <div class="beta-modal">
+        <button class="beta-modal-close" onclick="closeBetaModal()" data-action="beta_modal_close" name="beta_modal_close">&times;</button>
+        <h2>Sign Up</h2>
+        <p>Be the first to know when we launch. Sign up below.</p>
+        <form id="betaForm" onsubmit="submitBetaRequest(event)">
+            <div>
+                <label for="betaEmail" class="beta-label">Email</label>
+                <input type="email" id="betaEmail" name="beta_email" placeholder="you@example.com" required autocomplete="email">
+            </div>
+            <div class="beta-name-grid">
+                <div>
+                    <label for="betaFirstName" class="beta-label">First Name</label>
+                    <input type="text" id="betaFirstName" name="beta_first_name" placeholder="Jane" required autocomplete="given-name">
+                </div>
+                <div>
+                    <label for="betaLastName" class="beta-label">Last Name</label>
+                    <input type="text" id="betaLastName" name="beta_last_name" placeholder="Smith" required autocomplete="family-name">
+                </div>
+            </div>
+            <div class="beta-checkboxes">
+                <label class="beta-checkbox-label">
+                    <input type="checkbox" id="betaMarketing" name="beta_marketing">
+                    <span>I want to hear about new quiz packs, quiz questions, and quiz events</span>
+                </label>
+                <p id="betaMarketingError" class="beta-field-error" style="display:none;">This is required</p>
+                <label class="beta-checkbox-label">
+                    <input type="checkbox" id="betaTerms" name="beta_terms">
+                    <span>I agree to the <a href="https://fatbigquiz.com/terms" target="_blank" data-action="beta_terms_link" name="beta_terms_link">terms and conditions</a></span>
+                </label>
+                <p id="betaTermsError" class="beta-field-error" style="display:none;">You must agree to the terms</p>
+                <label class="beta-checkbox-label">
+                    <input type="checkbox" id="betaPrivacy" name="beta_privacy">
+                    <span>I agree to the <a href="https://fatbigquiz.com/privacy" target="_blank" data-action="beta_privacy_link" name="beta_privacy_link">privacy policy</a></span>
+                </label>
+                <p id="betaPrivacyError" class="beta-field-error" style="display:none;">You must agree to the privacy policy</p>
+            </div>
+            <button type="submit" class="beta-submit-btn" data-action="beta_submit" name="beta_submit">Sign Up</button>
+        </form>
+        <p id="betaMessage" class="beta-message" style="display:none;"></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openBetaModal() {
+    console.log('[Beta] Opening request modal');
+    document.getElementById('betaModal').style.display = 'flex';
+}
+
+function closeBetaModal() {
+    console.log('[Beta] Closing request modal');
+    document.getElementById('betaModal').style.display = 'none';
+    // Reset form state
+    document.getElementById('betaForm').style.display = 'block';
+    document.getElementById('betaMessage').style.display = 'none';
+    document.getElementById('betaForm').reset();
+    // Hide validation errors
+    document.querySelectorAll('.beta-field-error').forEach(function(el) { el.style.display = 'none'; });
+}
+
+function submitBetaRequest(e) {
+    e.preventDefault();
+    var firstName = document.getElementById('betaFirstName').value.trim();
+    var lastName = document.getElementById('betaLastName').value.trim();
+    var email = document.getElementById('betaEmail').value.trim();
+    var marketing = document.getElementById('betaMarketing').checked;
+    var terms = document.getElementById('betaTerms').checked;
+    var privacy = document.getElementById('betaPrivacy').checked;
+
+    console.log('[Beta] Submitting request for:', firstName, lastName, email);
+
+    // Validate checkboxes
+    var valid = true;
+    document.querySelectorAll('.beta-field-error').forEach(function(el) { el.style.display = 'none'; });
+
+    if (!marketing) {
+        document.getElementById('betaMarketingError').style.display = 'block';
+        valid = false;
+    }
+    if (!terms) {
+        document.getElementById('betaTermsError').style.display = 'block';
+        valid = false;
+    }
+    if (!privacy) {
+        document.getElementById('betaPrivacyError').style.display = 'block';
+        valid = false;
+    }
+
+    if (!valid) {
+        console.log('[Beta] Validation failed - checkboxes not ticked');
+        return;
+    }
+
+    var btn = document.querySelector('.beta-submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Signing up...';
+
+    fetch('https://fatbigquiz.com/api/subscribers', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            source: 'app',
+            sourcePath: '/app',
+            marketingOptIn: marketing
+        })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        console.log('[Beta] Response:', data);
+        var msgEl = document.getElementById('betaMessage');
+        if (data.message && !data.error) {
+            document.getElementById('betaForm').style.display = 'none';
+            msgEl.textContent = data.message;
+            msgEl.className = 'beta-message beta-success';
+            msgEl.style.display = 'block';
+        } else {
+            msgEl.textContent = data.error || 'Something went wrong.';
+            msgEl.className = 'beta-message beta-error';
+            msgEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Sign Up';
+        }
+    })
+    .catch(function(err) {
+        console.error('[Beta] Error:', err);
+        var msgEl = document.getElementById('betaMessage');
+        msgEl.textContent = 'Network error. Please try again.';
+        msgEl.className = 'beta-message beta-error';
+        msgEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign Up';
+    });
+}
+
+// Close modal on overlay click
+document.getElementById('betaModal').addEventListener('click', function(e) {
+    if (e.target === this) closeBetaModal();
+});
+</script>
 {% endblock %}

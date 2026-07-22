@@ -1,0 +1,368 @@
+{
+  "event_5": {
+    "price_id": "price_1TVXJePolWMC5AyO00JrvIDz",
+    "product_id": "prod_UUWMUurf8k7mzP",
+    "amount": 499,
+    "max_teams": 5
+  },
+  "event_10": {
+    "price_id": "price_1TVXJfPolWMC5AyOreacExb7",
+    "product_id": "prod_UUWMlN0X0bBacU",
+    "amount": 699,
+    "max_teams": 10
+  },
+  "event_20": {
+    "price_id": "price_1TVXJfPolWMC5AyOY8ZuW2m5",
+    "product_id": "prod_UUWMgzPV1tAXF4",
+    "amount": 999,
+    "max_teams": 20
+  },
+  "event_50": {
+    "price_id": "price_1TVXJgPolWMC5AyOY7WzWBKi",
+    "product_id": "prod_UUWM8HT2Bn6KeU",
+    "amount": 1599,
+    "max_teams": 50
+  },
+  "event_100": {
+    "price_id": "price_1TVXJhPolWMC5AyOggkMOHRJ",
+    "product_id": "prod_UUWMR8BigcpCx5",
+    "amount": 2399,
+    "max_teams": 100
+  },
+  "pro_monthly_1g_5t": {
+    "price_id": "price_1TVXJhPolWMC5AyOMG5lIvpU",
+    "product_id": "prod_UUWMhp65XDCEfy",
+    "amount": 299,
+    "games_per_month": 1,
+    "max_teams": 5
+  },
+  "pro_yearly_1g_5t": {
+    "price_id": "price_1TVXJiPolWMC5AyOhU9BSzNj",
+    "product_id": "prod_UUWMhp65XDCEfy",
+    "amount": 2871,
+    "games_per_month": 1,
+    "max_teams": 5
+  },
+  "pro_monthly_1g_10t": {
+    "price_id": "price_1TVXJiPolWMC5AyOJufCzKpC",
+    "product_id": "prod_UUWM9m6YdkYarY",
+    "amount": 499,
+    "games_per_month": 1,
+    "max_teams": 10
+  },
+  "pro_yearly_1g_10t": {
+    "price_id": "price_1TVXJjPolWMC5AyOl1IUlDVP",
+    "product_id": "prod_UUWM9m6YdkYarY",
+    "amount": 4791,
+    "games_per_month": 1,
+    "max_teams": 10
+  },
+  "pro_monthly_1g_20t": {
+    "price_id": "price_1TVXJjPolWMC5AyO6u0qltU4",
+    "product_id": "prod_UUWM4hKTD6A7pL",
+    "amount": 799,
+    "games_per_month": 1,
+    "max_teams": 20
+  },
+  "pro_yearly_1g_20t": {
+    "price_id": "price_1TVXJkPolWMC5AyODFhOPYdk",
+    "product_id": "prod_UUWM4hKTD6A7pL",
+    "amount": 7671,
+    "games_per_month": 1,
+    "max_teams": 20
+  },
+  "pro_monthly_1g_50t": {
+    "price_id": "price_1TVXJkPolWMC5AyO0E9R6O2o",
+    "product_id": "prod_UUWMjLXH2yo592",
+    "amount": 1399,
+    "games_per_month": 1,
+    "max_teams": 50
+  },
+  "pro_yearly_1g_50t": {
+    "price_id": "price_1TVXJkPolWMC5AyOt1s5SlaC",
+    "product_id": "prod_UUWMjLXH2yo592",
+    "amount": 13431,
+    "games_per_month": 1,
+    "max_teams": 50
+  },
+  "pro_monthly_1g_100t": {
+    "price_id": "price_1TVXJlPolWMC5AyOheGNVhVl",
+    "product_id": "prod_UUWMfWMHHZNal7",
+    "amount": 2199,
+    "games_per_month": 1,
+    "max_teams": 100
+  },
+  "pro_yearly_1g_100t": {
+    "price_id": "price_1TVXJlPolWMC5AyOVoD8WNPV",
+    "product_id": "prod_UUWMfWMHHZNal7",
+    "amount": 21111,
+    "games_per_month": 1,
+    "max_teams": 100
+  },
+  "pro_monthly_4g_5t": {
+    "price_id": "price_1TVXJmPolWMC5AyOdBG0VwXF",
+    "product_id": "prod_UUWMaWiUxXai8G",
+    "amount": 999,
+    "games_per_month": 4,
+    "max_teams": 5
+  },
+  "pro_yearly_4g_5t": {
+    "price_id": "price_1TVXJmPolWMC5AyOKHwJ7tae",
+    "product_id": "prod_UUWMaWiUxXai8G",
+    "amount": 9591,
+    "games_per_month": 4,
+    "max_teams": 5
+  },
+  "pro_monthly_4g_10t": {
+    "price_id": "price_1TVXJnPolWMC5AyOEVl07Ytk",
+    "product_id": "prod_UUWMGxVDp8n3FN",
+    "amount": 1499,
+    "games_per_month": 4,
+    "max_teams": 10
+  },
+  "pro_yearly_4g_10t": {
+    "price_id": "price_1TVXJnPolWMC5AyO84taa7Ur",
+    "product_id": "prod_UUWMGxVDp8n3FN",
+    "amount": 14391,
+    "games_per_month": 4,
+    "max_teams": 10
+  },
+  "pro_monthly_4g_20t": {
+    "price_id": "price_1TVXJoPolWMC5AyOeTwR6tXi",
+    "product_id": "prod_UUWMGaAqJgzu3R",
+    "amount": 2199,
+    "games_per_month": 4,
+    "max_teams": 20
+  },
+  "pro_yearly_4g_20t": {
+    "price_id": "price_1TVXJoPolWMC5AyOlDdryAQP",
+    "product_id": "prod_UUWMGaAqJgzu3R",
+    "amount": 21111,
+    "games_per_month": 4,
+    "max_teams": 20
+  },
+  "pro_monthly_4g_50t": {
+    "price_id": "price_1TVXJpPolWMC5AyOn7EHHpom",
+    "product_id": "prod_UUWMpJrjvlLaqN",
+    "amount": 3499,
+    "games_per_month": 4,
+    "max_teams": 50
+  },
+  "pro_yearly_4g_50t": {
+    "price_id": "price_1TVXJpPolWMC5AyOaPvzfF7U",
+    "product_id": "prod_UUWMpJrjvlLaqN",
+    "amount": 33591,
+    "games_per_month": 4,
+    "max_teams": 50
+  },
+  "pro_monthly_4g_100t": {
+    "price_id": "price_1TVXJqPolWMC5AyOYQPhqW6G",
+    "product_id": "prod_UUWMvOhMR2KU77",
+    "amount": 5499,
+    "games_per_month": 4,
+    "max_teams": 100
+  },
+  "pro_yearly_4g_100t": {
+    "price_id": "price_1TVXJqPolWMC5AyOogsByTek",
+    "product_id": "prod_UUWMvOhMR2KU77",
+    "amount": 52791,
+    "games_per_month": 4,
+    "max_teams": 100
+  },
+  "pro_monthly_8g_5t": {
+    "price_id": "price_1TVXJqPolWMC5AyOh7XhnNmt",
+    "product_id": "prod_UUWMXDFV7G7BEA",
+    "amount": 1699,
+    "games_per_month": 8,
+    "max_teams": 5
+  },
+  "pro_yearly_8g_5t": {
+    "price_id": "price_1TVXJrPolWMC5AyOSz0JbNnd",
+    "product_id": "prod_UUWMXDFV7G7BEA",
+    "amount": 16311,
+    "games_per_month": 8,
+    "max_teams": 5
+  },
+  "pro_monthly_8g_10t": {
+    "price_id": "price_1TVXJrPolWMC5AyOIaYSf1xe",
+    "product_id": "prod_UUWMQxs9LnfPGJ",
+    "amount": 2499,
+    "games_per_month": 8,
+    "max_teams": 10
+  },
+  "pro_yearly_8g_10t": {
+    "price_id": "price_1TVXJsPolWMC5AyOMVKx7Q2a",
+    "product_id": "prod_UUWMQxs9LnfPGJ",
+    "amount": 23991,
+    "games_per_month": 8,
+    "max_teams": 10
+  },
+  "pro_monthly_8g_20t": {
+    "price_id": "price_1TVXJsPolWMC5AyOJImocwKO",
+    "product_id": "prod_UUWMpPll8T9jhc",
+    "amount": 3699,
+    "games_per_month": 8,
+    "max_teams": 20
+  },
+  "pro_yearly_8g_20t": {
+    "price_id": "price_1TVXJtPolWMC5AyOdBR3KFgn",
+    "product_id": "prod_UUWMpPll8T9jhc",
+    "amount": 35511,
+    "games_per_month": 8,
+    "max_teams": 20
+  },
+  "pro_monthly_8g_50t": {
+    "price_id": "price_1TVXJtPolWMC5AyO4f0PV7ov",
+    "product_id": "prod_UUWMmxrodFZczw",
+    "amount": 5999,
+    "games_per_month": 8,
+    "max_teams": 50
+  },
+  "pro_yearly_8g_50t": {
+    "price_id": "price_1TVXJuPolWMC5AyOpPyHfJGS",
+    "product_id": "prod_UUWMmxrodFZczw",
+    "amount": 57591,
+    "games_per_month": 8,
+    "max_teams": 50
+  },
+  "pro_monthly_8g_100t": {
+    "price_id": "price_1TVXJuPolWMC5AyOfMc5DdFy",
+    "product_id": "prod_UUWMrQFt9yQMee",
+    "amount": 8999,
+    "games_per_month": 8,
+    "max_teams": 100
+  },
+  "pro_yearly_8g_100t": {
+    "price_id": "price_1TVXJvPolWMC5AyOM2s7UF58",
+    "product_id": "prod_UUWMrQFt9yQMee",
+    "amount": 86391,
+    "games_per_month": 8,
+    "max_teams": 100
+  },
+  "pro_monthly_16g_5t": {
+    "price_id": "price_1TVXJvPolWMC5AyOVTGaaDgk",
+    "product_id": "prod_UUWMXJCnW4NlLz",
+    "amount": 2799,
+    "games_per_month": 16,
+    "max_teams": 5
+  },
+  "pro_yearly_16g_5t": {
+    "price_id": "price_1TVXJwPolWMC5AyOleA3lTjP",
+    "product_id": "prod_UUWMXJCnW4NlLz",
+    "amount": 26871,
+    "games_per_month": 16,
+    "max_teams": 5
+  },
+  "pro_monthly_16g_10t": {
+    "price_id": "price_1TVXJwPolWMC5AyOfNhscsLh",
+    "product_id": "prod_UUWM0Tt9bIg7y9",
+    "amount": 3999,
+    "games_per_month": 16,
+    "max_teams": 10
+  },
+  "pro_yearly_16g_10t": {
+    "price_id": "price_1TVXJwPolWMC5AyORWgtFC7Z",
+    "product_id": "prod_UUWM0Tt9bIg7y9",
+    "amount": 38391,
+    "games_per_month": 16,
+    "max_teams": 10
+  },
+  "pro_monthly_16g_20t": {
+    "price_id": "price_1TVXJxPolWMC5AyOmseZl0MV",
+    "product_id": "prod_UUWMqDvPj2L8IS",
+    "amount": 5999,
+    "games_per_month": 16,
+    "max_teams": 20
+  },
+  "pro_yearly_16g_20t": {
+    "price_id": "price_1TVXJxPolWMC5AyOxM02opms",
+    "product_id": "prod_UUWMqDvPj2L8IS",
+    "amount": 57591,
+    "games_per_month": 16,
+    "max_teams": 20
+  },
+  "pro_monthly_16g_50t": {
+    "price_id": "price_1TVXJyPolWMC5AyOFeZqSEYc",
+    "product_id": "prod_UUWMjQHXEsf25w",
+    "amount": 9499,
+    "games_per_month": 16,
+    "max_teams": 50
+  },
+  "pro_yearly_16g_50t": {
+    "price_id": "price_1TVXJyPolWMC5AyO29iE3GGR",
+    "product_id": "prod_UUWMjQHXEsf25w",
+    "amount": 91191,
+    "games_per_month": 16,
+    "max_teams": 50
+  },
+  "pro_monthly_16g_100t": {
+    "price_id": "price_1TVXJzPolWMC5AyOxs0A3Mzn",
+    "product_id": "prod_UUWMZZcHPYr2Eo",
+    "amount": 14499,
+    "games_per_month": 16,
+    "max_teams": 100
+  },
+  "pro_yearly_16g_100t": {
+    "price_id": "price_1TVXJzPolWMC5AyO7MPWlPIC",
+    "product_id": "prod_UUWMZZcHPYr2Eo",
+    "amount": 139191,
+    "games_per_month": 16,
+    "max_teams": 100
+  },
+  "pro_monthly_32g_5t": {
+    "price_id": "price_1TVXK0PolWMC5AyOmvOfDe4D",
+    "product_id": "prod_UUWMOCrd3wCfAf",
+    "amount": 4499,
+    "games_per_month": 32,
+    "max_teams": 5
+  },
+  "pro_yearly_32g_5t": {
+    "price_id": "price_1TVXK0PolWMC5AyOWff0PSho",
+    "product_id": "prod_UUWMOCrd3wCfAf",
+    "amount": 43191,
+    "games_per_month": 32,
+    "max_teams": 5
+  },
+  "pro_monthly_32g_10t": {
+    "price_id": "price_1TVXK1PolWMC5AyOQtCXj7yV",
+    "product_id": "prod_UUWMhnYemArqqG",
+    "amount": 6499,
+    "games_per_month": 32,
+    "max_teams": 10
+  },
+  "pro_yearly_32g_10t": {
+    "price_id": "price_1TVXK1PolWMC5AyOl8PctuIG",
+    "product_id": "prod_UUWMhnYemArqqG",
+    "amount": 62391,
+    "games_per_month": 32,
+    "max_teams": 10
+  },
+  "pro_monthly_32g_20t": {
+    "price_id": "price_1TVXK2PolWMC5AyOdCmQFjN5",
+    "product_id": "prod_UUWMtIYLtl1FaA",
+    "amount": 9499,
+    "games_per_month": 32,
+    "max_teams": 20
+  },
+  "pro_yearly_32g_20t": {
+    "price_id": "price_1TVXK2PolWMC5AyOne8JzHrL",
+    "product_id": "prod_UUWMtIYLtl1FaA",
+    "amount": 91191,
+    "games_per_month": 32,
+    "max_teams": 20
+  },
+  "pro_monthly_32g_50t": {
+    "price_id": "price_1TVXK2PolWMC5AyOXGy2RBGn",
+    "product_id": "prod_UUWM1NLxKewk4u",
+    "amount": 14999,
+    "games_per_month": 32,
+    "max_teams": 50
+  },
+  "pro_yearly_32g_50t": {
+    "price_id": "price_1TVXK3PolWMC5AyO6K3BIgLQ",
+    "product_id": "prod_UUWM1NLxKewk4u",
+    "amount": 143991,
+    "games_per_month": 32,
+    "max_teams": 50
+  }
+}

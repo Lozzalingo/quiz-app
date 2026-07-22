@@ -106,7 +106,7 @@
     background: white;
     border-radius: 8px;
     text-decoration: none;
-    color: #673ab7;
+    color: var(--brand-primary);
     font-weight: 500;
     font-size: 14px;
     transition: all 0.2s;
@@ -115,7 +115,7 @@
 
 .hint-link:hover {
     background: #f5f0ff;
-    border-color: #673ab7;
+    border-color: var(--brand-primary);
 }
 
 .fun-message {
@@ -158,13 +158,13 @@
             <div class="hint-section">
                 <div class="hint-title">While you wait</div>
                 <div class="hint-links">
-                    <a href="{{ url_for('player.scoreboard', game_code=game.code) }}" class="hint-link">
+                    <a href="{{ url_for('player.scoreboard', game_code=game.code) }}" class="hint-link" name="paused_scoreboard">
                         📊 View Scoreboard
                     </a>
-                    <a href="{{ url_for('player.team_details', game_code=game.code) }}" class="hint-link">
+                    <a href="{{ url_for('player.team_details', game_code=game.code) }}" class="hint-link" name="paused_team_details">
                         👤 View Team Details
                     </a>
-                    <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="hint-link">
+                    <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="hint-link" name="paused_previous_answers">
                         📋 View Previous Answers
                     </a>
                 </div>

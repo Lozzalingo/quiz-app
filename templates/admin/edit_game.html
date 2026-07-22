@@ -5,7 +5,7 @@
 {% block extra_css %}
 <style>
 body {
-    background: #f0ebf8;
+    background: var(--brand-bg);
 }
 
 .game-page {
@@ -20,7 +20,7 @@ body {
     padding: 20px 24px;
     margin-bottom: 12px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    border-top: 10px solid #673ab7;
+    border-top: 10px solid var(--brand-primary);
     display: flex;
     gap: 24px;
     align-items: flex-start;
@@ -49,7 +49,7 @@ body {
 }
 
 .game-info h1.editing {
-    border: 2px solid #673ab7 !important;
+    border: 2px solid var(--brand-primary) !important;
     background: white;
     outline: none;
 }
@@ -75,7 +75,7 @@ body {
 
 .join-link {
     font-size: 13px;
-    color: #673ab7;
+    color: var(--brand-primary);
     word-break: break-all;
 }
 
@@ -126,7 +126,7 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #673ab7;
+    color: var(--brand-primary);
     text-decoration: none;
     font-weight: 500;
     padding: 4px 10px;
@@ -137,7 +137,7 @@ body {
 
 .scores-link:hover {
     background: #e9d5ff;
-    color: #5e35a1;
+    color: var(--brand-primary-hover);
 }
 
 .status-badge {
@@ -405,8 +405,8 @@ body {
 
 .add-btn {
     background: transparent;
-    color: #673ab7;
-    border: 1px solid #673ab7;
+    color: var(--brand-primary);
+    border: 1px solid var(--brand-primary);
     padding: 6px 16px;
     border-radius: 4px;
     font-size: 13px;
@@ -440,7 +440,7 @@ body {
 .round-item.nested {
     padding-left: 32px;
     background: #fafafa;
-    border-left: 3px solid #673ab7;
+    border-left: 3px solid var(--brand-primary);
     margin-left: 12px;
 }
 
@@ -451,9 +451,9 @@ body {
 
 .add-sub-btn {
     font-size: 11px;
-    color: #673ab7;
+    color: var(--brand-primary);
     background: none;
-    border: 1px dashed #673ab7;
+    border: 1px dashed var(--brand-primary);
     padding: 2px 8px;
     border-radius: 4px;
     cursor: pointer;
@@ -477,7 +477,7 @@ body {
 }
 
 .drag-handle:hover {
-    color: #673ab7;
+    color: var(--brand-primary);
 }
 
 .drag-handle:active {
@@ -490,7 +490,7 @@ body {
 }
 
 .round-item.drag-over {
-    border-top: 2px solid #673ab7;
+    border-top: 2px solid var(--brand-primary);
 }
 
 /* Mobile portrait only: 2-row grid layout for round items */
@@ -594,7 +594,7 @@ body {
 }
 
 .round-name.editing {
-    border: 2px solid #673ab7 !important;
+    border: 2px solid var(--brand-primary) !important;
     background: white;
     outline: none;
 }
@@ -674,7 +674,7 @@ body {
 }
 
 .team-name.editing {
-    border: 2px solid #673ab7 !important;
+    border: 2px solid var(--brand-primary) !important;
     background: white;
     outline: none;
 }
@@ -684,7 +684,7 @@ body {
     align-items: center;
     gap: 4px;
     padding: 4px 12px;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     color: white;
     border-radius: 16px;
     font-size: 13px;
@@ -732,7 +732,7 @@ body {
 }
 
 .team-tab-penalty.editing {
-    border: 2px solid #673ab7 !important;
+    border: 2px solid var(--brand-primary) !important;
     background: white !important;
 }
 
@@ -913,13 +913,13 @@ body {
 }
 
 .action-btn.primary {
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
-    border-color: #673ab7 !important;
+    border-color: var(--brand-primary) !important;
 }
 
 .action-btn.primary:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .action-btn.finish {

@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Gallery - {{ game.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: var(--brand-bg);
+}
+
+.gallery-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.gallery-header {
+    background: white;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-top: 10px solid var(--brand-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.gallery-header h1 {
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0;
+    color: #202124;
+}
+
+.gallery-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.gallery-filters select {
+    padding: 6px 12px;
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+    font-size: 13px;
+    background: white;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.gallery-item {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gallery-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.gallery-thumb {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: #f1f3f4;
+}
+
+.gallery-thumb video {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.gallery-item-info {
+    padding: 12px 16px;
+}
+
+.gallery-item-info .team {
+    font-weight: 600;
+    font-size: 14px;
+    color: #202124;
+}
+
+.gallery-item-info .task {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 2px;
+}
+
+.gallery-item-info .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 6px;
+}
+
+.status-badge.accepted { background: #e8f5e9; color: #2e7d32; }
+.status-badge.unaudited { background: #fff3e0; color: #e65100; }
+.status-badge.rejected { background: #ffebee; color: #c62828; }
+
+.gallery-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #5f6368;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 16px;
+    color: var(--brand-primary);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+/* Lightbox modal */
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.lightbox-overlay.active {
+    display: flex;
+}
+
+.lightbox-content {
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.lightbox-content img,
+.lightbox-content video {
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gallery-page">
+    <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="back-link" name="gallery_back_to_game">&larr; Back to game</a>
+
+    <div class="gallery-header">
+        <h1>Gallery</h1>
+        <a href="{{ url_for('admin.download_gallery', game_id=game.id) }}"
+           name="admin_download_gallery"
+           style="padding: 8px 16px; background: #4CAF50; color: white; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px;">
+            Download All
+        </a>
+        <div class="gallery-filters">
+            <select id="filter-team" name="gallery_filter_team">
+                <option value="">All teams</option>
+            </select>
+            <select id="filter-status" name="gallery_filter_status">
+                <option value="">All statuses</option>
+                <option value="accepted">Accepted</option>
+                <option value="unaudited">Unaudited</option>
+                <option value="rejected_resubmit">Rejected (resubmit)</option>
+                <option value="rejected_final">Rejected (final)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="gallery-grid" id="gallery-grid">
+        <!-- Loaded dynamically -->
+    </div>
+
+    <div class="gallery-empty" id="gallery-empty" style="display:none;">
+        <p>No submissions yet.</p>
+    </div>
+</div>
+
+<div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" onclick="closeLightbox()" name="gallery_close_lightbox">&times;</button>
+    <div class="lightbox-content" id="lightbox-content"></div>
+</div>
+
+<script>
+(function() {
+    const gameId = {{ game.id }};
+    let allUploads = [];
+
+    function loadGallery() {
+        fetch(`/api/game/${gameId}/gallery`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    allUploads = data.uploads;
+                    populateTeamFilter();
+                    renderGrid(allUploads);
+                }
+            });
+    }
+
+    function populateTeamFilter() {
+        const teams = [...new Set(allUploads.map(u => u.team_name))].sort();
+        const select = document.getElementById('filter-team');
+        teams.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select.appendChild(opt);
+        });
+    }
+
+    function renderGrid(uploads) {
+        const grid = document.getElementById('gallery-grid');
+        const empty = document.getElementById('gallery-empty');
+
+        if (uploads.length === 0) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        grid.innerHTML = uploads.map(u => {
+            const statusClass = u.audit_status.startsWith('rejected') ? 'rejected' : u.audit_status;
+            const isVideo = u.file_type === 'video';
+            return `
+                <div class="gallery-item" onclick="openLightbox('${u.storage_url}', '${u.file_type}')">
+                    ${isVideo
+                        ? `<video class="gallery-thumb" muted><source src="${u.storage_url}" type="video/mp4"></video>`
+                        : `<img class="gallery-thumb" src="${u.storage_url}" alt="${u.team_name}" loading="lazy">`
+                    }
+                    <div class="gallery-item-info">
+                        <div class="team">${u.team_name}</div>
+                        <div class="task">${u.round_name} - ${u.question_id}</div>
+                        <span class="status-badge ${statusClass}">${u.audit_status.replace('_', ' ')}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function applyFilters() {
+        const teamFilter = document.getElementById('filter-team').value;
+        const statusFilter = document.getElementById('filter-status').value;
+
+        let filtered = allUploads;
+        if (teamFilter) filtered = filtered.filter(u => u.team_name === teamFilter);
+        if (statusFilter) filtered = filtered.filter(u => u.audit_status === statusFilter);
+        renderGrid(filtered);
+    }
+
+    document.getElementById('filter-team').addEventListener('change', applyFilters);
+    document.getElementById('filter-status').addEventListener('change', applyFilters);
+
+    window.openLightbox = function(url, fileType) {
+        const overlay = document.getElementById('lightbox');
+        const content = document.getElementById('lightbox-content');
+        if (fileType === 'video') {
+            content.innerHTML = `<video controls autoplay playsinline style="max-width:90vw;max-height:85vh;"><source src="${url}" type="video/mp4"></video>`;
+        } else {
+            content.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:85vh;object-fit:contain;">`;
+        }
+        overlay.classList.add('active');
+    };
+
+    window.closeLightbox = function() {
+        const overlay = document.getElementById('lightbox');
+        overlay.classList.remove('active');
+        document.getElementById('lightbox-content').innerHTML = '';
+    };
+
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+        if (e.target === this) closeLightbox();
+    });
+
+    loadGallery();
+})();
+</script>
+{% endblock %}

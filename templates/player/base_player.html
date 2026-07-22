@@ -11,6 +11,15 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Theme CSS (toggled via JS) -->
+    <link rel="stylesheet" id="theme-css" href="">
+    <script>
+    (function() {
+        var theme = localStorage.getItem('quiz-theme') || 'fat-big-quiz';
+        document.getElementById('theme-css').href = '/static/css/style-' + theme + '.css';
+    })();
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -20,7 +29,7 @@
 
         body {
             font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f0ebf8;
+            background: var(--brand-bg);
             min-height: 100vh;
             padding-bottom: 80px; /* Space for nav */
         }
@@ -59,11 +68,11 @@
         }
 
         .nav-item:hover {
-            color: #673ab7;
+            color: var(--brand-primary);
         }
 
         .nav-item.active {
-            color: #673ab7;
+            color: var(--brand-primary);
         }
 
         .nav-item .nav-icon {
@@ -89,14 +98,14 @@
             transform: translateX(-50%);
             width: 8px;
             height: 8px;
-            background: #673ab7;
+            background: var(--brand-primary);
             border-radius: 50%;
             animation: bounce 1s ease-in-out infinite;
         }
 
         @keyframes pulse-highlight {
-            0%, 100% { background: rgba(103, 58, 183, 0.1); }
-            50% { background: rgba(103, 58, 183, 0.2); }
+            0%, 100% { background: rgba(var(--brand-primary-rgb), 0.1); }
+            50% { background: rgba(var(--brand-primary-rgb), 0.2); }
         }
 
         @keyframes bounce {
@@ -114,7 +123,7 @@
         }
 
         .card-header {
-            border-top: 8px solid #673ab7;
+            border-top: 8px solid var(--brand-primary);
             border-radius: 12px 12px 0 0;
             margin: -20px -20px 20px;
             padding: 20px 20px 0;
@@ -136,7 +145,7 @@
         .btn {
             display: inline-block;
             padding: 12px 24px;
-            background: #673ab7;
+            background: var(--brand-primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -148,13 +157,13 @@
         }
 
         .btn:hover {
-            background: #5e35a1;
+            background: var(--brand-primary-hover);
         }
 
         .btn-outline {
             background: white;
-            color: #673ab7;
-            border: 1px solid #673ab7;
+            color: var(--brand-primary);
+            border: 1px solid var(--brand-primary);
         }
 
         .btn-outline:hover {
@@ -296,7 +305,7 @@
         }
 
         .battery-popup-header.swap-mode {
-            background: linear-gradient(135deg, #673ab7, #9c27b0);
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
         }
 
         .battery-popup-header .battery-icon {
@@ -361,7 +370,7 @@
         .swap-steps .step-num {
             width: 24px;
             height: 24px;
-            background: #673ab7;
+            background: var(--brand-primary);
             color: white;
             border-radius: 50%;
             display: flex;
@@ -404,12 +413,219 @@
         }
 
         .battery-popup-btn.logout {
-            background: #673ab7;
+            background: var(--brand-primary);
             color: white;
         }
 
         .battery-popup-btn.logout:hover {
-            background: #5e35a1;
+            background: var(--brand-primary-hover);
+        }
+
+        /* Chat Widget */
+        .chat-fab {
+            position: fixed;
+            bottom: 80px;
+            left: 16px;
+            width: 52px;
+            height: 52px;
+            background: var(--brand-primary);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px var(--brand-shadow);
+            cursor: pointer;
+            z-index: 200;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .chat-fab:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 16px var(--brand-shadow);
+        }
+
+        .chat-fab .unread-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #f44336;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--brand-bg);
+        }
+
+        .chat-fab .unread-badge.hidden {
+            display: none;
+        }
+
+        .chat-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 400px;
+            background: white;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .chat-panel.open {
+            transform: translateY(0);
+        }
+
+        .chat-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+
+        .chat-panel-header h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #202124;
+        }
+
+        .chat-close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: #5f6368;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 150px;
+            max-height: 260px;
+        }
+
+        .chat-msg {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .chat-msg.team {
+            align-self: flex-end;
+            background: var(--brand-bg-muted);
+            color: #202124;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-msg.admin {
+            align-self: flex-start;
+            background: var(--brand-primary);
+            color: white;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-msg .msg-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 2px;
+            display: block;
+        }
+
+        .chat-empty {
+            text-align: center;
+            color: #9e9e9e;
+            font-size: 13px;
+            padding: 30px 0;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px 14px;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--brand-primary);
+        }
+
+        .chat-send-btn {
+            width: 38px;
+            height: 38px;
+            background: var(--brand-primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--brand-primary-hover);
+        }
+
+        .chat-send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .chat-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 250;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .chat-overlay.show {
+            opacity: 1;
+            visibility: visible;
         }
 
         {% block extra_css %}{% endblock %}
@@ -454,8 +670,8 @@
                 </ol>
             </div>
             <div class="battery-popup-actions">
-                <button class="battery-popup-btn dismiss" onclick="dismissBatteryPopup()">Dismiss</button>
-                <a href="{{ url_for('auth.logout') }}" class="battery-popup-btn logout">Log Out</a>
+                <button class="battery-popup-btn dismiss" name="battery_dismiss" onclick="dismissBatteryPopup()">Dismiss</button>
+                <a href="{{ url_for('auth.logout') }}" class="battery-popup-btn logout" name="battery_logout">Log Out</a>
             </div>
         </div>
     </div>
@@ -463,27 +679,61 @@
     <!-- Bottom Navigation -->
     {% if show_nav is not defined or show_nav %}
     <nav class="bottom-nav" id="bottom-nav">
-        <a href="{{ url_for('player.next_questions', game_code=game.code) }}" class="nav-item {% if active_nav == 'questions' %}active{% endif %}" data-nav="questions">
+        <a href="{{ url_for('player.next_questions', game_code=game.code) }}" class="nav-item {% if active_nav == 'questions' %}active{% endif %}" data-nav="questions" name="nav_questions">
             <span class="nav-icon">📝</span>
             <span>Questions</span>
         </a>
-        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="nav-item {% if active_nav == 'rounds' %}active{% endif %}" data-nav="rounds">
+        <a href="{{ url_for('player.quiz', game_code=game.code) }}" class="nav-item {% if active_nav == 'rounds' %}active{% endif %}" data-nav="rounds" name="nav_rounds">
             <span class="nav-icon">📋</span>
             <span>Rounds</span>
         </a>
-        <a href="{{ url_for('player.scoreboard', game_code=game.code) }}" class="nav-item {% if active_nav == 'scoreboard' %}active{% endif %}" data-nav="scoreboard">
+        <a href="{{ url_for('player.scoreboard', game_code=game.code) }}" class="nav-item {% if active_nav == 'scoreboard' %}active{% endif %}" data-nav="scoreboard" name="nav_scoreboard">
             <span class="nav-icon">🏆</span>
             <span>Scores</span>
         </a>
-        <a href="{{ url_for('player.team_details', game_code=game.code) }}" class="nav-item {% if active_nav == 'team' %}active{% endif %}" data-nav="team">
+        <a href="{{ url_for('player.team_details', game_code=game.code) }}" class="nav-item {% if active_nav == 'team' %}active{% endif %}" data-nav="team" name="nav_team">
             <span class="nav-icon">👥</span>
             <span>Team</span>
         </a>
-        <a href="{{ url_for('player.instructions', game_code=game.code) }}" class="nav-item {% if active_nav == 'help' %}active{% endif %}" data-nav="help">
+        <a href="{{ url_for('player.instructions', game_code=game.code) }}" class="nav-item {% if active_nav == 'help' %}active{% endif %}" data-nav="help" name="nav_help">
             <span class="nav-icon">❓</span>
             <span>Help</span>
         </a>
+        {% if game.is_finished or game.is_gallery_public %}
+        <a href="{{ url_for('player.gallery', game_code=game.code) }}" class="nav-item {% if active_nav == 'gallery' %}active{% endif %}" data-nav="gallery" name="nav_gallery">
+            <span class="nav-icon">🖼️</span>
+            <span>Gallery</span>
+        </a>
+        {% endif %}
+        <a href="{{ url_for('player.submissions', game_code=game.code) }}" class="nav-item {% if active_nav == 'submissions' %}active{% endif %}" data-nav="submissions" name="nav_submissions">
+            <span class="nav-icon">📤</span>
+            <span>Submissions</span>
+        </a>
     </nav>
+    {% endif %}
+
+    <!-- Chat Widget -->
+    {% if team is defined and team %}
+    <button class="chat-fab" id="chat-fab" name="chat_open" aria-label="Open chat with host">
+        <span>💬</span>
+        <span class="unread-badge hidden" id="chat-unread-badge">0</span>
+    </button>
+
+    <div class="chat-overlay" id="chat-overlay"></div>
+
+    <div class="chat-panel" id="chat-panel">
+        <div class="chat-panel-header">
+            <h3>Chat with host</h3>
+            <button class="chat-close-btn" id="chat-close-btn" name="chat_close" aria-label="Close chat">&times;</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="chat-empty" id="chat-empty">No messages yet. Say hello!</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" maxlength="500">
+            <button class="chat-send-btn" id="chat-send-btn" name="chat_send" aria-label="Send message">&#9654;</button>
+        </div>
+    </div>
     {% endif %}
 
     <!-- Socket.IO -->
@@ -809,6 +1059,165 @@
             console.log('[Battery] API not supported');
         }
     })();
+
+    // Chat Widget
+    {% if team is defined and team %}
+    (function() {
+        const chatFab = document.getElementById('chat-fab');
+        const chatPanel = document.getElementById('chat-panel');
+        const chatOverlay = document.getElementById('chat-overlay');
+        const chatCloseBtn = document.getElementById('chat-close-btn');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatEmpty = document.getElementById('chat-empty');
+        const unreadBadge = document.getElementById('chat-unread-badge');
+
+        const chatGameId = {{ game.id }};
+        const chatTeamId = {{ team.id }};
+        let chatOpen = false;
+
+        function formatChatTime(isoStr) {
+            const d = new Date(isoStr);
+            const h = d.getHours();
+            const m = d.getMinutes();
+            return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+        }
+
+        function appendMessage(senderType, text, createdAt) {
+            if (chatEmpty) chatEmpty.style.display = 'none';
+            const div = document.createElement('div');
+            div.className = 'chat-msg ' + (senderType === 'admin' ? 'admin' : 'team');
+            div.innerHTML = '<span>' + escapeHtml(text) + '</span><span class="msg-time">' + formatChatTime(createdAt) + '</span>';
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function loadMessages() {
+            fetch('/api/game/' + chatGameId + '/chat/' + chatTeamId, {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.messages && data.messages.length > 0) {
+                    chatMessages.innerHTML = '';
+                    data.messages.forEach(function(msg) {
+                        appendMessage(msg.sender_type, msg.message_text, msg.created_at);
+                    });
+                }
+                updateUnreadBadge(0);
+            })
+            .catch(err => console.log('[Chat] Failed to load messages:', err));
+        }
+
+        function fetchUnreadCount() {
+            fetch('/api/game/' + chatGameId + '/chat/unread-count', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.unread_count !== undefined) {
+                    updateUnreadBadge(data.unread_count);
+                }
+            })
+            .catch(err => console.log('[Chat] Failed to fetch unread count:', err));
+        }
+
+        function updateUnreadBadge(count) {
+            if (count > 0) {
+                unreadBadge.textContent = count > 9 ? '9+' : count;
+                unreadBadge.classList.remove('hidden');
+            } else {
+                unreadBadge.classList.add('hidden');
+            }
+        }
+
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            chatSendBtn.disabled = true;
+            chatInput.value = '';
+
+            fetch('/api/game/' + chatGameId + '/chat/' + chatTeamId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ message: text })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    appendMessage('team', text, new Date().toISOString());
+                }
+                chatSendBtn.disabled = false;
+                chatInput.focus();
+            })
+            .catch(err => {
+                console.log('[Chat] Failed to send:', err);
+                chatSendBtn.disabled = false;
+            });
+        }
+
+        function openChat() {
+            chatOpen = true;
+            chatPanel.classList.add('open');
+            chatOverlay.classList.add('show');
+            chatFab.style.display = 'none';
+            loadMessages();
+            chatInput.focus();
+        }
+
+        function closeChat() {
+            chatOpen = false;
+            chatPanel.classList.remove('open');
+            chatOverlay.classList.remove('show');
+            chatFab.style.display = 'flex';
+        }
+
+        chatFab.addEventListener('click', openChat);
+        chatCloseBtn.addEventListener('click', closeChat);
+        chatOverlay.addEventListener('click', closeChat);
+
+        chatSendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Listen for real-time replies via SocketIO
+        // io() reuses the existing connection from the tab tracker
+        const chatSocket = io();
+        chatSocket.on('connect', function() {
+            chatSocket.emit('join_game', { game_id: chatGameId });
+        });
+        if (chatSocket.connected) {
+            chatSocket.emit('join_game', { game_id: chatGameId });
+        }
+        chatSocket.on('chat_reply', function(data) {
+            if (data.game_id == chatGameId && data.team_id == chatTeamId && data.sender_type === 'admin') {
+                if (chatOpen) {
+                    appendMessage('admin', data.message_text, data.created_at);
+                } else {
+                    fetchUnreadCount();
+                }
+            }
+        });
+
+        // Fetch unread count on page load
+        fetchUnreadCount();
+    })();
+    {% endif %}
     </script>
 
     {% block extra_js %}{% endblock %}

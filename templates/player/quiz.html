@@ -16,7 +16,7 @@
     padding: 24px;
     margin-bottom: 12px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    border-top: 10px solid #673ab7;
+    border-top: 10px solid var(--brand-primary);
 }
 
 .header-top {
@@ -58,11 +58,11 @@
 
 .stat-badge.team {
     background: #f3e8ff;
-    color: #673ab7;
+    color: var(--brand-primary);
 }
 
 .stat-badge.score {
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     color: white;
 }
 
@@ -80,9 +80,9 @@
     top: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     padding: 16px 24px;
-    box-shadow: 0 4px 20px rgba(103, 58, 183, 0.4);
+    box-shadow: 0 4px 20px var(--brand-shadow);
     text-align: center;
     display: none;
     z-index: 1000;
@@ -139,7 +139,7 @@ body.timer-active {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(103, 58, 183, 0.3);
+    background: var(--brand-shadow);
     z-index: 999;
     pointer-events: none;
     animation: flash 0.6s ease-out forwards;
@@ -188,7 +188,7 @@ body.timer-active {
 }
 
 .round-card.is-open {
-    border-color: #673ab7;
+    border-color: var(--brand-primary);
     background: #f9f5ff;
 }
 
@@ -211,7 +211,7 @@ body.timer-active {
 }
 
 .round-card.is-open .round-order {
-    background: #673ab7;
+    background: var(--brand-primary);
     color: white;
 }
 
@@ -264,7 +264,7 @@ body.timer-active {
     padding: 8px 16px !important;
     font-size: 13px !important;
     font-weight: 500 !important;
-    background: #673ab7 !important;
+    background: var(--brand-primary) !important;
     color: white !important;
     border: none !important;
     border-radius: 4px !important;
@@ -274,7 +274,7 @@ body.timer-active {
 }
 
 .round-action:hover {
-    background: #5e35a1 !important;
+    background: var(--brand-primary-hover) !important;
 }
 
 .round-action-edit {
@@ -295,7 +295,7 @@ body.timer-active {
 
 .round-card.nested {
     margin-left: 24px;
-    border-left: 3px solid #673ab7;
+    border-left: 3px solid var(--brand-primary);
     background: #faf8ff;
 }
 
@@ -354,7 +354,7 @@ body.timer-active {
 
 .round-timer {
     display: none;
-    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-gradient-end));
     color: white;
     padding: 4px 10px;
     border-radius: 4px;
@@ -418,7 +418,7 @@ body.timer-active {
     {% endif %}
 
     <div class="rounds-section">
-        <h2 class="section-title">Rounds</h2>
+        <h2 class="section-title">{{ game.round_label }}s</h2>
 
         {% if rounds %}
         <ul class="rounds-list">
@@ -459,13 +459,13 @@ body.timer-active {
                 {% if has_children %}
                     {# Parent with subrounds - no action button, subrounds have their own #}
                 {% elif round.id in resubmit_rounds and round.is_open %}
-                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-edit">Edit</a>
+                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-edit" name="round_edit_{{ round.id }}">Edit</a>
                 {% elif round.id in submitted_rounds %}
-                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-view">See Answers</a>
+                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action round-action-view" name="round_view_{{ round.id }}">See Answers</a>
                 {% elif round.is_open and pause_mode %}
                     <span class="round-action round-action-paused">Paused</span>
                 {% elif round.is_open %}
-                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action">Answer</a>
+                    <a href="{{ url_for('player.view_round', round_id=round.id) }}" class="round-action" name="round_answer_{{ round.id }}">Answer</a>
                 {% else %}
                     <span class="status-badge status-closed">Closed</span>
                 {% endif %}
@@ -488,13 +488,13 @@ body.timer-active {
                 </div>
                 <span class="round-timer" id="round-timer-{{ child.id }}">--:--</span>
                 {% if child.id in resubmit_rounds and child.is_open %}
-                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-edit">Edit</a>
+                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-edit" name="subround_edit_{{ child.id }}">Edit</a>
                 {% elif child.id in submitted_rounds %}
-                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-view">See Answers</a>
+                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action round-action-view" name="subround_view_{{ child.id }}">See Answers</a>
                 {% elif child.is_open and pause_mode %}
                     <span class="round-action round-action-paused">Paused</span>
                 {% elif child.is_open %}
-                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action">Answer</a>
+                    <a href="{{ url_for('player.view_round', round_id=child.id) }}" class="round-action" name="subround_answer_{{ child.id }}">Answer</a>
                 {% else %}
                     <span class="status-badge status-closed">Closed</span>
                 {% endif %}
@@ -503,7 +503,7 @@ body.timer-active {
             {% endfor %}
         </ul>
         {% else %}
-        <p class="empty-state">No rounds available yet. Please wait for the host to start.</p>
+        <p class="empty-state">No {{ game.round_label|lower }}s available yet. Please wait for the host to start.</p>
         {% endif %}
     </div>
     </div>
