@@ -123,19 +123,27 @@ def create_app(config_name=None):
 
     # Register blueprints
     from routes import auth, player, admin, api
+    from routes.payments import bp as payments_bp
     app.register_blueprint(auth.bp)
     app.register_blueprint(player.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(api.bp)
+    app.register_blueprint(payments_bp)
 
     # Exempt API routes from CSRF for AJAX calls
     csrf.exempt(api.bp)
+    csrf.exempt(payments_bp)  # Stripe webhooks send raw POST
 
     # Basic routes
     @app.route('/')
     def index():
         """Landing page for the quiz application."""
         return render_template('index.html')
+
+    @app.route('/health')
+    def health():
+        """Health check endpoint for deploy verification."""
+        return 'ok', 200
 
     # Create database tables and default admin user
     with app.app_context():
@@ -312,6 +320,51 @@ def register_socketio_handlers(sio):
             sio.emit('tab_penalty_tracking_changed', {
                 'enabled': enabled
             }, room=room)
+
+    @sio.on('game_timer_started')
+    def handle_game_timer_started(data):
+        """Broadcast game-level timer start to all players."""
+        game_id = data.get('game_id')
+        seconds = data.get('seconds', 3600)
+        if game_id:
+            from models import Game
+            game = Game.query.get(game_id)
+            if game:
+                game.timer_end_time = time.time() + seconds
+                db.session.commit()
+                print(f'[Socket] Game timer started: game={game_id}, seconds={seconds}')
+
+            room = f'game_{game_id}'
+            sio.emit('game_timer_started', {
+                'game_id': game_id,
+                'seconds': seconds,
+                'end_time': game.timer_end_time if game else None,
+            }, room=room)
+
+    @sio.on('game_timer_stopped')
+    def handle_game_timer_stopped(data):
+        """Broadcast game-level timer stop."""
+        game_id = data.get('game_id')
+        if game_id:
+            from models import Game
+            game = Game.query.get(game_id)
+            if game:
+                game.timer_end_time = None
+                db.session.commit()
+                print(f'[Socket] Game timer stopped: game={game_id}')
+
+            room = f'game_{game_id}'
+            sio.emit('game_timer_stopped', {'game_id': game_id}, room=room)
+
+    @sio.on('join_chat')
+    def handle_join_chat(data):
+        """Team or admin joins a chat room for real-time messages."""
+        team_id = data.get('team_id')
+        game_id = data.get('game_id')
+        if team_id and game_id:
+            chat_room = f'chat_{game_id}_{team_id}'
+            join_room(chat_room)
+            print(f'[Socket] Client joined chat room: {chat_room}')
 
 
 def create_default_admin(app):

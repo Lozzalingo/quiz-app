@@ -1,0 +1,137 @@
+name: Deploy Quiz App
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      no_cache:
+        description: 'Build without Docker cache'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: quiz-app:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          no-cache: ${{ github.event.inputs.no_cache == 'true' }}
+
+      - name: Save image to tar
+        run: |
+          docker save quiz-app:latest | gzip > quiz-app.tar.gz
+          ls -lh quiz-app.tar.gz
+
+      - name: Clean up server disk
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Before cleanup ==="
+            df -h /
+            rm -f /tmp/quiz-app*.tar.gz
+            docker image prune -f 2>/dev/null || true
+            docker container prune -f 2>/dev/null || true
+            echo "=== After cleanup ==="
+            df -h /
+
+      - name: Transfer image to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "quiz-app.tar.gz"
+          target: "/tmp/"
+
+      - name: Sync docker-compose to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: "/root/quiz-app-python/"
+
+      - name: Deploy with auto-rollback
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root/quiz-app-python
+
+            # Save current working image for rollback
+            echo "=== Tagging current image for rollback ==="
+            docker tag quiz-app:latest quiz-app:rollback 2>/dev/null || true
+
+            # Load new image
+            echo "=== Loading new image ==="
+            docker load < /tmp/quiz-app.tar.gz
+            rm -f /tmp/quiz-app.tar.gz
+
+            # CRITICAL: Only restart the web service
+            # nginx, db, and certbot must NOT be touched -- nginx proxies ALL sites on this droplet
+            echo "=== Starting new container (web only) ==="
+            docker compose up -d --no-build web
+
+            # Health check with retries
+            echo "=== Health check (waiting 10s) ==="
+            sleep 10
+            RETRIES=3
+            HEALTHY=false
+            for i in $(seq 1 $RETRIES); do
+              STATUS=$(curl -sf -o /dev/null -w '%{http_code}' http://localhost:5000/health || echo "FAIL")
+              echo "Attempt $i: Health=$STATUS"
+              if [ "$STATUS" = "200" ]; then
+                HEALTHY=true
+                break
+              fi
+              if [ "$i" -lt "$RETRIES" ]; then
+                echo "Retrying in 10s..."
+                sleep 10
+              fi
+            done
+
+            if [ "$HEALTHY" = "true" ]; then
+              echo "=== Deploy successful ==="
+              docker rmi quiz-app:rollback 2>/dev/null || true
+              docker image prune -f || true
+            else
+              echo "=== HEALTH CHECK FAILED - ROLLING BACK ==="
+              docker logs quiz_app_web --tail 30
+
+              docker tag quiz-app:rollback quiz-app:latest 2>/dev/null || true
+              docker compose up -d --no-build web
+
+              echo "=== Waiting 10s for rollback container ==="
+              sleep 10
+              STATUS2=$(curl -sf -o /dev/null -w '%{http_code}' http://localhost:5000/health || echo "FAIL")
+              echo "After rollback: Health=$STATUS2"
+
+              echo "DEPLOY FAILED - ROLLED BACK TO PREVIOUS VERSION"
+              exit 1
+            fi

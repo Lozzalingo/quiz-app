@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   web:
+    image: quiz-app:latest
     build: .
     container_name: quiz_app_web
     restart: unless-stopped
@@ -14,6 +15,19 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - DATABASE_URL=postgresql://quiz_user:${DB_PASSWORD}@db:5432/quiz_app
       - BASE_URL=${BASE_URL}
+      - FBQ_RESEND_API_KEY=${FBQ_RESEND_API_KEY}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
+      - DO_SPACES_KEY=${DO_SPACES_KEY}
+      - DO_SPACES_SECRET=${DO_SPACES_SECRET}
+      - DO_SPACES_BUCKET=${DO_SPACES_BUCKET}
+      - DO_SPACES_REGION=${DO_SPACES_REGION}
+      - DO_SPACES_ENDPOINT=${DO_SPACES_ENDPOINT}
+      - DO_SPACES_CDN_ENDPOINT=${DO_SPACES_CDN_ENDPOINT}
+      - DO_SPACES_FOLDER=${DO_SPACES_FOLDER}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     volumes:
       - ./static/qrcodes:/app/static/qrcodes
     depends_on:
@@ -66,6 +80,8 @@ services:
 
 volumes:
   postgres_data:
+    external: true
+    name: quiz-app_postgres_data
 
 networks:
   quiz_network:
