@@ -53,7 +53,8 @@
             '--brand-bg-tint': '#f3e5f5',
             '--brand-bg-muted': '#e8e0f3',
             '--brand-shadow': 'rgba(103, 58, 183, 0.3)',
-            '--brand-primary-rgb': '103, 58, 183'
+            '--brand-primary-rgb': '103, 58, 183',
+            '--brand-logo-filter': 'none'
         },
         'bucketrace': {
             '--brand-primary': '#F26522',
@@ -67,7 +68,8 @@
             '--brand-bg-tint': '#fff3e0',
             '--brand-bg-muted': '#e8e8e8',
             '--brand-shadow': 'rgba(242, 101, 34, 0.3)',
-            '--brand-primary-rgb': '242, 101, 34'
+            '--brand-primary-rgb': '242, 101, 34',
+            '--brand-logo-filter': 'invert(1)'
         }
     };
     (function() {
@@ -106,6 +108,7 @@
         .nav-logo img {
             height: 36px;
             width: auto;
+            filter: var(--brand-logo-filter, none);
         }
         .nav-logo span {
             font-weight: 600;
@@ -236,9 +239,13 @@
         var logoEl = document.getElementById('nav-logo-img');
         var nameEl = document.getElementById('nav-brand-name');
         var footerEl = document.getElementById('footer-brand-name');
+        var heroLogo = document.getElementById('hero-logo-img');
+        var heroName = document.getElementById('hero-brand-name');
         if (logoEl) logoEl.src = cfg.logo;
         if (nameEl) nameEl.textContent = cfg.name;
         if (footerEl) footerEl.textContent = cfg.name;
+        if (heroLogo) heroLogo.src = cfg.logo;
+        if (heroName) heroName.textContent = cfg.name;
     }
     function applyThemeVars(themeName) {
         var vars = THEME_VARS[themeName] || THEME_VARS['fat-big-quiz'];
