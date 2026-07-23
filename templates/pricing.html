@@ -91,8 +91,10 @@
 /* Toggle switch */
 .toggle-switch {
     position: relative;
+    display: inline-block;
     width: 48px;
     height: 26px;
+    cursor: pointer;
 }
 .toggle-switch input {
     opacity: 0;
@@ -340,10 +342,10 @@
     <!-- Billing toggle -->
     <div class="billing-toggle">
         <label id="labelMonthly" class="active" onclick="setBilling('monthly')">Monthly</label>
-        <div class="toggle-switch">
+        <label class="toggle-switch" for="billingToggle">
             <input type="checkbox" id="billingToggle" onchange="toggleBilling()">
             <span class="toggle-slider"></span>
-        </div>
+        </label>
         <label id="labelYearly" onclick="setBilling('yearly')">Yearly</label>
         <span class="save-badge">Save 20%</span>
     </div>
@@ -351,7 +353,7 @@
     <div class="pricing-cards">
         {% for tier in pro_tiers %}
         <div class="pricing-card" data-games="{{ tier.games }}">
-            <p class="card-teams">Per month</p>
+            <p class="card-teams">Per mo</p>
             <h3 class="card-title">{{ tier.games }} {% if tier.games == 1 %}quiz{% else %}quizzes{% endif %}</h3>
 
             <p class="card-price">
@@ -388,7 +390,7 @@
             </form>
 
             <ul class="features-included">
-                <li>{{ tier.games }} {% if tier.games == 1 %}quiz{% else %}quizzes{% endif %} per month</li>
+                <li>{{ tier.games }} {% if tier.games == 1 %}quiz{% else %}quizzes{% endif %} per mo</li>
                 <li>Custom branding</li>
                 <li>CSV export</li>
                 <li>All features included</li>
@@ -404,7 +406,7 @@
             <p class="card-saving">&nbsp;</p>
             <a href="mailto:laurencedotcomputer@gmail.com?subject=Fat Big Quiz Enterprise" class="buy-btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px;" name="contact_enterprise">Get in Touch</a>
             <ul class="features-included">
-                <li>32+ quizzes per month</li>
+                <li>32+ quizzes per mo</li>
                 <li>100+ teams</li>
                 <li>Dedicated support</li>
                 <li>Custom features</li>
