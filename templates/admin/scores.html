@@ -8,30 +8,46 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Default brand variables (fallback if theme CSS fails to load) -->
-    <style id="brand-defaults">
-    :root {
-        --brand-primary: #673ab7;
-        --brand-primary-hover: #5e35a1;
-        --brand-nav-start: #673ab7;
-        --brand-nav-end: #512da8;
-        --brand-gradient-start: #673ab7;
-        --brand-gradient-end: #9c27b0;
-        --brand-accent: #7b1fa2;
-        --brand-bg: #f0ebf8;
-        --brand-bg-tint: #f3e5f5;
-        --brand-bg-muted: #e8e0f3;
-        --brand-shadow: rgba(103, 58, 183, 0.3);
-        --brand-primary-rgb: 103, 58, 183;
-    }
-    </style>
-
-    <!-- Theme CSS (overrides defaults when loaded) -->
-    <link rel="stylesheet" id="theme-css" href="{{ url_for('static', filename='css/style-fat-big-quiz.css') }}">
+    <!-- Theme system: brand variables applied via JS from inline definitions -->
+    <style id="theme-vars"></style>
     <script>
+    var THEME_VARS = {
+        'fat-big-quiz': {
+            '--brand-primary': '#673ab7',
+            '--brand-primary-hover': '#5e35a1',
+            '--brand-nav-start': '#673ab7',
+            '--brand-nav-end': '#512da8',
+            '--brand-gradient-start': '#673ab7',
+            '--brand-gradient-end': '#9c27b0',
+            '--brand-accent': '#7b1fa2',
+            '--brand-bg': '#f0ebf8',
+            '--brand-bg-tint': '#f3e5f5',
+            '--brand-bg-muted': '#e8e0f3',
+            '--brand-shadow': 'rgba(103, 58, 183, 0.3)',
+            '--brand-primary-rgb': '103, 58, 183'
+        },
+        'bucketrace': {
+            '--brand-primary': '#F26522',
+            '--brand-primary-hover': '#d4541a',
+            '--brand-nav-start': '#303030',
+            '--brand-nav-end': '#1a1a1a',
+            '--brand-gradient-start': '#303030',
+            '--brand-gradient-end': '#1a1a1a',
+            '--brand-accent': '#303030',
+            '--brand-bg': '#f8f9fa',
+            '--brand-bg-tint': '#fff3e0',
+            '--brand-bg-muted': '#e8e8e8',
+            '--brand-shadow': 'rgba(242, 101, 34, 0.3)',
+            '--brand-primary-rgb': '242, 101, 34'
+        }
+    };
     (function() {
         var theme = localStorage.getItem('quiz-theme') || 'fat-big-quiz';
-        document.getElementById('theme-css').href = '/static/css/style-' + theme + '.css';
+        var vars = THEME_VARS[theme] || THEME_VARS['fat-big-quiz'];
+        var css = ':root {';
+        for (var k in vars) { css += k + ':' + vars[k] + ';'; }
+        css += '}';
+        document.getElementById('theme-vars').textContent = css;
     })();
     </script>
 
