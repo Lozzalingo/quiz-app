@@ -69,7 +69,7 @@
             '--brand-bg-muted': '#e8e8e8',
             '--brand-shadow': 'rgba(242, 101, 34, 0.3)',
             '--brand-primary-rgb': '242, 101, 34',
-            '--brand-logo-filter': 'invert(1)'
+            '--brand-logo-filter': 'none'
         }
     };
     (function() {
@@ -230,8 +230,8 @@
     <!-- Theme toggle -->
     <script>
     var THEMES = {
-        'fat-big-quiz': { name: 'Fat Big Quiz', logo: '{{ url_for("static", filename="images/logo.png") }}' },
-        'bucketrace': { name: 'BucketRace', logo: '{{ url_for("static", filename="images/logo-bucketrace.png") }}' }
+        'fat-big-quiz': { name: 'Fat Big Quiz', logo: '{{ url_for("static", filename="images/logo.png") }}', tagline: 'The ultimate pub quiz experience' },
+        'bucketrace': { name: 'BucketRace', logo: '{{ url_for("static", filename="images/logo-bucketrace.png") }}', tagline: 'The ultimate scavenger hunt experience' }
     };
     function applyThemeBranding() {
         var theme = localStorage.getItem('quiz-theme') || 'fat-big-quiz';
@@ -241,11 +241,13 @@
         var footerEl = document.getElementById('footer-brand-name');
         var heroLogo = document.getElementById('hero-logo-img');
         var heroName = document.getElementById('hero-brand-name');
+        var heroTagline = document.getElementById('hero-tagline');
         if (logoEl) logoEl.src = cfg.logo;
         if (nameEl) nameEl.textContent = cfg.name;
         if (footerEl) footerEl.textContent = cfg.name;
         if (heroLogo) heroLogo.src = cfg.logo;
         if (heroName) heroName.textContent = cfg.name;
+        if (heroTagline) heroTagline.textContent = cfg.tagline;
     }
     function applyThemeVars(themeName) {
         var vars = THEME_VARS[themeName] || THEME_VARS['fat-big-quiz'];
