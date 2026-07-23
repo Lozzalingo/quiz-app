@@ -8,11 +8,12 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies (including FFmpeg for video compression)
+# Install system dependencies (including FFmpeg for video compression, curl for healthchecks)
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for caching)
