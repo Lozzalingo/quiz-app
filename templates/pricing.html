@@ -69,13 +69,13 @@
     gap: 12px;
     margin: 20px 0 32px;
 }
-.billing-toggle label {
+.billing-toggle label:not(.toggle-switch) {
     font-size: 14px;
     color: #5f6368;
     cursor: pointer;
     font-weight: 500;
 }
-.billing-toggle label.active {
+.billing-toggle label:not(.toggle-switch).active {
     color: var(--brand-primary);
     font-weight: 600;
 }
@@ -353,7 +353,6 @@
     <div class="pricing-cards">
         {% for tier in pro_tiers %}
         <div class="pricing-card" data-games="{{ tier.games }}">
-            <p class="card-teams">Per mo</p>
             <h3 class="card-title">{{ tier.games }} {% if tier.games == 1 %}quiz{% else %}quizzes{% endif %}</h3>
 
             <p class="card-price">
