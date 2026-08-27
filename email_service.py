@@ -11,7 +11,7 @@ from datetime import datetime
 
 RESEND_API_KEY = os.environ.get('FBQ_RESEND_API_KEY') or os.environ.get('RESEND_API_KEY')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'laurencedotcomputer@gmail.com')
-FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', 'Fat Big Quiz <noreply@fatbigquiz.com>')
+FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', 'Fat Big Quiz <no-reply@fatbigquiz.com>')
 BASE_URL = os.environ.get('BASE_URL', 'https://app.fatbigquiz.com')
 
 SOURCE_LABELS = {
