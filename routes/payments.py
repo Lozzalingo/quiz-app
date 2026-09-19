@@ -13,6 +13,13 @@ from flask_login import login_required, current_user
 import stripe
 
 from models import db, Admin, Subscription, PaymentEvent
+
+try:
+    from lozzalingo.core import db_log
+except ImportError:
+    def db_log(*args, **kwargs):
+        pass
+
 from email_service import (
     send_event_purchase_confirmation,
     send_pro_subscription_started,
@@ -209,6 +216,7 @@ def stripe_webhook():
             event = json.loads(payload)
             print('[Payments] WARNING: No webhook secret set, skipping signature verification')
     except (ValueError, stripe.error.SignatureVerificationError) as e:
+        db_log('error', 'payments', f'Webhook signature verification failed: {e}')
         print(f'[Payments] Webhook signature verification failed: {e}')
         return jsonify({'error': 'Invalid signature'}), 400
 
@@ -233,6 +241,10 @@ def stripe_webhook():
         else:
             print(f'[Payments] Unhandled event type: {event_type}')
     except Exception as e:
+        db_log('critical', 'payments', f'Webhook handler error for {event_type}: {e}', {
+            'event_type': event_type,
+            'stripe_event_id': stripe_event_id,
+        })
         print(f'[Payments] Error handling {event_type}: {e}')
         import traceback
         traceback.print_exc()
@@ -326,6 +338,24 @@ def _handle_checkout_completed(event):
     db.session.add(pe)
     db.session.commit()
 
+    # Log conversion for analytics attribution
+    try:
+        from lozzalingo.clients.analytics_client import AnalyticsClient
+        _analytics = AnalyticsClient()
+        _analytics.log_conversion(
+            site_id='quiz-app',
+            conversion_type='subscription' if plan_type.startswith('pro_') else 'purchase',
+            order_id=str(event['id']),
+            order_value=amount,
+            customer_email=admin.email if admin else None,
+            metadata={'plan_type': plan_type, 'max_teams': max_teams},
+        )
+    except Exception:
+        pass  # Analytics not critical to payment flow
+
+    db_log('info', 'payments', f'Checkout completed: admin={admin_id}, plan={plan_type}, amount={amount_display}', {
+        'admin_id': admin_id, 'plan_type': plan_type, 'amount': amount, 'max_teams': max_teams,
+    })
     print(f'[Payments] Checkout completed: admin={admin_id}, plan={plan_type}, amount={amount_display}')
 
 
@@ -384,6 +414,7 @@ def _handle_invoice_paid(event):
     db.session.add(pe)
     db.session.commit()
 
+    db_log('info', 'payments', f'Invoice paid (renewal): admin={sub.admin_id}, amount={amount_display}')
     print(f'[Payments] Invoice paid (renewal): admin={sub.admin_id}, amount={amount_display}')
 
 
@@ -426,6 +457,7 @@ def _handle_subscription_deleted(event):
     db.session.add(pe)
     db.session.commit()
 
+    db_log('info', 'payments', f'Subscription cancelled: admin={sub.admin_id}', {'plan': plan_description})
     print(f'[Payments] Subscription cancelled: admin={sub.admin_id}')
 
 
@@ -468,4 +500,7 @@ def _handle_payment_failed(event):
     db.session.add(pe)
     db.session.commit()
 
+    db_log('warning', 'payments', f'Payment failed: customer={customer_email}', {
+        'failure_reason': failure_reason, 'plan': plan_description,
+    })
     print(f'[Payments] Payment failed: customer={customer_email}')

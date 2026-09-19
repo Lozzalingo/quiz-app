@@ -15,12 +15,14 @@ from flask_wtf.csrf import CSRFProtect
 
 from config import Config, config
 from models import db
+from lozzalingo import Lozzalingo
 
 # Initialize extensions (db is imported from models)
 login_manager = LoginManager()
 socketio = SocketIO()
 migrate = Migrate()
 csrf = CSRFProtect()
+lozzalingo = Lozzalingo()  # Initialised in create_app via init_app()
 
 # Active timers storage: {round_id: {'end_time': timestamp, 'game_id': int}}
 active_timers = {}
@@ -134,16 +136,21 @@ def create_app(config_name=None):
     csrf.exempt(api.bp)
     csrf.exempt(payments_bp)  # Stripe webhooks send raw POST
 
+    # Initialise Lozzalingo framework (analytics, email, ops, error logging)
+    # Must come after blueprints so framework routes don't clash with quiz routes.
+    # The framework's ops module provides /health, so no inline route needed.
+    lozzalingo.init_app(app)
+    print(f'[Lozzalingo] Registered modules: {lozzalingo.get_registered_modules()}')
+
+    # Exempt framework blueprints from CSRF (they handle their own POST endpoints)
+    from lozzalingo.modules.client_error import client_error_bp
+    csrf.exempt(client_error_bp)
+
     # Basic routes
     @app.route('/')
     def index():
         """Landing page for the quiz application."""
         return render_template('index.html')
-
-    @app.route('/health')
-    def health():
-        """Health check endpoint for deploy verification."""
-        return 'ok', 200
 
     # Create database tables and default admin user
     with app.app_context():
@@ -378,12 +385,15 @@ def create_default_admin(app):
     """
     from models import Admin
 
-    if Admin.query.filter_by(username='admin').first() is None:
-        admin = Admin(username='admin')
-        admin.set_password(app.config['ADMIN_PASSWORD'])
-        db.session.add(admin)
-        db.session.commit()
-        print("Default admin user created (username: admin)")
+    default_email = app.config.get('ADMIN_EMAIL', 'admin@fatbigquiz.com').lower()
+    if Admin.query.filter_by(email=default_email).first() is None:
+        # Check if there are any admins at all
+        if Admin.query.count() == 0:
+            admin = Admin(email=default_email, username='admin')
+            admin.set_password(app.config['ADMIN_PASSWORD'])
+            db.session.add(admin)
+            db.session.commit()
+            print(f"Default admin user created (email: {default_email})")
 
 
 # Create application instance
