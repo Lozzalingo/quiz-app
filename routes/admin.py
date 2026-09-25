@@ -14,7 +14,26 @@ from sqlalchemy import func
 from forms import CreateGameForm, CreateRoundForm, AdminSettingsForm
 from utils import generate_unique_code, generate_qr_code
 
+from auth_client import require_super_admin
+
+try:
+    from lozzalingo.core import db_log
+except ImportError:
+    def db_log(*args, **kwargs):
+        pass
+
 bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+
+@bp.route('/login')
+def login():
+    """Redirect to the actual admin login page.
+
+    The Lozzalingo framework's ops admin_required decorator redirects to
+    url_for('admin.login'). This route bridges that to the quiz app's
+    auth blueprint login route.
+    """
+    return redirect(url_for('auth.admin_login', **request.args))
 
 
 def admin_required(f):
@@ -35,6 +54,7 @@ def admin_required(f):
 
 
 @bp.route('/dashboard')
+@require_super_admin
 @admin_required
 def dashboard():
     """
@@ -47,6 +67,7 @@ def dashboard():
 
 
 @bp.route('/create_game', methods=['GET', 'POST'])
+@require_super_admin
 @admin_required
 def create_game():
     """
@@ -115,6 +136,7 @@ def create_game():
 
 
 @bp.route('/game/<int:game_id>/edit')
+@require_super_admin
 @admin_required
 def edit_game(game_id):
     """
@@ -151,6 +173,7 @@ def edit_game(game_id):
 
 
 @bp.route('/game/<int:game_id>/scores')
+@require_super_admin
 @admin_required
 def admin_scores(game_id):
     """
@@ -161,6 +184,7 @@ def admin_scores(game_id):
 
 
 @bp.route('/game/<int:game_id>/create_round', methods=['GET', 'POST'])
+@require_super_admin
 @admin_required
 def create_round(game_id):
     """
@@ -211,6 +235,7 @@ def create_round(game_id):
 
 
 @bp.route('/round/<int:round_id>/edit_questions')
+@require_super_admin
 @admin_required
 def edit_questions(round_id):
     """
@@ -226,6 +251,7 @@ def edit_questions(round_id):
 
 
 @bp.route('/game/<int:game_id>/spreadsheet')
+@require_super_admin
 @admin_required
 def spreadsheet(game_id):
     """
@@ -242,6 +268,7 @@ def spreadsheet(game_id):
 
 
 @bp.route('/game/<int:game_id>/live_control')
+@require_super_admin
 @admin_required
 def live_control(game_id):
     """
@@ -259,6 +286,7 @@ def live_control(game_id):
 
 
 @bp.route('/game/<int:game_id>/toggle_active', methods=['POST'])
+@require_super_admin
 @admin_required
 def toggle_game_active(game_id):
     """Toggle game active status."""
@@ -272,6 +300,7 @@ def toggle_game_active(game_id):
 
 
 @bp.route('/game/<int:game_id>/duplicate', methods=['POST'])
+@require_super_admin
 @admin_required
 def duplicate_game(game_id):
     """Duplicate a game's structure (rounds and questions) without teams or answers."""
@@ -320,6 +349,7 @@ def duplicate_game(game_id):
 
 
 @bp.route('/game/<int:game_id>/delete', methods=['POST'])
+@require_super_admin
 @admin_required
 def delete_game(game_id):
     """Delete a game and all associated data."""
@@ -334,6 +364,7 @@ def delete_game(game_id):
 
 
 @bp.route('/round/<int:round_id>/delete', methods=['POST'])
+@require_super_admin
 @admin_required
 def delete_round(round_id):
     """Delete a round and all associated answers."""
@@ -349,6 +380,7 @@ def delete_round(round_id):
 
 
 @bp.route('/game/<int:game_id>/scoreboard')
+@require_super_admin
 @admin_required
 def scoreboard(game_id):
     """
@@ -362,6 +394,7 @@ def scoreboard(game_id):
 
 
 @bp.route('/settings', methods=['GET', 'POST'])
+@require_super_admin
 @admin_required
 def settings():
     """Admin settings page to update username and password."""
@@ -375,8 +408,8 @@ def settings():
             flash('Current password is incorrect.', 'danger')
             return render_template('admin/settings.html', form=form)
 
-        # Update username
-        admin.username = form.username.data
+        # Update email
+        admin.email = form.email.data.lower().strip()
 
         # Update password if provided
         if form.new_password.data:
@@ -390,6 +423,7 @@ def settings():
 
 
 @bp.route('/game/<int:game_id>/audit')
+@require_super_admin
 @admin_required
 def audit(game_id):
     """
@@ -408,6 +442,7 @@ def audit(game_id):
 
 
 @bp.route('/game/<int:game_id>/gallery')
+@require_super_admin
 @admin_required
 def admin_gallery(game_id):
     """
@@ -418,6 +453,7 @@ def admin_gallery(game_id):
 
 
 @bp.route('/game/<int:game_id>/gallery/download')
+@require_super_admin
 @admin_required
 def download_gallery(game_id):
     """
@@ -459,6 +495,7 @@ def download_gallery(game_id):
                         f'[DOWNLOAD] Failed to fetch {upload.storage_url}: {response.status_code}'
                     )
             except Exception as e:
+                db_log('error', 'admin', f'Gallery download fetch failed: {e}', {'url': upload.storage_url})
                 current_app.logger.error(
                     f'[DOWNLOAD] Error fetching {upload.storage_url}: {e}'
                 )
@@ -478,6 +515,7 @@ def download_gallery(game_id):
 
 
 @bp.route('/game/<int:game_id>/chat')
+@require_super_admin
 @admin_required
 def chat(game_id):
     """
