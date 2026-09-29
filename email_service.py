@@ -1,17 +1,21 @@
 """
 Email Service - Quiz App (Fat Big Quiz)
-Sends notification and transactional emails via Resend API.
+Sends notification and transactional emails via the centralised Email Service.
 """
 import os
-import json
-import urllib.request
-import urllib.error
 from datetime import datetime
 
+from lozzalingo.clients.email_client import EmailClient
 
-RESEND_API_KEY = os.environ.get('FBQ_RESEND_API_KEY') or os.environ.get('RESEND_API_KEY')
+try:
+    from lozzalingo.core import db_log
+except ImportError:
+    def db_log(*args, **kwargs):
+        pass
+
+
+SITE_ID = 'fat-big-quiz'
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'laurencedotcomputer@gmail.com')
-FROM_EMAIL = os.environ.get('RESEND_FROM_EMAIL', 'Fat Big Quiz <no-reply@fatbigquiz.com>')
 BASE_URL = os.environ.get('BASE_URL', 'https://app.fatbigquiz.com')
 
 SOURCE_LABELS = {
@@ -21,41 +25,34 @@ SOURCE_LABELS = {
     'quiz-app': 'Quiz App Beta Access',
 }
 
+# Centralised email client (reads EMAIL_SERVICE_URL and EMAIL_SERVICE_API_KEY from env)
+_client = EmailClient()
+
 
 def _send_email(to, subject, html, text=None):
-    """Send an email via Resend API."""
-    if not RESEND_API_KEY:
-        print(f'[Email] No RESEND_API_KEY set, skipping email to {to}')
-        return False
-
-    payload = json.dumps({
-        'from': FROM_EMAIL,
-        'to': [to] if isinstance(to, str) else to,
-        'subject': subject,
-        'html': html,
-        'text': text or '',
-    }).encode('utf-8')
-
-    req = urllib.request.Request(
-        'https://api.resend.com/emails',
-        data=payload,
-        headers={
-            'Authorization': f'Bearer {RESEND_API_KEY}',
-            'Content-Type': 'application/json',
-        },
-        method='POST',
-    )
-
+    """Send an email via the centralised Email Service."""
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            result = json.loads(resp.read().decode('utf-8'))
-            print(f'[Email] Sent to {to} - subject="{subject}", id={result.get("id")}')
+        result = _client.send(
+            to=to,
+            subject=subject,
+            html=html,
+            site_id=SITE_ID,
+            text=text,
+        )
+        if result and result.get('success'):
+            print(f'[Email] Sent to {to} - subject="{subject}", id={result.get("email_id")}')
             return True
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8') if e.fp else ''
-        print(f'[Email] Failed to send to {to}: {e.code} {body}')
-        return False
+        else:
+            error = result.get('error', 'Unknown error') if result else 'No response from email service'
+            db_log('error', 'email_service', f'Failed to send email to {to}: {error}', {
+                'subject': subject,
+            })
+            print(f'[Email] Failed to send to {to}: {error}')
+            return False
     except Exception as e:
+        db_log('error', 'email_service', f'Error sending email to {to}: {e}', {
+            'subject': subject,
+        })
         print(f'[Email] Error sending to {to}: {e}')
         return False
 
