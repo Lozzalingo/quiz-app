@@ -41,7 +41,7 @@ boto3
 requests
 
 # Lozzalingo framework
-git+https://github.com/Lozzalingo/lozzalingo-framework.git@main#egg=lozzalingo-framework
+lozzalingo @ git+https://github.com/Lozzalingo/lozzalingo-framework.git@main
 
 # Lozzalingo framework dependencies
 PyYAML
