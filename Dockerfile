@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     ffmpeg \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for caching)
@@ -25,8 +26,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directories for QR codes and temp uploads
-RUN mkdir -p static/qrcodes static/uploads/temp
+# Create directories for QR codes, temp uploads, and framework databases
+RUN mkdir -p static/qrcodes static/uploads/temp databases
 
 # Expose port
 EXPOSE 5000
