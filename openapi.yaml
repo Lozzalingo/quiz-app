@@ -1,0 +1,665 @@
+openapi: 3.0.3
+info:
+  title: Quiz App
+  version: "1.0"
+  description: |
+    API documentation for the Lozzalingo Quiz App — a live quiz platform for
+    hosting team-based quizzes with real-time scoring, timed rounds, image
+    submissions, and custom leaderboards.
+  contact:
+    name: Lozzalingo
+    url: https://quiz.laurence.computer
+
+servers:
+  - url: https://quiz.laurence.computer
+    description: Production
+
+tags:
+  - name: Rounds
+    description: Round and question management
+  - name: Answers
+    description: Team answer submission and scoring
+  - name: Teams
+    description: Team management and scores
+  - name: Games
+    description: Game lifecycle management
+  - name: Webhooks
+    description: Payment callbacks
+
+paths:
+  # --- Rounds ---
+
+  /round/{round_id}/questions:
+    get:
+      tags: [Rounds]
+      summary: Get questions for a round
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Array of questions
+    post:
+      tags: [Rounds]
+      summary: Add a question to a round
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "200":
+          description: Question created
+
+  /round/{round_id}/toggle:
+    post:
+      tags: [Rounds]
+      summary: Toggle round active state
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Round state toggled
+
+  /round/{round_id}/name:
+    put:
+      tags: [Rounds]
+      summary: Rename a round
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Round renamed
+
+  /round/{round_id}/question/{question_id}:
+    patch:
+      tags: [Rounds]
+      summary: Update a question
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: question_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "200":
+          description: Question updated
+
+  /round/{round_id}/submissions:
+    get:
+      tags: [Rounds]
+      summary: Get all team submissions for a round
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Array of submissions
+
+  /round/{round_id}/reset-all:
+    post:
+      tags: [Rounds]
+      summary: Reset all answers for a round
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Round reset
+
+  # --- Answers ---
+
+  /game/{game_id}/answers:
+    get:
+      tags: [Answers]
+      summary: Get all answers for a game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Array of answers
+
+  /answer/create:
+    post:
+      tags: [Answers]
+      summary: Submit an answer
+      description: Called by the player app when a team submits an answer.
+      security:
+        - SessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerInput"
+      responses:
+        "200":
+          description: Answer submitted
+
+  /answer/{answer_id}/text:
+    post:
+      tags: [Answers]
+      summary: Update answer text
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: answer_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        "200":
+          description: Answer updated
+
+  /answer/{answer_id}/score:
+    post:
+      tags: [Answers]
+      summary: Set score for an answer
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: answer_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                score:
+                  type: number
+      responses:
+        "200":
+          description: Score updated
+
+  /upload/image:
+    post:
+      tags: [Answers]
+      summary: Upload an image answer
+      security:
+        - SessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                round_id:
+                  type: integer
+      responses:
+        "200":
+          description: Image uploaded
+
+  # --- Teams ---
+
+  /game/{game_id}/teams:
+    get:
+      tags: [Teams]
+      summary: List teams in a game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Array of teams
+
+  /game/{game_id}/leaderboard:
+    get:
+      tags: [Teams]
+      summary: Get game leaderboard
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ordered leaderboard array
+
+  /team/update-name:
+    post:
+      tags: [Teams]
+      summary: Update team name
+      security:
+        - SessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Team name updated
+
+  /team/update-password:
+    post:
+      tags: [Teams]
+      summary: Update team password
+      security:
+        - SessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Password updated
+
+  /team/round/{round_id}/scores:
+    get:
+      tags: [Teams]
+      summary: Get team scores for a round
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: round_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Score data for the team
+
+  /team/{team_id}/custom_score:
+    post:
+      tags: [Teams]
+      summary: Set custom score for a team
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: team_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                column_id:
+                  type: string
+                score:
+                  type: number
+      responses:
+        "200":
+          description: Custom score updated
+
+  # --- Games ---
+
+  /game/{game_id}/rounds/reorder:
+    post:
+      tags: [Games]
+      summary: Reorder rounds within a game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        "200":
+          description: Rounds reordered
+
+  /game/{game_id}/custom_columns:
+    get:
+      tags: [Games]
+      summary: Get custom score columns for a game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Array of custom column definitions
+    post:
+      tags: [Games]
+      summary: Create a custom score column
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Column created
+
+  /game/{game_id}/custom_columns/{col_id}:
+    delete:
+      tags: [Games]
+      summary: Delete a custom score column
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: col_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Column deleted
+    patch:
+      tags: [Games]
+      summary: Rename a custom score column
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: col_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Column renamed
+
+  /game/{game_id}/name:
+    put:
+      tags: [Games]
+      summary: Rename a game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Game renamed
+
+  /game/{game_id}/pause:
+    put:
+      tags: [Games]
+      summary: Pause or unpause a game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paused:
+                  type: boolean
+      responses:
+        "200":
+          description: Pause state updated
+
+  /game/{game_id}/finish:
+    post:
+      tags: [Games]
+      summary: Mark game as finished
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game finished
+
+  /game/{game_id}/unfinish:
+    post:
+      tags: [Games]
+      summary: Reopen a finished game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game reopened
+
+  /game/{game_id}/regenerate-qr:
+    post:
+      tags: [Games]
+      summary: Regenerate QR code for a game
+      security:
+        - SessionAuth: []
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: QR code regenerated
+
+  # --- Webhooks ---
+
+  /payments/callback:
+    post:
+      tags: [Webhooks]
+      summary: Lozzalingo payments callback
+      description: Internal callback from the payments service when a subscription checkout completes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentsCallback"
+      responses:
+        "200":
+          description: Callback processed
+
+components:
+  securitySchemes:
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  schemas:
+    QuestionInput:
+      type: object
+      properties:
+        text:
+          type: string
+        answer:
+          type: string
+        points:
+          type: number
+        type:
+          type: string
+          enum: [text, image, ordering]
+
+    AnswerInput:
+      type: object
+      properties:
+        round_id:
+          type: integer
+        question_id:
+          type: string
+        answer:
+          type: string
+
+    PaymentsCallback:
+      type: object
+      properties:
+        event:
+          type: string
+          example: checkout.completed
+        site_id:
+          type: integer
+        customer_email:
+          type: string
+          format: email
+        amount:
+          type: number

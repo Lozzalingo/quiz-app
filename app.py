@@ -126,11 +126,13 @@ def create_app(config_name=None):
     # Register blueprints
     from routes import auth, player, admin, api
     from routes.payments import bp as payments_bp
+    from routes.docs import bp as docs_bp
     app.register_blueprint(auth.bp)
     app.register_blueprint(player.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(api.bp)
     app.register_blueprint(payments_bp)
+    app.register_blueprint(docs_bp)
 
     # Exempt API routes from CSRF for AJAX calls
     csrf.exempt(api.bp)
