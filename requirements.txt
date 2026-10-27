@@ -13,6 +13,7 @@ python-engineio
 # Database
 SQLAlchemy
 psycopg2-binary
+psycopg[binary]
 
 # Password hashing (included in Werkzeug which Flask depends on)
 
