@@ -31,9 +31,6 @@ email-validator
 gunicorn==22.0.0
 eventlet==0.36.1
 
-# Payments
-stripe
-
 # Security
 Flask-Limiter
 
@@ -42,3 +39,10 @@ boto3
 
 # HTTP client (for downloading files from CDN)
 requests
+
+# Lozzalingo framework
+git+https://github.com/Lozzalingo/lozzalingo-framework.git@main#egg=lozzalingo-framework
+
+# Lozzalingo framework dependencies
+PyYAML
+Flask-CORS
