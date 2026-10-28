@@ -40,6 +40,10 @@ instance/
 static/qrcodes/
 !static/qrcodes/.gitkeep
 
+# Lozzalingo framework databases (SQLite)
+databases/
+!databases/.gitkeep
+
 # IDE
 .idea/
 .vscode/

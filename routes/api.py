@@ -8,12 +8,19 @@ import os
 import uuid
 from datetime import datetime
 from functools import wraps
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, g
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 
-from models import db, Game, Round, Team, Answer, ResubmitPermission, BetaRequest, MediaUpload, ChatMessage, RoundBonus
+from models import db, Game, Round, Team, Answer, ResubmitPermission, BetaRequest, MediaUpload, ChatMessage, RoundBonus, PaymentEvent, Admin
 from email_service import send_admin_list_notification
+from auth_client import decode_jwt
+
+try:
+    from lozzalingo.core import db_log
+except ImportError:
+    def db_log(*args, **kwargs):
+        pass
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -23,13 +30,49 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _is_sso_admin():
+    """Check if the current request has a valid SSO super admin JWT.
+
+    Reads the auth_token cookie or Authorization header. Returns True if
+    the JWT is valid and the user is a super admin. Also sets g.auth_user.
+    """
+    if hasattr(g, 'auth_user') and g.auth_user:
+        return g.auth_user.get('is_super_admin', False)
+
+    token = (
+        request.cookies.get('auth_token')
+        or request.headers.get('Authorization', '').replace('Bearer ', '')
+    )
+    if not token:
+        return False
+
+    payload = decode_jwt(token)
+    if payload and payload.get('is_super_admin'):
+        g.auth_user = payload
+        return True
+    return False
+
+
+def _is_admin_request():
+    """Check if the current request is from an admin (SSO or Flask-Login).
+
+    Returns True if authenticated as an SSO super admin or Flask-Login admin.
+    """
+    if _is_sso_admin():
+        return True
+    if current_user.is_authenticated and current_user.get_id().startswith('admin_'):
+        return True
+    return False
+
+
 def admin_required_api(f):
-    """Decorator to require admin authentication for API endpoints."""
+    """Decorator to require admin authentication for API endpoints.
+
+    Accepts both SSO auth_token (super admin) and legacy Flask-Login admin session.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated:
-            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
-        if not current_user.get_id().startswith('admin_'):
+        if not _is_admin_request():
             return jsonify({'success': False, 'error': 'Admin access required'}), 403
         return f(*args, **kwargs)
     return decorated_function
@@ -1956,6 +1999,7 @@ def submit_beta_request():
         try:
             send_admin_list_notification(email=email, name=name, source=source)
         except Exception as notify_err:
+            db_log('error', 'api', f'Beta request notification failed: {notify_err}', {'email': email})
             print(f'[API] Beta request: Admin notification failed - {notify_err}')
 
         resp = jsonify({'success': True, 'message': 'Thanks! We will be in touch soon.'})
@@ -1963,6 +2007,7 @@ def submit_beta_request():
         return resp
     except Exception as e:
         db.session.rollback()
+        db_log('error', 'api', f'Beta request failed: {e}', {'email': email, 'name': name})
         print(f'[API] Beta request: Error - {e}')
         resp = jsonify({'success': False, 'error': 'Something went wrong. Please try again.'})
         resp.headers['Access-Control-Allow-Origin'] = cors_origin
@@ -2021,6 +2066,122 @@ def products_embed():
     resp = jsonify({'success': True, 'count': len(products), 'products': products})
     resp.headers['Access-Control-Allow-Origin'] = cors_origin
     return resp
+
+
+# =============================================================================
+# RECENT SALES (for laurence.computer live ticker)
+# =============================================================================
+
+@bp.route('/recent-sales', methods=['GET'])
+def recent_sales():
+    """
+    Return recent successful payments for the live ticker.
+
+    Protected by X-Ticker-Key header. Returns the 5 most recent
+    checkout_completed events as sales entries.
+    """
+    ticker_key = os.environ.get('TICKER_API_KEY', '')
+    provided_key = request.headers.get('X-Ticker-Key', '')
+
+    if not ticker_key or provided_key != ticker_key:
+        return jsonify({'error': 'Unauthorised'}), 401
+
+    # Test emails to exclude
+    test_emails = {'laurencestephan@hotmail.com', 'laurencedotcomputer@gmail.com'}
+
+    # Get recent successful payments (checkout_completed and invoice_paid)
+    events = PaymentEvent.query.filter(
+        PaymentEvent.event_type.in_(['checkout_completed', 'invoice_paid'])
+    ).order_by(PaymentEvent.created_at.desc()).limit(20).all()
+
+    sales = []
+    for event in events:
+        # Skip test emails
+        if event.admin_id:
+            admin = Admin.query.get(event.admin_id)
+            if admin and admin.email and admin.email.lower() in test_emails:
+                continue
+
+        # Build title from plan type
+        plan = event.plan_type or 'unknown'
+        if plan == 'event':
+            metadata = {}
+            if event.metadata_json:
+                try:
+                    metadata = json.loads(event.metadata_json)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            max_teams = metadata.get('max_teams', '')
+            title = f'Fat Big Quiz - Event Pack ({max_teams} teams)' if max_teams else 'Fat Big Quiz - Event Pack'
+            sale_type = 'purchase'
+        elif plan == 'pro_monthly':
+            title = 'Fat Big Quiz - Pro Monthly'
+            sale_type = 'subscription'
+        elif plan == 'pro_yearly':
+            title = 'Fat Big Quiz - Pro Yearly'
+            sale_type = 'subscription'
+        else:
+            title = 'Fat Big Quiz - Purchase'
+            sale_type = 'purchase'
+
+        sales.append({
+            'title': title,
+            'url': 'https://app.fatbigquiz.com',
+            'date': event.created_at.strftime('%Y-%m-%d') if event.created_at else None,
+            'type': sale_type,
+        })
+
+        if len(sales) >= 5:
+            break
+
+    return jsonify({'sales': sales})
+
+
+@bp.route('/sales-summary', methods=['GET'])
+def sales_summary():
+    """
+    Return total revenue and order stats for the laurence.computer leaderboard.
+
+    Protected by X-Ticker-Key header. Filters out test emails.
+    """
+    ticker_key = os.environ.get('TICKER_API_KEY', '')
+    provided_key = request.headers.get('X-Ticker-Key', '')
+
+    if not ticker_key or provided_key != ticker_key:
+        return jsonify({'error': 'Unauthorised'}), 401
+
+    # Test emails to exclude
+    test_emails = {'laurencestephan@hotmail.com', 'laurencedotcomputer@gmail.com'}
+
+    # Get all completed payment events
+    events = PaymentEvent.query.filter(
+        PaymentEvent.event_type.in_(['checkout_completed', 'invoice_paid'])
+    ).order_by(PaymentEvent.created_at.asc()).all()
+
+    total_revenue = 0
+    total_orders = 0
+    first_sale_date = None
+
+    for event in events:
+        # Filter out test emails
+        if event.admin_id:
+            admin = Admin.query.get(event.admin_id)
+            if admin and admin.email and admin.email.lower() in test_emails:
+                continue
+
+        total_orders += 1
+        total_revenue += event.amount or 0
+
+        if first_sale_date is None and event.created_at:
+            first_sale_date = event.created_at.strftime('%Y-%m-%d')
+
+    return jsonify({
+        'brand': 'Fat Big Quiz',
+        'total_revenue_pence': total_revenue,
+        'total_orders': total_orders,
+        'first_sale_date': first_sale_date,
+        'currency': 'GBP',
+    })
 
 
 # =============================================================================
@@ -2637,7 +2798,15 @@ def audit_upload(upload_id):
     if action not in ('accept', 'reject_resubmit', 'reject_final'):
         return jsonify({'success': False, 'error': 'Invalid action'}), 400
 
-    admin_id = int(current_user.get_id().split('_')[1])
+    # Get admin ID from SSO user or Flask-Login session
+    if hasattr(g, 'auth_user') and g.auth_user:
+        email = g.auth_user.get('email', '').lower()
+        admin_obj = Admin.query.filter_by(email=email).first()
+        admin_id = admin_obj.id if admin_obj else None
+    elif current_user.is_authenticated and current_user.get_id().startswith('admin_'):
+        admin_id = int(current_user.get_id().split('_')[1])
+    else:
+        admin_id = None
 
     if action == 'accept':
         upload.audit_status = 'accepted'
@@ -2697,8 +2866,7 @@ def get_gallery(game_id):
     """
     game = Game.query.get_or_404(game_id)
 
-    is_admin = (current_user.is_authenticated and
-                current_user.get_id().startswith('admin_'))
+    is_admin = _is_admin_request()
 
     if is_admin:
         # Admin sees everything
@@ -2788,11 +2956,11 @@ def get_chat_threads(game_id):
 @bp.route('/game/<int:game_id>/chat/<int:team_id>', methods=['GET'])
 def get_chat_messages(game_id, team_id):
     """Get chat messages between admin and a team."""
-    if not current_user.is_authenticated:
+    is_admin = _is_admin_request()
+    if not is_admin and not current_user.is_authenticated:
         return jsonify({'success': False, 'error': 'Not authenticated'}), 401
 
     # Verify access
-    is_admin = current_user.get_id().startswith('admin_')
     if not is_admin:
         user_team_id = int(current_user.get_id().split('_')[1])
         if user_team_id != team_id:
@@ -2826,10 +2994,9 @@ def get_chat_messages(game_id, team_id):
 @bp.route('/game/<int:game_id>/chat/<int:team_id>', methods=['POST'])
 def send_chat_message(game_id, team_id):
     """Send a chat message (works for both admin and team)."""
-    if not current_user.is_authenticated:
+    is_admin = _is_admin_request()
+    if not is_admin and not current_user.is_authenticated:
         return jsonify({'success': False, 'error': 'Not authenticated'}), 401
-
-    is_admin = current_user.get_id().startswith('admin_')
     if not is_admin:
         user_team_id = int(current_user.get_id().split('_')[1])
         if user_team_id != team_id:
@@ -2882,10 +3049,9 @@ def send_chat_message(game_id, team_id):
 @bp.route('/game/<int:game_id>/chat/unread-count', methods=['GET'])
 def get_unread_count(game_id):
     """Get unread message count (for badge display)."""
-    if not current_user.is_authenticated:
+    is_admin = _is_admin_request()
+    if not is_admin and not current_user.is_authenticated:
         return jsonify({'success': False, 'error': 'Not authenticated'}), 401
-
-    is_admin = current_user.get_id().startswith('admin_')
 
     if is_admin:
         # Count all unread messages from teams in this game

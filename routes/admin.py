@@ -2,16 +2,16 @@
 Admin routes for Quiz App.
 
 Handles game management, round creation, and administrative functions.
+All admin routes use @require_super_admin from auth_client.py which validates
+the SSO JWT from auth.laurence.computer. No local admin login needed.
 """
 import io
 import zipfile
-from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, send_file
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, send_file, g
 
 from models import db, Admin, Game, Round, Team, Answer, Subscription, MediaUpload, ChatMessage
 from sqlalchemy import func
-from forms import CreateGameForm, CreateRoundForm, AdminSettingsForm
+from forms import CreateGameForm, CreateRoundForm
 from utils import generate_unique_code, generate_qr_code
 
 from auth_client import require_super_admin
@@ -25,37 +25,40 @@ except ImportError:
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
+def _get_admin_id():
+    """Get or create a local Admin record for the SSO user.
+
+    The SSO user's email is in g.auth_user (set by @require_super_admin).
+    We look up or create a matching Admin record so foreign keys (game.admin_id,
+    subscription.admin_id, etc.) still work.
+    """
+    email = g.auth_user.get('email', '').lower().strip()
+    admin = Admin.query.filter_by(email=email).first()
+    if not admin:
+        admin = Admin(email=email, username=email.split('@')[0])
+        admin.set_password('__sso_managed__')
+        db.session.add(admin)
+        db.session.commit()
+        print(f'[Admin] Created local admin record for SSO user: {email}')
+    return admin.id
+
+
 @bp.route('/login')
 def login():
-    """Redirect to the actual admin login page.
+    """Redirect to centralised SSO login.
 
     The Lozzalingo framework's ops admin_required decorator redirects to
-    url_for('admin.login'). This route bridges that to the quiz app's
-    auth blueprint login route.
+    url_for('admin.login'). This route bridges that to the SSO login page.
     """
-    return redirect(url_for('auth.admin_login', **request.args))
-
-
-def admin_required(f):
-    """
-    Decorator to require admin authentication.
-
-    Wraps login_required and additionally checks that
-    the current user is an Admin (not a Team).
-    """
-    @wraps(f)
-    @login_required
-    def decorated_function(*args, **kwargs):
-        if not current_user.get_id().startswith('admin_'):
-            flash('Admin access required.', 'danger')
-            return redirect(url_for('auth.admin_login'))
-        return f(*args, **kwargs)
-    return decorated_function
+    import os
+    auth_url = os.getenv('AUTH_SERVICE_URL', 'https://auth.laurence.computer')
+    base_url = current_app.config.get('BASE_URL', request.host_url.rstrip('/'))
+    redirect_url = request.args.get('next', f'{base_url}/admin/dashboard')
+    return redirect(f'{auth_url}/login?redirect={redirect_url}')
 
 
 @bp.route('/dashboard')
 @require_super_admin
-@admin_required
 def dashboard():
     """
     Admin dashboard showing all games.
@@ -68,14 +71,13 @@ def dashboard():
 
 @bp.route('/create_game', methods=['GET', 'POST'])
 @require_super_admin
-@admin_required
 def create_game():
     """
     Create a new quiz game.
 
     Generates unique code and QR code for the game.
     """
-    admin_id = int(current_user.get_id().split('_')[1])
+    admin_id = _get_admin_id()
 
     # Check game creation limits
     sub = Subscription.query.filter_by(admin_id=admin_id).first()
@@ -137,7 +139,6 @@ def create_game():
 
 @bp.route('/game/<int:game_id>/edit')
 @require_super_admin
-@admin_required
 def edit_game(game_id):
     """
     Edit game page showing rounds and settings.
@@ -174,7 +175,6 @@ def edit_game(game_id):
 
 @bp.route('/game/<int:game_id>/scores')
 @require_super_admin
-@admin_required
 def admin_scores(game_id):
     """
     Admin-only scoreboard that always shows real-time scores.
@@ -185,7 +185,6 @@ def admin_scores(game_id):
 
 @bp.route('/game/<int:game_id>/create_round', methods=['GET', 'POST'])
 @require_super_admin
-@admin_required
 def create_round(game_id):
     """
     Create a new round for a game.
@@ -236,7 +235,6 @@ def create_round(game_id):
 
 @bp.route('/round/<int:round_id>/edit_questions')
 @require_super_admin
-@admin_required
 def edit_questions(round_id):
     """
     Edit questions for a round using form builder.
@@ -252,7 +250,6 @@ def edit_questions(round_id):
 
 @bp.route('/game/<int:game_id>/spreadsheet')
 @require_super_admin
-@admin_required
 def spreadsheet(game_id):
     """
     Spreadsheet view of all answers for grading.
@@ -269,7 +266,6 @@ def spreadsheet(game_id):
 
 @bp.route('/game/<int:game_id>/live_control')
 @require_super_admin
-@admin_required
 def live_control(game_id):
     """
     Live control panel for managing rounds in real-time.
@@ -287,7 +283,6 @@ def live_control(game_id):
 
 @bp.route('/game/<int:game_id>/toggle_active', methods=['POST'])
 @require_super_admin
-@admin_required
 def toggle_game_active(game_id):
     """Toggle game active status."""
     game = Game.query.get_or_404(game_id)
@@ -301,7 +296,6 @@ def toggle_game_active(game_id):
 
 @bp.route('/game/<int:game_id>/duplicate', methods=['POST'])
 @require_super_admin
-@admin_required
 def duplicate_game(game_id):
     """Duplicate a game's structure (rounds and questions) without teams or answers."""
     original = Game.query.get_or_404(game_id)
@@ -350,7 +344,6 @@ def duplicate_game(game_id):
 
 @bp.route('/game/<int:game_id>/delete', methods=['POST'])
 @require_super_admin
-@admin_required
 def delete_game(game_id):
     """Delete a game and all associated data."""
     game = Game.query.get_or_404(game_id)
@@ -365,7 +358,6 @@ def delete_game(game_id):
 
 @bp.route('/round/<int:round_id>/delete', methods=['POST'])
 @require_super_admin
-@admin_required
 def delete_round(round_id):
     """Delete a round and all associated answers."""
     round_obj = Round.query.get_or_404(round_id)
@@ -381,7 +373,6 @@ def delete_round(round_id):
 
 @bp.route('/game/<int:game_id>/scoreboard')
 @require_super_admin
-@admin_required
 def scoreboard(game_id):
     """
     Animated scoreboard view for displaying scores.
@@ -393,38 +384,8 @@ def scoreboard(game_id):
     return render_template('scoreboard.html', game=game, is_admin=True)
 
 
-@bp.route('/settings', methods=['GET', 'POST'])
-@require_super_admin
-@admin_required
-def settings():
-    """Admin settings page to update username and password."""
-    admin_id = int(current_user.get_id().replace('admin_', ''))
-    admin = Admin.query.get_or_404(admin_id)
-    form = AdminSettingsForm(obj=admin)
-
-    if form.validate_on_submit():
-        # Verify current password
-        if not admin.check_password(form.current_password.data):
-            flash('Current password is incorrect.', 'danger')
-            return render_template('admin/settings.html', form=form)
-
-        # Update email
-        admin.email = form.email.data.lower().strip()
-
-        # Update password if provided
-        if form.new_password.data:
-            admin.set_password(form.new_password.data)
-
-        db.session.commit()
-        flash('Settings updated successfully.', 'success')
-        return redirect(url_for('admin.settings'))
-
-    return render_template('admin/settings.html', form=form)
-
-
 @bp.route('/game/<int:game_id>/audit')
 @require_super_admin
-@admin_required
 def audit(game_id):
     """
     Tinder-style audit page for reviewing photo/video submissions.
@@ -443,7 +404,6 @@ def audit(game_id):
 
 @bp.route('/game/<int:game_id>/gallery')
 @require_super_admin
-@admin_required
 def admin_gallery(game_id):
     """
     Admin gallery page showing all media submissions.
@@ -454,7 +414,6 @@ def admin_gallery(game_id):
 
 @bp.route('/game/<int:game_id>/gallery/download')
 @require_super_admin
-@admin_required
 def download_gallery(game_id):
     """
     Download all accepted uploads for a game as a zip file.
@@ -516,7 +475,6 @@ def download_gallery(game_id):
 
 @bp.route('/game/<int:game_id>/chat')
 @require_super_admin
-@admin_required
 def chat(game_id):
     """
     Admin chat inbox showing all team conversations.

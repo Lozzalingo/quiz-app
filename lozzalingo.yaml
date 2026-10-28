@@ -1,0 +1,37 @@
+# Fat Big Quiz - Lozzalingo Framework Configuration
+# Only enable modules that complement the quiz app's own admin/auth system.
+
+site:
+  name: "Fat Big Quiz"
+  tagline: "Live quiz platform"
+
+features:
+  # Enabled - complement the quiz app
+  analytics: false
+  email: true
+  ops: true
+
+  # Disabled - quiz app has its own admin dashboard and auth
+  dashboard: false
+  auth: false
+  settings: false
+  news: false
+  news_public: false
+  customer_spotlight: false
+  merchandise: false
+  merchandise_public: false
+  orders: false
+  external_api: false
+  projects: false
+  projects_public: false
+  quick_links: false
+  campaigns: false
+  crm: false
+
+analytics:
+  track_admin: false
+
+email:
+  from_address: "no-reply@fatbigquiz.com"
+  support_email: "laurencedotcomputer@gmail.com"
+  admin_email: "laurencedotcomputer@gmail.com"

@@ -27,6 +27,10 @@ class Config:
 
     # Admin configuration
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin123'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@fatbigquiz.com')
+
+    # Lozzalingo framework - Resend API key (shared with quiz app's email_service)
+    RESEND_API_KEY = os.environ.get('FBQ_RESEND_API_KEY') or os.environ.get('RESEND_API_KEY', '')
 
     # Application settings
     BASE_URL = os.environ.get('BASE_URL') or 'http://localhost:5777'
@@ -34,16 +38,19 @@ class Config:
     # SocketIO settings
     SOCKETIO_ASYNC_MODE = 'eventlet'
 
-    # Stripe
-    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
-    STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
-    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    # Payments service (centralised)
+    PAYMENTS_SERVICE_URL = os.environ.get('PAYMENTS_SERVICE_URL', '')
+    PAYMENTS_API_KEY = os.environ.get('PAYMENTS_API_KEY', '')
 
     # Rate limiting defaults
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URI = 'memory://'
     RATELIMIT_DEFAULT = '200 per day, 50 per hour'
     RATELIMIT_HEADERS_ENABLED = True
+
+    # Marketing service
+    MARKETING_SERVICE_URL = os.environ.get('MARKETING_SERVICE_URL', 'https://marketing.laurence.computer')
+    MARKETING_SERVICE_API_KEY = os.environ.get('MARKETING_SERVICE_API_KEY', '')
 
     # DigitalOcean Spaces (S3-compatible) for media uploads
     DO_SPACES_KEY = os.environ.get('DO_SPACES_KEY', '')

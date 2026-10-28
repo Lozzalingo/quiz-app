@@ -37,6 +37,10 @@ stripe
 # Security
 Flask-Limiter
 
+# Auth service SSO (auth_client.py)
+PyJWT>=2.8
+cryptography>=42.0
+
 # File storage (DO Spaces / S3)
 boto3
 

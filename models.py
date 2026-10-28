@@ -30,8 +30,8 @@ class Admin(UserMixin, db.Model):
     __tablename__ = 'admin'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(320), nullable=True)
+    username = db.Column(db.String(80), nullable=True)  # Display name (optional)
+    email = db.Column(db.String(320), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
     def set_password(self, password):
@@ -47,7 +47,7 @@ class Admin(UserMixin, db.Model):
         return f'admin_{self.id}'
 
     def __repr__(self):
-        return f'<Admin {self.username}>'
+        return f'<Admin {self.email}>'
 
 
 class Game(db.Model):

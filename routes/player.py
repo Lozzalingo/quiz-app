@@ -13,6 +13,12 @@ from models import db, Game, Round, Team, Answer, ResubmitPermission, MediaUploa
 from utils import calculate_points_for_answer
 from sqlalchemy import func
 
+try:
+    from lozzalingo.core import db_log
+except ImportError:
+    def db_log(*args, **kwargs):
+        pass
+
 bp = Blueprint('player', __name__, url_prefix='/player')
 
 
@@ -607,6 +613,7 @@ def submit_round(round_id):
 
     except Exception as e:
         db.session.rollback()
+        db_log('error', 'player', f'Answer submission failed: {e}', {'game_code': game.code})
         flash('Error submitting answers. Please try again.', 'danger')
         return redirect(url_for('player.quiz', game_code=game.code))
 

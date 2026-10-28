@@ -1,47 +1,49 @@
 """
 Authentication routes for Quiz App.
 
-Handles login/logout for both admin users and player teams.
+Handles login/logout for admin users (via centralised SSO) and player teams
+(via Flask-Login).
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+import os
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 
 from models import db, Admin, Team, Game, Subscription
-from forms import AdminLoginForm, TeamLoginForm, TeamReloginForm
+from forms import TeamLoginForm, TeamReloginForm
+
+try:
+    from lozzalingo.core import db_log
+except ImportError:
+    def db_log(*args, **kwargs):
+        pass  # Graceful fallback if framework not available
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
+def _sso_login_redirect(next_url=None):
+    """Build a redirect to the centralised SSO login page."""
+    auth_url = os.getenv('AUTH_SERVICE_URL', 'https://auth.laurence.computer')
+    base_url = current_app.config.get('BASE_URL', request.host_url.rstrip('/'))
+    redirect_url = next_url or f'{base_url}/admin/dashboard'
+    return redirect(f'{auth_url}/login?redirect={redirect_url}')
+
+
+@bp.route('/login')
+def login():
+    """Redirect alias for Lozzalingo framework compatibility.
+
+    Framework modules (analytics, ops) redirect to url_for('auth.login')
+    when admin is not logged in. This redirects to centralised SSO.
+    """
+    next_url = request.args.get('next')
+    return _sso_login_redirect(next_url)
+
+
 @bp.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """
-    Admin login page.
-
-    GET: Display login form
-    POST: Verify credentials and log in
-    """
-    # Redirect if already logged in as admin
-    if current_user.is_authenticated and current_user.get_id().startswith('admin_'):
-        return redirect(url_for('admin.dashboard'))
-
-    form = AdminLoginForm()
-
-    if form.validate_on_submit():
-        admin = Admin.query.filter_by(username=form.username.data).first()
-
-        if admin and admin.check_password(form.password.data):
-            login_user(admin, remember=True)
-            flash('Logged in successfully.', 'success')
-
-            # Redirect to requested page or dashboard
-            next_page = request.args.get('next')
-            if next_page:
-                return redirect(next_page)
-            return redirect(url_for('admin.dashboard'))
-
-        flash('Invalid username or password.', 'danger')
-
-    return render_template('admin/login.html', form=form)
+    """Admin login - redirects to centralised SSO at auth.laurence.computer."""
+    next_url = request.args.get('next')
+    return _sso_login_redirect(next_url)
 
 
 @bp.route('/player/login', methods=['GET', 'POST'])
@@ -196,11 +198,16 @@ def player_relogin(game_code):
 
 
 @bp.route('/logout')
-@login_required
 def logout():
-    """Log out current user (admin or team)."""
+    """Log out current user (admin or team).
+
+    For teams: tracks logout via Flask-Login.
+    For SSO admins: clears session bridge vars. The auth_token cookie is
+    domain-scoped to .laurence.computer so it cannot be cleared from here,
+    but clearing the session is sufficient for the quiz app.
+    """
     # Track logout for teams
-    if current_user.get_id().startswith('team_'):
+    if current_user.is_authenticated and current_user.get_id().startswith('team_'):
         team = Team.query.get(int(current_user.get_id().split('_')[1]))
         if team:
             team.logout_count = (team.logout_count or 0) + 1
@@ -217,7 +224,12 @@ def logout():
             except Exception as e:
                 print(f'[Auth] Error emitting team_logout: {e}')
 
-    logout_user()
+    if current_user.is_authenticated:
+        logout_user()
+
+    # Clear Lozzalingo session bridge
+    session.pop('admin_id', None)
+    session.pop('admin_email', None)
     # Clear any pending flash messages before showing logout message
     session.pop('_flashes', None)
     flash('You have been logged out.', 'info')

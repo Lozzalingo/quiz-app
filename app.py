@@ -7,7 +7,7 @@ spreadsheet-style answer grading.
 """
 import os
 import time
-from flask import Flask, render_template
+from flask import Flask, render_template, request, g, session
 from flask_login import LoginManager
 from flask_socketio import SocketIO
 from flask_migrate import Migrate
@@ -74,10 +74,41 @@ def create_app(config_name=None):
     if limiter and app.config.get('RATELIMIT_ENABLED', True):
         limiter.init_app(app)
 
-    # Configure login manager
+    # Configure login manager (used for team/player auth only)
     login_manager.login_view = 'auth.player_login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
+
+    # SSO session bridge: when an SSO admin is authenticated via auth_token cookie,
+    # set session vars so the lozzalingo framework recognises them (analytics exclusion,
+    # ops access, dashboard module, etc.)
+    @app.before_request
+    def _sso_session_bridge():
+        if session.get('admin_email'):
+            return  # Already bridged
+        if hasattr(g, 'auth_user') and g.auth_user:
+            # auth_client decorators already decoded the JWT
+            _bridge_sso_session(g.auth_user)
+            return
+        token = request.cookies.get('auth_token')
+        if not token:
+            return
+        try:
+            from auth_client import decode_jwt
+            payload = decode_jwt(token)
+            if payload and payload.get('is_super_admin'):
+                _bridge_sso_session(payload)
+        except Exception:
+            pass
+
+    def _bridge_sso_session(payload):
+        """Set session vars from an SSO JWT payload for framework compatibility."""
+        email = payload.get('email', '')
+        from models import Admin
+        admin = Admin.query.filter_by(email=email.lower().strip()).first()
+        if admin:
+            session['admin_id'] = admin.id
+            session['admin_email'] = admin.email
 
     # Import models (after db is initialized)
     from models import Admin, Team
@@ -154,10 +185,9 @@ def create_app(config_name=None):
         """Landing page for the quiz application."""
         return render_template('index.html')
 
-    # Create database tables and default admin user
+    # Create database tables
     with app.app_context():
         db.create_all()
-        create_default_admin(app)
 
     # Register Socket.IO event handlers
     register_socketio_handlers(socketio)
@@ -374,28 +404,6 @@ def register_socketio_handlers(sio):
             chat_room = f'chat_{game_id}_{team_id}'
             join_room(chat_room)
             print(f'[Socket] Client joined chat room: {chat_room}')
-
-
-def create_default_admin(app):
-    """
-    Create default admin user if none exists.
-
-    Uses ADMIN_PASSWORD from environment/config.
-
-    Args:
-        app: Flask application instance
-    """
-    from models import Admin
-
-    default_email = app.config.get('ADMIN_EMAIL', 'admin@fatbigquiz.com').lower()
-    if Admin.query.filter_by(email=default_email).first() is None:
-        # Check if there are any admins at all
-        if Admin.query.count() == 0:
-            admin = Admin(email=default_email, username='admin')
-            admin.set_password(app.config['ADMIN_PASSWORD'])
-            db.session.add(admin)
-            db.session.commit()
-            print(f"Default admin user created (email: {default_email})")
 
 
 # Create application instance

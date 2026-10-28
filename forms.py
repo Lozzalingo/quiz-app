@@ -15,8 +15,8 @@ from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 class AdminLoginForm(FlaskForm):
     """Form for admin user login."""
 
-    username = StringField('Username', validators=[
-        DataRequired(message='Username is required')
+    email = StringField('Email', validators=[
+        DataRequired(message='Email is required')
     ])
 
     password = PasswordField('Password', validators=[
@@ -112,11 +112,11 @@ class CreateRoundForm(FlaskForm):
 
 
 class AdminSettingsForm(FlaskForm):
-    """Form for admin to update their username and password."""
+    """Form for admin to update their email and password."""
 
-    username = StringField('Username', validators=[
-        DataRequired(message='Username is required'),
-        Length(min=3, max=50, message='Username must be 3-50 characters')
+    email = StringField('Email', validators=[
+        DataRequired(message='Email is required'),
+        Length(min=5, max=320, message='Please enter a valid email address')
     ])
 
     current_password = PasswordField('Current Password', validators=[
