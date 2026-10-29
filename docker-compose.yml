@@ -86,7 +86,7 @@ services:
 volumes:
   postgres_data:
     external: true
-    name: quiz-app_postgres_data
+    name: quiz-app-python_postgres_data
 
 networks:
   quiz_network:
