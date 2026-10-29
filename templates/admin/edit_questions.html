@@ -822,6 +822,96 @@ body {
     border-radius: 4px;
 }
 
+/* Pairing question styles */
+.pairing-config {
+    margin-top: 16px;
+    padding: 16px;
+    background: #e0f2f1;
+    border-radius: 8px;
+}
+
+.pairing-columns {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.pairing-column {
+    flex: 1;
+}
+
+.pairing-column-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #00695c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.pairing-item-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.pairing-item-row input {
+    flex: 1;
+    border: 1px solid #b2dfdb !important;
+    border-radius: 4px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    background: white !important;
+    outline: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+.pairing-item-row input:focus {
+    border-color: #00695c !important;
+}
+
+.pairing-add-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(0,105,92,0.07);
+    border: 2px dashed #80cbc4;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.pairing-add-row input {
+    flex: 1;
+    border: none !important;
+    padding: 4px 0 !important;
+    font-size: 13px !important;
+    background: transparent !important;
+    outline: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}
+
+.pairing-points-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #b2dfdb;
+    align-items: center;
+}
+
+.pairing-hint {
+    font-size: 12px;
+    color: #00695c;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(0,105,92,0.08);
+    border-radius: 4px;
+}
+
 /* Photo/Video question styles */
 .photo-video-config {
     margin-top: 16px;
@@ -1224,14 +1314,15 @@ function renderQuestions() {
                     <option value="betting" ${q.type === 'betting' ? 'selected' : ''}>Betting</option>
                     <option value="ordering" ${q.type === 'ordering' ? 'selected' : ''}>Ordering</option>
                     <option value="estimate" ${q.type === 'estimate' ? 'selected' : ''}>Estimate</option>
+                    <option value="pairing" ${q.type === 'pairing' ? 'selected' : ''}>Pairing</option>
                     <option value="photo_video" ${q.type === 'photo_video' ? 'selected' : ''}>Photo/Video Task</option>
                 </select>
             </div>
 
-            ${q.type === 'radio' ? renderRadioOptions(q, index) : q.type === 'betting' ? renderBettingOptions(q, index) : q.type === 'ordering' ? renderOrderingOptions(q, index) : q.type === 'estimate' ? renderEstimateOptions(q, index) : q.type === 'photo_video' ? renderPhotoVideoOptions(q, index) : renderValidation(q, index)}
+            ${q.type === 'radio' ? renderRadioOptions(q, index) : q.type === 'betting' ? renderBettingOptions(q, index) : q.type === 'ordering' ? renderOrderingOptions(q, index) : q.type === 'estimate' ? renderEstimateOptions(q, index) : q.type === 'pairing' ? renderPairingOptions(q, index) : q.type === 'photo_video' ? renderPhotoVideoOptions(q, index) : renderValidation(q, index)}
 
             <div class="card-actions">
-                ${(q.type !== 'betting' && q.type !== 'ordering' && q.type !== 'estimate' && q.type !== 'photo_video') ? `
+                ${(q.type !== 'betting' && q.type !== 'ordering' && q.type !== 'estimate' && q.type !== 'pairing' && q.type !== 'photo_video') ? `
                 <div style="margin-right: auto; display: flex; align-items: center; gap: 6px;">
                     <span class="field-label" style="margin: 0;">Pts:</span>
                     <input type="number" class="points-input"
@@ -1699,6 +1790,158 @@ function updatePhotoVideoConfig(index, field, value) {
         questions[index].photo_video = { points: 1, max_duration: 60 };
     }
     questions[index].photo_video[field] = value;
+}
+
+function renderPairingOptions(q, index) {
+    if (!q.pairing) {
+        q.pairing = { left_items: [], right_items: [], correct_pairs: {}, points_per_pair: 1 };
+    }
+
+    const p = q.pairing;
+    const leftItems  = p.left_items  || [];
+    const rightItems = p.right_items || [];
+    const pointsPer  = p.points_per_pair || 1;
+
+    let leftHtml = '';
+    leftItems.forEach((item, i) => {
+        leftHtml += `
+            <div class="pairing-item-row">
+                <input type="text" value="${escapeHtml(item)}"
+                       onchange="updatePairingItem(${index}, 'left', ${i}, this.value)"
+                       placeholder="Left item ${i + 1}" name="pairing_left_${index}_${i}">
+                <button type="button" class="option-delete-btn"
+                        onclick="removePairingItem(${index}, 'left', ${i})" name="remove_pairing_left_${index}_${i}" title="Remove">x</button>
+            </div>`;
+    });
+
+    let rightHtml = '';
+    rightItems.forEach((item, i) => {
+        rightHtml += `
+            <div class="pairing-item-row">
+                <input type="text" value="${escapeHtml(item)}"
+                       onchange="updatePairingItem(${index}, 'right', ${i}, this.value)"
+                       placeholder="Right item ${i + 1}" name="pairing_right_${index}_${i}">
+                <button type="button" class="option-delete-btn"
+                        onclick="removePairingItem(${index}, 'right', ${i})" name="remove_pairing_right_${index}_${i}" title="Remove">x</button>
+            </div>`;
+    });
+
+    // Correct pairs section - shown only when both columns have items
+    let pairsHtml = '';
+    if (leftItems.length > 0 && rightItems.length > 0) {
+        pairsHtml = `<div style="margin-top:12px;"><div class="pairing-column-label">Correct pairs</div>`;
+        leftItems.forEach((leftItem) => {
+            const correctRight = (p.correct_pairs || {})[leftItem] || '';
+            const opts = rightItems.map(r =>
+                `<option value="${escapeHtml(r)}" ${r === correctRight ? 'selected' : ''}>${escapeHtml(r)}</option>`
+            ).join('');
+            pairsHtml += `
+                <div class="pairing-item-row" style="margin-bottom: 8px;">
+                    <span style="min-width:100px;font-size:13px;flex:1;">${escapeHtml(leftItem)}</span>
+                    <span style="color:#5f6368;">&#8594;</span>
+                    <select class="field-input" style="flex:1;margin:0!important;"
+                            onchange="updatePairingPair(${index}, '${escapeHtml(leftItem)}', this.value)"
+                            name="pairing_pair_${index}">
+                        <option value="">-- not set --</option>
+                        ${opts}
+                    </select>
+                </div>`;
+        });
+        pairsHtml += `</div>`;
+    }
+
+    return `
+        <div class="pairing-config">
+            <div class="pairing-columns">
+                <div class="pairing-column">
+                    <div class="pairing-column-label">Left column</div>
+                    ${leftHtml}
+                    <div class="pairing-add-row">
+                        <input type="text" placeholder="Add left item..."
+                               name="pairing_add_left_${index}"
+                               onkeydown="if(event.key==='Enter'){addPairingItem(${index}, 'left', this.value); this.value=''; event.preventDefault();}"
+                               onblur="if(this.value.trim()){addPairingItem(${index}, 'left', this.value); this.value='';}">
+                    </div>
+                </div>
+                <div class="pairing-column">
+                    <div class="pairing-column-label">Right column</div>
+                    ${rightHtml}
+                    <div class="pairing-add-row">
+                        <input type="text" placeholder="Add right item..."
+                               name="pairing_add_right_${index}"
+                               onkeydown="if(event.key==='Enter'){addPairingItem(${index}, 'right', this.value); this.value=''; event.preventDefault();}"
+                               onblur="if(this.value.trim()){addPairingItem(${index}, 'right', this.value); this.value='';}">
+                    </div>
+                </div>
+            </div>
+
+            ${pairsHtml}
+
+            <div class="pairing-points-row">
+                <span class="field-label" style="margin:0;">Points per correct pair:</span>
+                <input type="number" class="field-input" style="width:70px;margin:0!important;"
+                       value="${pointsPer}"
+                       onchange="updatePairingConfig(${index}, 'points_per_pair', parseFloat(this.value))"
+                       name="pairing_points_${index}"
+                       min="0" step="0.5">
+            </div>
+
+            <div class="pairing-hint">
+                Players tap a left item then a right item to connect them.
+                ${leftItems.length} pair${leftItems.length !== 1 ? 's' : ''} (${leftItems.length} x ${pointsPer} pts each).
+            </div>
+        </div>
+    `;
+}
+
+function updatePairingConfig(index, field, value) {
+    if (!questions[index].pairing) {
+        questions[index].pairing = { left_items: [], right_items: [], correct_pairs: {}, points_per_pair: 1 };
+    }
+    questions[index].pairing[field] = value;
+    renderQuestions();
+}
+
+function addPairingItem(index, side, value) {
+    if (!value || !value.trim()) return;
+    if (!questions[index].pairing) {
+        questions[index].pairing = { left_items: [], right_items: [], correct_pairs: {}, points_per_pair: 1 };
+    }
+    const key = side === 'left' ? 'left_items' : 'right_items';
+    questions[index].pairing[key].push(value.trim());
+    renderQuestions();
+}
+
+function removePairingItem(index, side, itemIndex) {
+    if (!questions[index].pairing) return;
+    const key = side === 'left' ? 'left_items' : 'right_items';
+    const removed = questions[index].pairing[key][itemIndex];
+    questions[index].pairing[key].splice(itemIndex, 1);
+    // Clean up the correct_pairs entry if a left item was removed
+    if (side === 'left' && questions[index].pairing.correct_pairs) {
+        delete questions[index].pairing.correct_pairs[removed];
+    }
+    renderQuestions();
+}
+
+function updatePairingItem(index, side, itemIndex, value) {
+    if (!questions[index].pairing) return;
+    const key = side === 'left' ? 'left_items' : 'right_items';
+    const oldValue = questions[index].pairing[key][itemIndex];
+    questions[index].pairing[key][itemIndex] = value;
+    // Rename the key in correct_pairs if a left item was renamed
+    if (side === 'left' && questions[index].pairing.correct_pairs && oldValue in questions[index].pairing.correct_pairs) {
+        questions[index].pairing.correct_pairs[value] = questions[index].pairing.correct_pairs[oldValue];
+        delete questions[index].pairing.correct_pairs[oldValue];
+    }
+}
+
+function updatePairingPair(index, leftItem, rightItem) {
+    if (!questions[index].pairing) return;
+    if (!questions[index].pairing.correct_pairs) {
+        questions[index].pairing.correct_pairs = {};
+    }
+    questions[index].pairing.correct_pairs[leftItem] = rightItem;
 }
 
 function escapeHtml(text) {

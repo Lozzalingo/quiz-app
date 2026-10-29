@@ -186,7 +186,6 @@
                 {% if current_user.get_id().startswith('admin_') %}
                     <li><a href="{{ url_for('admin.dashboard') }}" name="nav_dashboard">Dashboard</a></li>
                     <li><a href="{{ url_for('payments.pricing') }}" name="nav_pricing">Pricing</a></li>
-                    <li><a href="{{ url_for('admin.settings') }}" name="nav_settings">Settings</a></li>
                 {% else %}
                     <li><a href="{{ url_for('player.quiz', game_code=current_user.game.code) }}" name="nav_my_quiz">My Quiz</a></li>
                 {% endif %}

@@ -723,6 +723,134 @@ body.timer-active {
     text-align: center;
 }
 
+/* Pairing question styles */
+.pairing-section {
+    border: 2px solid #00897b;
+    border-radius: 12px;
+    padding: 16px;
+    background: #e0f2f1;
+}
+
+.pairing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #b2dfdb;
+}
+
+.pairing-header span {
+    font-weight: 500;
+    color: #00695c;
+}
+
+.pairing-scoring {
+    font-size: 11px;
+    color: #00897b;
+}
+
+.pairing-grid {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.pairing-left-col,
+.pairing-right-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pairing-item {
+    padding: 10px 14px;
+    border: 2px solid #b2dfdb;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    color: #202124;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.2s, background 0.2s;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.pairing-item.selected {
+    border-color: #00897b;
+    background: #e0f2f1;
+    font-weight: 500;
+}
+
+.pairing-item.paired {
+    border-color: #00897b;
+    background: #b2dfdb;
+}
+
+.pairing-item.disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.pairing-connector-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.pairing-pair-line {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    color: #b2dfdb;
+    font-size: 20px;
+    font-weight: 200;
+}
+
+.pairing-pair-line.active {
+    color: #00897b;
+}
+
+.pairing-result-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #b2dfdb;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.pairing-result-row.correct {
+    background: #e8f5e9;
+    border-color: #4caf50;
+}
+
+.pairing-result-row.incorrect {
+    background: #ffebee;
+    border-color: #f44336;
+}
+
+.pairing-result-icon {
+    font-weight: bold;
+    min-width: 20px;
+}
+
+.pairing-hint {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(0,105,92,0.08);
+    border-radius: 6px;
+    font-size: 12px;
+    color: #00695c;
+}
+
 /* Photo/Video upload styles */
 .upload-section {
     border: 2px solid var(--brand-accent);
@@ -1185,6 +1313,79 @@ body.timer-active {
                         Enter your best guess. The closer you are, the more points you get!
                     </div>
                 </div>
+            {% elif question.type == 'pairing' %}
+                {% set pairing = question.pairing or {} %}
+                {% set left_items = pairing.get('left_items', []) %}
+                {% set right_items = pairing.get('right_items', []) %}
+                {% set correct_pairs = pairing.get('correct_pairs', {}) %}
+                {% set points_per_pair = pairing.get('points_per_pair', 1) %}
+                {% set existing = existing_answers.get(question.id, '') %}
+
+                {# Hidden input updated by JS on each tap #}
+                <input type="hidden"
+                       name="answer_{{ question.id }}"
+                       id="answer_{{ question.id }}"
+                       value="{{ existing }}">
+
+                <div class="pairing-section"
+                     id="pairing-section-{{ question.id }}"
+                     data-question-id="{{ question.id }}"
+                     data-read-only="{{ 'true' if read_only else 'false' }}">
+                    <div class="pairing-header">
+                        <span>&#128279; Match the pairs</span>
+                        <span class="pairing-scoring">{{ points_per_pair }} pt{{ 's' if points_per_pair != 1 else '' }} per correct pair</span>
+                    </div>
+
+                    {% if read_only %}
+                        {# Read-only: show results as static rows #}
+                        {% if existing and existing.startswith('{') %}
+                            {% set existing_pairs = existing | fromjson %}
+                        {% else %}
+                            {% set existing_pairs = {} %}
+                        {% endif %}
+                        {% for left_item in left_items %}
+                            {% set player_right = existing_pairs.get(left_item, '') %}
+                            {% set correct_right = correct_pairs.get(left_item, '') %}
+                            {% set is_correct = player_right and correct_right and player_right.strip().lower() == correct_right.strip().lower() %}
+                            <div class="pairing-result-row {{ 'correct' if is_correct else 'incorrect' }}">
+                                <span class="pairing-result-icon">{{ '&#10003;' if is_correct else '&#10007;' }}</span>
+                                <span>{{ left_item }}</span>
+                                <span style="color: #5f6368; margin: 0 4px;">&#8594;</span>
+                                <span>{{ player_right if player_right else '(no answer)' }}</span>
+                                {% if not is_correct and correct_right %}
+                                <span style="color: #5f6368; font-size: 11px; margin-left: auto;">correct: {{ correct_right }}</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        {# Interactive pairing UI - controlled by JS #}
+                        <div class="pairing-grid" id="pairing-grid-{{ question.id }}">
+                            <div class="pairing-left-col" id="pairing-left-{{ question.id }}">
+                                {% for item in left_items %}
+                                <div class="pairing-item pairing-left-item"
+                                     data-side="left"
+                                     data-item="{{ item }}"
+                                     data-question-id="{{ question.id }}">{{ item }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="pairing-connector-col" id="pairing-connectors-{{ question.id }}">
+                                {% for item in left_items %}
+                                <div class="pairing-pair-line">-</div>
+                                {% endfor %}
+                            </div>
+                            <div class="pairing-right-col" id="pairing-right-{{ question.id }}">
+                                {% for item in right_items %}
+                                <div class="pairing-item pairing-right-item"
+                                     data-side="right"
+                                     data-item="{{ item }}"
+                                     data-question-id="{{ question.id }}">{{ item }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="pairing-hint">Tap a left item then a right item to connect them. Tap again to change.</div>
+                    {% endif %}
+                </div>
+
             {% elif question.type == 'photo_video' %}
                 {% set upload = media_uploads.get(question.id, {}) if media_uploads else {} %}
                 {% set audit = upload.get('audit_status', '') %}
@@ -1767,6 +1968,124 @@ function shuffleOrderingOptions() {
 // Shuffle on page load (only if not read-only/viewing existing answers)
 {% if not read_only %}
 shuffleOrderingOptions();
+{% endif %}
+
+// ---- Pairing Question Logic ----
+const pairingState = {};
+
+function initPairingQuestions() {
+    console.log('[Round] Initialising pairing questions');
+    document.querySelectorAll('.pairing-section[data-read-only="false"]').forEach(section => {
+        const qId = section.dataset.questionId;
+
+        // Load existing pairs from the hidden input
+        const hidden = document.getElementById('answer_' + qId);
+        let currentPairs = {};
+        if (hidden && hidden.value && hidden.value.startsWith('{')) {
+            try { currentPairs = JSON.parse(hidden.value); } catch(e) {}
+        }
+
+        pairingState[qId] = { currentPairs: currentPairs, selectedLeft: null };
+
+        // Shuffle the right column items
+        const rightCol = document.getElementById('pairing-right-' + qId);
+        if (rightCol) {
+            const items = Array.from(rightCol.querySelectorAll('.pairing-right-item'));
+            for (let i = items.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                rightCol.insertBefore(items[j], items[i]);
+                [items[i], items[j]] = [items[j], items[i]];
+            }
+        }
+
+        // Attach tap handlers
+        section.querySelectorAll('.pairing-left-item').forEach(el => {
+            el.addEventListener('click', () => handlePairingTap(qId, 'left', el.dataset.item));
+        });
+        section.querySelectorAll('.pairing-right-item').forEach(el => {
+            el.addEventListener('click', () => handlePairingTap(qId, 'right', el.dataset.item));
+        });
+
+        // Render initial paired state (for existing answers)
+        renderPairingState(qId);
+    });
+}
+
+function handlePairingTap(qId, side, item) {
+    const state = pairingState[qId];
+    if (!state) return;
+
+    if (side === 'left') {
+        // Toggle left selection
+        state.selectedLeft = (state.selectedLeft === item) ? null : item;
+    } else {
+        if (state.selectedLeft !== null) {
+            // Remove any existing pair that used this right item
+            const existingLeft = Object.keys(state.currentPairs).find(
+                l => state.currentPairs[l] === item
+            );
+            if (existingLeft) delete state.currentPairs[existingLeft];
+
+            // Set the new pair
+            state.currentPairs[state.selectedLeft] = item;
+            state.selectedLeft = null;
+        } else {
+            // Tapping right with no left selected - clear its pair
+            const existingLeft = Object.keys(state.currentPairs).find(
+                l => state.currentPairs[l] === item
+            );
+            if (existingLeft) delete state.currentPairs[existingLeft];
+        }
+    }
+
+    renderPairingState(qId);
+    savePairingAnswer(qId);
+}
+
+function renderPairingState(qId) {
+    const state = pairingState[qId];
+    if (!state) return;
+
+    const section = document.querySelector(`.pairing-section[data-question-id="${qId}"]`);
+    if (!section) return;
+
+    // Update left items
+    section.querySelectorAll('.pairing-left-item').forEach(el => {
+        const item = el.dataset.item;
+        el.classList.remove('selected', 'paired');
+        if (item === state.selectedLeft) {
+            el.classList.add('selected');
+        } else if (state.currentPairs[item]) {
+            el.classList.add('paired');
+        }
+    });
+
+    // Update right items
+    const pairedRightItems = new Set(Object.values(state.currentPairs));
+    section.querySelectorAll('.pairing-right-item').forEach(el => {
+        el.classList.toggle('paired', pairedRightItems.has(el.dataset.item));
+    });
+
+    // Update connector lines
+    const leftItems = Array.from(section.querySelectorAll('.pairing-left-item')).map(el => el.dataset.item);
+    const connectors = section.querySelectorAll(`#pairing-connectors-${qId} .pairing-pair-line`);
+    connectors.forEach((connector, i) => {
+        const leftItem = leftItems[i];
+        connector.classList.toggle('active', !!(leftItem && state.currentPairs[leftItem]));
+    });
+}
+
+function savePairingAnswer(qId) {
+    const state = pairingState[qId];
+    if (!state) return;
+    const hidden = document.getElementById('answer_' + qId);
+    if (hidden) {
+        hidden.value = JSON.stringify(state.currentPairs);
+    }
+}
+
+{% if not read_only %}
+initPairingQuestions();
 {% endif %}
 
 // Fetch active timers on page load (persists across page refresh)

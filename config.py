@@ -62,7 +62,7 @@ class Config:
     DO_SPACES_FOLDER = os.environ.get('DO_SPACES_FOLDER', 'fat-big-quiz')
 
     # Upload settings
-    MAX_UPLOAD_SIZE_MB = 100
+    MAX_UPLOAD_SIZE_MB = 500
     MAX_VIDEO_DURATION_SECONDS = 60
 
 

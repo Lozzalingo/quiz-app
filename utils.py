@@ -9,6 +9,7 @@ Contains helper functions for:
 """
 import os
 import re
+import json
 import random
 import string
 import qrcode
@@ -226,7 +227,7 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
 
     Args:
         question_config: Dict with question settings including:
-            - type: 'text', 'number', or 'radio'
+            - type: 'text', 'number', 'radio', 'estimate', or 'pairing'
             - validation: Regex pattern for text, formula for number
             - points: Points to award (default 1)
         answer_text: The user's answer
@@ -313,6 +314,27 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
             return 0.0
         except (ValueError, TypeError):
             return 0.0
+
+    elif q_type == 'pairing':
+        # Pairing question - 1 point per correct pair (configurable)
+        pairing_config = question_config.get('pairing', {})
+        correct_pairs = pairing_config.get('correct_pairs', {})
+        points_per_pair = pairing_config.get('points_per_pair', 1)
+
+        if not answer_text or not correct_pairs:
+            return 0.0
+
+        try:
+            player_pairs = json.loads(answer_text)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return 0.0
+
+        total = 0.0
+        for left_item, correct_right in correct_pairs.items():
+            player_right = player_pairs.get(left_item, '')
+            if str(player_right).strip().lower() == str(correct_right).strip().lower():
+                total += float(points_per_pair)
+        return total
 
     # Unknown type
     return 0.0

@@ -127,6 +127,16 @@ def update_questions(round_id):
                 old_estimate.get('points_30') != new_estimate.get('points_30')):
                 questions_to_rescore.append(new_q)
 
+        elif q_type == 'pairing' and q_id in old_questions_map:
+            old_q = old_questions_map[q_id]
+            old_pairing = old_q.get('pairing', {})
+            new_pairing = new_q.get('pairing', {})
+
+            # Re-score if correct pairs or points per pair changed
+            if (old_pairing.get('correct_pairs') != new_pairing.get('correct_pairs') or
+                old_pairing.get('points_per_pair') != new_pairing.get('points_per_pair')):
+                questions_to_rescore.append(new_q)
+
     round_obj.set_questions(new_questions)
 
     # Re-score answers for estimate questions with changed configs

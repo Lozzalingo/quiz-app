@@ -519,6 +519,26 @@ def submit_round(round_id):
                 except (ValueError, TypeError):
                     points = 0
 
+        # Handle pairing questions specially
+        elif q_type == 'pairing':
+            pairing_config = q.get('pairing', {})
+            correct_pairs = pairing_config.get('correct_pairs', {})
+            points_per_pair = pairing_config.get('points_per_pair', 1)
+
+            answer_text = request.form.get(f'answer_{q_id}', '').strip()
+
+            # Calculate points - 1 point per correct pair
+            points = 0
+            if answer_text and correct_pairs:
+                try:
+                    player_pairs = json.loads(answer_text)
+                    for left_item, correct_right in correct_pairs.items():
+                        player_right = player_pairs.get(left_item, '')
+                        if str(player_right).strip().lower() == str(correct_right).strip().lower():
+                            points += float(points_per_pair)
+                except (json.JSONDecodeError, TypeError, ValueError):
+                    points = 0
+
         else:
             answer_text = request.form.get(f'answer_{q_id}', '').strip()
             all_answers[q_id] = answer_text

@@ -35,3 +35,7 @@ email:
   from_address: "no-reply@fatbigquiz.com"
   support_email: "laurencedotcomputer@gmail.com"
   admin_email: "laurencedotcomputer@gmail.com"
+
+ops:
+  suppress_checks:
+    - no_swap
