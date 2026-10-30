@@ -132,29 +132,20 @@ def _invalidate_rs256_cache():
 # ---------------------------------------------------------------------------
 
 def _clean_redirect_url(url):
-    """Strip any stale auth_token param from a URL and fix the scheme.
-
-    Inside Docker containers, request.url returns http:// because Nginx
-    terminates SSL. This function upgrades to https:// when X-Forwarded-Proto
-    is set, preventing meta-refresh redirects to plain HTTP URLs.
-    Also strips auth_token to prevent duplicate params in SSO loops.
-    """
+    """Strip any stale auth_token param from a URL before using it as a login redirect.
+    Forces https:// for non-localhost domains - behind Nginx/Cloudflare,
+    request.url reports http:// even when the actual request is https://."""
     from urllib.parse import urlencode, urlparse, parse_qs
     parsed = urlparse(url)
     params = parse_qs(parsed.query)
     params.pop('auth_token', None)
     clean_query = urlencode(params, doseq=True)
-    # Fix scheme: behind Nginx/Cloudflare, request.url is http but the
-    # real client-facing scheme is https.
-    scheme = parsed.scheme
-    try:
-        from flask import request as _req
-        proto = _req.headers.get('X-Forwarded-Proto')
-        if proto:
-            scheme = proto
-    except (RuntimeError, ImportError):
-        pass
-    return parsed._replace(scheme=scheme, query=clean_query).geturl()
+    cleaned = parsed._replace(query=clean_query).geturl()
+    # Force https:// for non-localhost domains
+    localhost_hosts = ('localhost', '127.0.0.1', '0.0.0.0')
+    if parsed.netloc and not any(parsed.netloc.startswith(h) for h in localhost_hosts):
+        cleaned = 'https://' + cleaned[len(parsed.scheme) + 3:]
+    return cleaned
 
 
 # ---------------------------------------------------------------------------
