@@ -37,5 +37,6 @@ email:
   admin_email: "laurencedotcomputer@gmail.com"
 
 ops:
+  show_banner: false
   suppress_checks:
     - no_swap
