@@ -741,10 +741,12 @@
             <span>Gallery</span>
         </a>
         {% endif %}
+        {% if game.game_type != 'quiz' %}
         <a href="{{ url_for('player.submissions', game_code=game.code) }}" class="nav-item {% if active_nav == 'submissions' %}active{% endif %}" data-nav="submissions" name="nav_submissions">
             <span class="nav-icon">📤</span>
             <span>Submissions</span>
         </a>
+        {% endif %}
     </nav>
     {% endif %}
 

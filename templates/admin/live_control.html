@@ -1070,7 +1070,7 @@ body {
 .nav-bar {
     display: flex;
     gap: 8px;
-    margin-top: 12px;
+    margin: 0 0 12px 0;
 }
 
 .nav-bar .nav-btn {
@@ -1439,6 +1439,13 @@ body {
         </div>
     </div>
 
+    <!-- Nav Bar (always visible) -->
+    <div class="nav-bar">
+        <a href="{{ url_for('admin.scoreboard', game_id=game.id) }}" class="nav-btn" name="nav_scoreboard">Scoreboard</a>
+        <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="nav-btn" name="nav_spreadsheet">Spreadsheet</a>
+        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="nav-btn" name="nav_back_to_game">Back to Game</a>
+    </div>
+
     <!-- Tab Bar -->
     <div class="tab-bar">
         <button class="tab-btn active" data-tab="controls" name="tab_controls" onclick="switchTab('controls')">Controls</button>
@@ -1699,12 +1706,6 @@ body {
         </div>
     </div>
 
-    <!-- Nav Bar (always visible) -->
-    <div class="nav-bar">
-        <a href="{{ url_for('admin.scoreboard', game_id=game.id) }}" class="nav-btn primary" name="nav_scoreboard">Scoreboard</a>
-        <a href="{{ url_for('admin.spreadsheet', game_id=game.id) }}" class="nav-btn" name="nav_spreadsheet">Spreadsheet</a>
-        <a href="{{ url_for('admin.edit_game', game_id=game.id) }}" class="nav-btn" name="nav_back_to_game">Back to Game</a>
-    </div>
 </div>
 {% endblock %}
 
@@ -1753,7 +1754,7 @@ socket.on('round_status_changed', function(data) {
 socket.on('submission_update', function(data) {
     console.log('[LiveControl] Submission update:', data);
     var el = document.getElementById('submissions-' + data.round_id);
-    if (el) {
+    if (el && data.submissions !== undefined && data.total_teams !== undefined) {
         el.textContent = data.submissions + '/' + data.total_teams + ' submitted';
     }
     if (data.team_id && data.total_score !== undefined) {
@@ -1763,6 +1764,12 @@ socket.on('submission_update', function(data) {
         }
     } else {
         fetchTeamScores();
+    }
+    // Refresh the per-team submission list if its panel is open for this round
+    var panel = document.getElementById('submissions-panel-' + data.round_id);
+    if (panel && panel.classList.contains('show')) {
+        console.log('[LiveControl] Refreshing submissions panel for round', data.round_id);
+        loadSubmissions(data.round_id);
     }
 });
 

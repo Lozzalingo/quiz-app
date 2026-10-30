@@ -107,18 +107,6 @@ def player_login(game_code=None):
             else:
                 flash('team_exists', 'team_error')  # Special marker for template
         else:
-            # Check team limit based on game owner's subscription
-            if game.admin_id:
-                sub = Subscription.query.filter_by(admin_id=game.admin_id).first()
-                max_teams = sub.max_teams if sub else 5
-            else:
-                max_teams = 5  # Legacy games default to 5
-
-            current_team_count = Team.query.filter_by(game_id=game.id).count()
-            if current_team_count >= max_teams:
-                flash(f'This game is full ({max_teams} teams maximum).', 'danger')
-                return render_template('player/login.html', form=form)
-
             # Create new team
             new_team = Team(
                 game_id=game.id,

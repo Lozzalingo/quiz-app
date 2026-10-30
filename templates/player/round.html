@@ -816,15 +816,26 @@ body.timer-active {
 }
 
 .pairing-result-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     padding: 8px 12px;
     border-radius: 8px;
     background: white;
     border: 1px solid #b2dfdb;
     font-size: 13px;
     margin-bottom: 6px;
+}
+
+.pairing-result-pair {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.pairing-result-correct {
+    margin-top: 4px;
+    text-align: center;
+    color: #5f6368;
+    font-size: 11px;
 }
 
 .pairing-result-row.correct {
@@ -835,11 +846,6 @@ body.timer-active {
 .pairing-result-row.incorrect {
     background: #ffebee;
     border-color: #f44336;
-}
-
-.pairing-result-icon {
-    font-weight: bold;
-    min-width: 20px;
 }
 
 .pairing-hint {
@@ -1348,12 +1354,13 @@ body.timer-active {
                             {% set correct_right = correct_pairs.get(left_item, '') %}
                             {% set is_correct = player_right and correct_right and player_right.strip().lower() == correct_right.strip().lower() %}
                             <div class="pairing-result-row {{ 'correct' if is_correct else 'incorrect' }}">
-                                <span class="pairing-result-icon">{{ '&#10003;' if is_correct else '&#10007;' }}</span>
-                                <span>{{ left_item }}</span>
-                                <span style="color: #5f6368; margin: 0 4px;">&#8594;</span>
-                                <span>{{ player_right if player_right else '(no answer)' }}</span>
+                                <div class="pairing-result-pair">
+                                    <span>{{ left_item }}</span>
+                                    <span style="color: #5f6368; margin: 0 4px;">&#8594;</span>
+                                    <span>{{ player_right if player_right else '(no answer)' }}</span>
+                                </div>
                                 {% if not is_correct and correct_right %}
-                                <span style="color: #5f6368; font-size: 11px; margin-left: auto;">correct: {{ correct_right }}</span>
+                                <div class="pairing-result-correct">correct: {{ correct_right }}</div>
                                 {% endif %}
                             </div>
                         {% endfor %}
@@ -1557,6 +1564,7 @@ socket.on('round_ending', function(data) {
             stopClientTimer();
             const form = document.getElementById('quiz-form');
             const formData = new FormData(form);
+            formData.append('auto_submit', '1');
 
             fetch(form.action, {
                 method: 'POST',
@@ -1577,6 +1585,7 @@ socket.on('round_closed', function(data) {
             hasSubmitted = true;
             const form = document.getElementById('quiz-form');
             const formData = new FormData(form);
+            formData.append('auto_submit', '1');
 
             fetch(form.action, {
                 method: 'POST',
@@ -1797,6 +1806,7 @@ function autoSubmitAnswers() {
     // Submit via fetch (no redirect) then show popup
     const form = document.getElementById('quiz-form');
     const formData = new FormData(form);
+    formData.append('auto_submit', '1');
 
     fetch(form.action, {
         method: 'POST',
@@ -1891,6 +1901,15 @@ function showRoundClosedOverlay(message, isTimerExpiry, isFinalRound = false) {
 
     document.getElementById('round-closed-overlay').classList.add('show');
 }
+
+// Prevent Enter in an answer input from submitting the whole round.
+// Submission must only happen via the Submit / Update Answers button.
+document.getElementById('quiz-form').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.type !== 'submit') {
+        e.preventDefault();
+        console.log('[PlayerRound] Enter key blocked - use the Submit button to submit the round');
+    }
+});
 
 document.getElementById('quiz-form').addEventListener('submit', function(e) {
     if (hasSubmitted) {

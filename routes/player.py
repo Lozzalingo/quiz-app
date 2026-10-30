@@ -413,7 +413,12 @@ def submit_round(round_id):
         round_id=round_obj.id
     ).first()
 
-    if existing_answers and not resubmit_permission:
+    # Auto-submits (round ending / timer expiry) are a safety net fired by every
+    # device logged in as the team. They must never clobber answers a teammate
+    # already saved - they only fill in blanks.
+    is_auto_submit = request.form.get('auto_submit') == '1'
+
+    if existing_answers and not resubmit_permission and not is_auto_submit:
         flash('You have already submitted answers for this round.', 'danger')
         return redirect(url_for('player.quiz', game_code=game.code))
 
@@ -556,12 +561,18 @@ def submit_round(round_id):
 
         # Update existing or create new answer
         if q_id in existing_by_question:
-            # Update existing answer
             answer = existing_by_question[q_id]
+            if is_auto_submit and (answer.answer_text or '').strip():
+                # Never let an auto-submit overwrite an answer that is already saved
+                continue
+            # Update existing answer
             answer.answer_text = answer_text
             answer.points = points
             answer.submitted_at = db.func.now()
         else:
+            if is_auto_submit and not answer_text:
+                # Auto-submits only save answers that actually have content
+                continue
             # Create new answer record
             answer = Answer(
                 team_id=team.id,
@@ -573,8 +584,8 @@ def submit_round(round_id):
             db.session.add(answer)
 
     try:
-        # Remove resubmit permission if it exists
-        if resubmit_permission:
+        # Remove resubmit permission if it exists (not consumed by auto-submits)
+        if resubmit_permission and not is_auto_submit:
             db.session.delete(resubmit_permission)
 
         db.session.commit()
@@ -902,6 +913,10 @@ def submissions(game_code):
     if team.game_id != game.id:
         flash('You are not registered for this game.', 'danger')
         return redirect(url_for('auth.player_login', game_code=game_code))
+
+    # Submissions are for media-based games only (treasure hunt, adventure)
+    if game.game_type == 'quiz':
+        return redirect(url_for('player.quiz', game_code=game.code))
 
     uploads = MediaUpload.query.filter_by(
         team_id=team.id, game_id=game.id

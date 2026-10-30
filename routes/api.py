@@ -874,18 +874,30 @@ def upload_image():
     ext = file.filename.rsplit('.', 1)[1].lower()
     filename = f"{uuid.uuid4().hex}.{ext}"
 
-    # Ensure upload directory exists
-    upload_dir = os.path.join('static', 'uploads', 'questions')
-    os.makedirs(upload_dir, exist_ok=True)
+    content_types = {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'svg': 'image/svg+xml',
+    }
+    content_type = content_types.get(ext, 'application/octet-stream')
 
-    # Save file
-    filepath = os.path.join(upload_dir, filename)
-    file.save(filepath)
+    # Upload to DO Spaces so images persist across container rebuilds
+    try:
+        from storage import upload_fileobj_to_spaces
+        from flask import current_app
+        folder = current_app.config.get('DO_SPACES_FOLDER', 'fat-big-quiz')
+        storage_key = f'{folder}/question-images/{filename}'
+        url = upload_fileobj_to_spaces(file, storage_key, content_type=content_type)
+    except Exception as e:
+        db_log('error', 'api', f'Question image upload to Spaces failed: {e}', {'filename': filename})
+        return jsonify({'success': False, 'error': 'Image upload failed. Please try again.'}), 500
 
-    # Return the URL path
     return jsonify({
         'success': True,
-        'url': f'/static/uploads/questions/{filename}'
+        'url': url
     })
 
 
