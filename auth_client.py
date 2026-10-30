@@ -283,6 +283,14 @@ def require_auth(f):
             if payload:
                 # Strip auth_token from URL
                 clean_url = _clean_redirect_url(request.url)
+                # Derive cookie max_age from the JWT exp claim so it
+                # matches the token lifetime set by the auth service.
+                cookie_max_age = 900  # fallback: 15 minutes
+                exp = payload.get('exp')
+                if exp:
+                    remaining = int(exp - time.time())
+                    if remaining > 0:
+                        cookie_max_age = remaining
                 # Return an HTML page that sets the cookie via response header
                 # and redirects. Using a 200 with Set-Cookie avoids Cloudflare
                 # stripping cookies from 302 responses.
@@ -293,10 +301,11 @@ def require_auth(f):
                 )
                 resp = make_response(html, 200)
                 resp.headers['Content-Type'] = 'text/html'
+                resp.headers['Cache-Control'] = 'no-store'
                 resp.set_cookie(
                     'auth_token', token_from_url,
                     httponly=True, secure=True, samesite='Lax',
-                    max_age=900, path='/',
+                    max_age=cookie_max_age, path='/',
                 )
                 return resp
 
@@ -313,7 +322,14 @@ def require_auth(f):
         if not payload:
             if request.is_json or request.headers.get('Accept') == 'application/json':
                 return jsonify({'error': 'Invalid or expired token'}), 401
-            return redirect(f'{AUTH_SERVICE_URL}/login?redirect={_clean_redirect_url(request.url)}')
+            # Clear the stale cookie before redirecting to login.
+            # Without this, the browser keeps sending the expired cookie,
+            # the auth service sees a valid .laurence.computer cookie and
+            # bounces back with ?auth_token=, and we loop.
+            login_url = f'{AUTH_SERVICE_URL}/login?redirect={_clean_redirect_url(request.url)}'
+            resp = make_response(redirect(login_url))
+            resp.set_cookie('auth_token', '', max_age=0, path='/')
+            return resp
 
         g.auth_user = payload
         return f(*args, **kwargs)
