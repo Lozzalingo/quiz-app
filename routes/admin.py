@@ -57,6 +57,13 @@ def login():
     return redirect(f'{auth_url}/login?redirect={redirect_url}')
 
 
+@bp.route('/')
+@require_super_admin
+def admin_root():
+    """Redirect /admin to /admin/dashboard."""
+    return redirect(url_for('admin.dashboard'))
+
+
 @bp.route('/dashboard')
 @require_super_admin
 def dashboard():
