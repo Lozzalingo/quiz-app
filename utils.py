@@ -354,7 +354,8 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
                 place = results.index(choice)
                 if place < len(multipliers):
                     return float(bet_amount * multipliers[place])
-            return 0.0
+                return float(-bet_amount)
+            return float(-bet_amount)
         except (json.JSONDecodeError, TypeError, ValueError):
             return 0.0
 
