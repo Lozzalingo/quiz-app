@@ -917,32 +917,38 @@ body {
 }
 
 .betting-place-select {
-    flex: 1;
+    flex: 1 !important;
+    min-width: 0 !important;
     padding: 6px 10px !important;
     font-size: 13px !important;
     border: 1px solid #dadce0 !important;
     border-radius: 4px !important;
     margin: 0 !important;
     background: white !important;
+    height: 34px !important;
 }
 
 .betting-multiplier {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--brand-primary);
     font-weight: 500;
     flex-shrink: 0;
 }
 
 .betting-mult-input {
-    width: 50px;
-    padding: 6px 8px !important;
+    width: 56px !important;
+    max-width: 56px !important;
+    min-width: 56px !important;
+    padding: 6px 4px !important;
     font-size: 13px !important;
-    text-align: center;
+    text-align: center !important;
     border: 1px solid #dadce0 !important;
     border-radius: 4px !important;
     margin: 0 !important;
     background: white !important;
-    flex-shrink: 0;
+    flex: none !important;
+    height: 34px !important;
+    box-sizing: border-box !important;
 }
 
 .betting-save-btn {
