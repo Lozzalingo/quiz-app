@@ -927,10 +927,22 @@ body {
 }
 
 .betting-multiplier {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--brand-primary);
-    min-width: 40px;
-    text-align: right;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.betting-mult-input {
+    width: 50px;
+    padding: 6px 8px !important;
+    font-size: 13px !important;
+    text-align: center;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    margin: 0 !important;
+    background: white !important;
+    flex-shrink: 0;
 }
 
 .betting-save-btn {
@@ -2133,7 +2145,7 @@ async function loadBettingQuestions(roundId) {
                         q.choices.map(function(c) { return '<option value="' + c + '"' + (c === currentResult ? ' selected' : '') + '>' + c + '</option>'; }).join('') +
                         '</select>' +
                         '<span class="betting-multiplier">\u00d7</span>' +
-                        '<input type="number" id="betting-' + roundId + '-' + q.id + '-mult-' + i + '" value="' + multiplier + '" min="0" step="0.5" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;">' +
+                        '<input type="number" class="betting-mult-input" id="betting-' + roundId + '-' + q.id + '-mult-' + i + '" value="' + multiplier + '" min="0" step="0.5">' +
                         '</div>';
                 }
 

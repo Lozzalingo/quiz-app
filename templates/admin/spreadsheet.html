@@ -578,10 +578,22 @@ body {
 }
 
 .betting-multiplier-label {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--brand-primary);
-    min-width: 35px;
-    text-align: right;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.betting-mult-input {
+    width: 50px;
+    padding: 6px 8px !important;
+    font-size: 13px !important;
+    text-align: center;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+    margin: 0 !important;
+    background: white !important;
+    flex-shrink: 0;
 }
 
 .betting-save-btn {
@@ -1793,8 +1805,8 @@ async function loadAllBettingQuestions() {
                                 ${q.choices.map(c => `<option value="${c}" ${c === currentResult ? 'selected' : ''}>${c}</option>`).join('')}
                             </select>
                             <span class="betting-multiplier-label">×</span>
-                            <input type="number" class="multiplier-input" id="bp-mult-${roundId}-${q.id}-${i}"
-                                   value="${multiplier}" min="0" step="0.5" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;">
+                            <input type="number" class="betting-mult-input" id="bp-mult-${roundId}-${q.id}-${i}"
+                                   value="${multiplier}" min="0" step="0.5">
                         </div>
                     `;
                 }
@@ -1847,8 +1859,8 @@ function rebuildBettingPlaces(roundId, questionId, numPlaces, choices) {
                     ${choices.map(c => `<option value="${c}" ${c === currentResult ? 'selected' : ''}>${c}</option>`).join('')}
                 </select>
                 <span class="betting-multiplier-label">×</span>
-                <input type="number" class="multiplier-input" id="bp-mult-${roundId}-${questionId}-${i}"
-                       value="${multiplier}" min="0" step="0.5" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;">
+                <input type="number" class="betting-mult-input" id="bp-mult-${roundId}-${questionId}-${i}"
+                       value="${multiplier}" min="0" step="0.5">
             </div>
         `;
     }
