@@ -2132,13 +2132,21 @@ async function loadBettingQuestions(roundId) {
                         '<option value="">Select...</option>' +
                         q.choices.map(function(c) { return '<option value="' + c + '"' + (c === currentResult ? ' selected' : '') + '>' + c + '</option>'; }).join('') +
                         '</select>' +
-                        '<span class="betting-multiplier">\u00d7' + multiplier + '</span>' +
+                        '<span class="betting-multiplier">\u00d7</span>' +
+                        '<input type="number" id="betting-' + roundId + '-' + q.id + '-mult-' + i + '" value="' + multiplier + '" min="0" step="0.5" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;">' +
                         '</div>';
                 }
+
+                var placesHtml = '<div class="betting-results-row" style="margin-bottom: 10px;">' +
+                    '<span class="betting-place-label">Places:</span>' +
+                    '<input type="number" id="betting-' + roundId + '-' + q.id + '-numplaces" value="' + q.num_places + '" min="1" max="10" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;" onchange="rebuildBettingPlacesLC(' + roundId + ', \'' + q.id + '\', parseInt(this.value), ' + JSON.stringify(q.choices) + ')">' +
+                    '</div>';
+
                 return '<div class="betting-question" data-question-id="' + q.id + '">' +
                     '<p class="betting-question-text">' + (q.text || 'Betting Question') + '</p>' +
-                    resultsHtml +
-                    '<button class="betting-save-btn" name="save_betting_' + q.id + '" onclick="saveBettingResults(' + roundId + ', \'' + q.id + '\', ' + q.num_places + ')">Save Results</button>' +
+                    placesHtml +
+                    '<div id="betting-places-' + roundId + '-' + q.id + '">' + resultsHtml + '</div>' +
+                    '<button class="betting-save-btn" name="save_betting_' + q.id + '" onclick="saveBettingResultsLC(' + roundId + ', \'' + q.id + '\')">Save Results</button>' +
                     '<span class="betting-status" id="betting-status-' + roundId + '-' + q.id + '"></span>' +
                     '</div>';
             }).join('');
@@ -2148,18 +2156,55 @@ async function loadBettingQuestions(roundId) {
     }
 }
 
-async function saveBettingResults(roundId, questionId, numPlaces) {
+function rebuildBettingPlacesLC(roundId, questionId, numPlaces, choices) {
+    var container = document.getElementById('betting-places-' + roundId + '-' + questionId);
+    if (!container) return;
+
+    var ordinal = function(n) {
+        var s = ['th', 'st', 'nd', 'rd'];
+        var v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+
+    var html = '';
+    for (var i = 0; i < numPlaces; i++) {
+        // Preserve existing values if present
+        var existingSelect = document.getElementById('betting-' + roundId + '-' + questionId + '-place-' + i);
+        var existingMult = document.getElementById('betting-' + roundId + '-' + questionId + '-mult-' + i);
+        var currentResult = existingSelect ? existingSelect.value : '';
+        var multiplier = existingMult ? parseFloat(existingMult.value) || 1 : (i === 0 ? 3 : i === 1 ? 2 : 1);
+
+        html += '<div class="betting-results-row">' +
+            '<span class="betting-place-label">' + ordinal(i + 1) + ' place:</span>' +
+            '<select class="betting-place-select" id="betting-' + roundId + '-' + questionId + '-place-' + i + '">' +
+            '<option value="">Select...</option>' +
+            choices.map(function(c) { return '<option value="' + c + '"' + (c === currentResult ? ' selected' : '') + '>' + c + '</option>'; }).join('') +
+            '</select>' +
+            '<span class="betting-multiplier">\u00d7</span>' +
+            '<input type="number" id="betting-' + roundId + '-' + questionId + '-mult-' + i + '" value="' + multiplier + '" min="0" step="0.5" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;">' +
+            '</div>';
+    }
+    container.innerHTML = html;
+}
+
+async function saveBettingResultsLC(roundId, questionId) {
+    var numPlacesInput = document.getElementById('betting-' + roundId + '-' + questionId + '-numplaces');
+    var numPlaces = numPlacesInput ? parseInt(numPlacesInput.value) || 1 : 1;
+
     var results = [];
+    var multipliers = [];
     for (var i = 0; i < numPlaces; i++) {
         var select = document.getElementById('betting-' + roundId + '-' + questionId + '-place-' + i);
         if (select && select.value) results.push(select.value);
+        var multInput = document.getElementById('betting-' + roundId + '-' + questionId + '-mult-' + i);
+        multipliers.push(multInput ? parseFloat(multInput.value) || 1 : 1);
     }
     var statusEl = document.getElementById('betting-status-' + roundId + '-' + questionId);
     try {
         var response = await fetch('/api/round/' + roundId + '/question/' + questionId + '/betting-results', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ results: results })
+            body: JSON.stringify({ results: results, multipliers: multipliers })
         });
         var data = await response.json();
         if (data.success) {
