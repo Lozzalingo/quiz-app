@@ -1792,7 +1792,9 @@ async function loadAllBettingQuestions() {
                                 <option value="">Select winner...</option>
                                 ${q.choices.map(c => `<option value="${c}" ${c === currentResult ? 'selected' : ''}>${c}</option>`).join('')}
                             </select>
-                            <span class="betting-multiplier-label">×${multiplier}</span>
+                            <span class="betting-multiplier-label">×</span>
+                            <input type="number" class="multiplier-input" id="bp-mult-${roundId}-${q.id}-${i}"
+                                   value="${multiplier}" min="0" step="0.5" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;">
                         </div>
                     `;
                 }
@@ -1800,8 +1802,16 @@ async function loadAllBettingQuestions() {
                 html += `
                     <div class="betting-question-card">
                         <p class="betting-question-text">${q.text || 'Betting Question'}</p>
-                        ${placesHtml}
-                        <button class="betting-save-btn" onclick="saveBettingResultsSpreadsheet(${roundId}, '${q.id}', ${q.num_places})">
+                        <div class="betting-place-row" style="margin-bottom: 12px;">
+                            <span class="betting-place-label">Places:</span>
+                            <input type="number" id="bp-numplaces-${roundId}-${q.id}" value="${q.num_places}" min="1" max="10"
+                                   style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;"
+                                   onchange="rebuildBettingPlaces(${roundId}, '${q.id}', parseInt(this.value), ${JSON.stringify(q.choices)})">
+                        </div>
+                        <div id="bp-places-${roundId}-${q.id}">
+                            ${placesHtml}
+                        </div>
+                        <button class="betting-save-btn" name="save_betting_results" onclick="saveBettingResultsFromPanel(${roundId}, '${q.id}')">
                             Save Results
                         </button>
                         <div class="betting-status" id="bp-status-${roundId}-${q.id}"></div>
@@ -1819,13 +1829,53 @@ async function loadAllBettingQuestions() {
     }
 }
 
-async function saveBettingResultsSpreadsheet(roundId, questionId, numPlaces) {
+function rebuildBettingPlaces(roundId, questionId, numPlaces, choices) {
+    const container = document.getElementById(`bp-places-${roundId}-${questionId}`);
+    if (!container) return;
+
+    const ordinal = (n) => {
+        const s = ['th', 'st', 'nd', 'rd'];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+
+    let html = '';
+    for (let i = 0; i < numPlaces; i++) {
+        // Try to preserve existing values
+        const existingSelect = document.getElementById(`bp-${roundId}-${questionId}-${i}`);
+        const existingMult = document.getElementById(`bp-mult-${roundId}-${questionId}-${i}`);
+        const currentResult = existingSelect ? existingSelect.value : '';
+        const multiplier = existingMult ? parseFloat(existingMult.value) || 1 : (i === 0 ? 3 : i === 1 ? 2 : 1);
+
+        html += `
+            <div class="betting-place-row">
+                <span class="betting-place-label">${ordinal(i + 1)} place:</span>
+                <select class="betting-place-select" id="bp-${roundId}-${questionId}-${i}">
+                    <option value="">Select winner...</option>
+                    ${choices.map(c => `<option value="${c}" ${c === currentResult ? 'selected' : ''}>${c}</option>`).join('')}
+                </select>
+                <span class="betting-multiplier-label">×</span>
+                <input type="number" class="multiplier-input" id="bp-mult-${roundId}-${questionId}-${i}"
+                       value="${multiplier}" min="0" step="0.5" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;">
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+async function saveBettingResultsFromPanel(roundId, questionId) {
+    const numPlacesInput = document.getElementById(`bp-numplaces-${roundId}-${questionId}`);
+    const numPlaces = numPlacesInput ? parseInt(numPlacesInput.value) || 1 : 1;
+
     const results = [];
+    const multipliers = [];
     for (let i = 0; i < numPlaces; i++) {
         const select = document.getElementById(`bp-${roundId}-${questionId}-${i}`);
         if (select && select.value) {
             results.push(select.value);
         }
+        const multInput = document.getElementById(`bp-mult-${roundId}-${questionId}-${i}`);
+        multipliers.push(multInput ? parseFloat(multInput.value) || 1 : 1);
     }
 
     const statusEl = document.getElementById(`bp-status-${roundId}-${questionId}`);
@@ -1834,7 +1884,7 @@ async function saveBettingResultsSpreadsheet(roundId, questionId, numPlaces) {
         const response = await fetch(`/api/round/${roundId}/question/${questionId}/betting-results`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ results })
+            body: JSON.stringify({ results, multipliers })
         });
 
         const data = await response.json();

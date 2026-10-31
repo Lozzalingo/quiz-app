@@ -1772,7 +1772,8 @@ def set_betting_results(round_id, question_id):
 
     Expected JSON body:
     {
-        "results": ["Horse 1", "Horse 3", "Horse 2"]  // Winners in order (1st, 2nd, 3rd)
+        "results": ["Horse 1", "Horse 3", "Horse 2"],  // Winners in order (1st, 2nd, 3rd)
+        "multipliers": [3, 2, 1]  // Optional: override multipliers per place
     }
     """
     import json
@@ -1798,6 +1799,13 @@ def set_betting_results(round_id, question_id):
         return jsonify({'success': False, 'error': 'Question not found or not a betting question'}), 400
 
     betting_config = question.get('betting', {})
+
+    # Update multipliers and num_places if provided
+    if 'multipliers' in data:
+        betting_config['multipliers'] = data['multipliers']
+        betting_config['num_places'] = len(data['multipliers'])
+        question['betting'] = betting_config
+
     multipliers = betting_config.get('multipliers', [1])
 
     # Store the results in the question config
