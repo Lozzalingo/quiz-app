@@ -1821,25 +1821,18 @@ def set_betting_results(round_id, question_id):
             bet_amount = bet_data.get('bet_amount', 0)
             choice = bet_data.get('choice', '')
 
-            # Calculate points based on where their choice placed
-            # Points are NOT deducted upfront, so:
-            # - If won: net gain = bet_amount * multiplier - bet_amount (profit)
-            # - If lost: net loss = -bet_amount
+            # Calculate points: multiplier means points per point bet
+            # - If their choice placed: points = bet_amount * multiplier
+            # - If their choice didn't place: points = 0
             if choice in results:
                 place = results.index(choice)  # 0 = 1st, 1 = 2nd, etc.
                 if place < len(multipliers):
                     multiplier = multipliers[place]
-                    # Win: profit = (multiplier * bet) - bet = bet * (multiplier - 1)
-                    # But if multiplier >= 1, they at least get their bet back as profit
-                    points = bet_amount * multiplier - bet_amount
-                    if points < 0:
-                        points = 0  # At worst, break even if multiplier < 1
+                    points = bet_amount * multiplier
                 else:
-                    # Placed but no multiplier for this place - lose bet
-                    points = -bet_amount
+                    points = 0
             else:
-                # Didn't place at all - lose bet
-                points = -bet_amount
+                points = 0
 
             answer.points = points
             updated_count += 1

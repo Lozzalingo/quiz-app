@@ -336,6 +336,28 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
                 total += float(points_per_pair)
         return total
 
+    elif q_type == 'betting':
+        # Betting question - score based on saved results and multipliers
+        betting_config = question_config.get('betting', {})
+        multipliers = betting_config.get('multipliers', [1])
+        results = question_config.get('betting_results', [])
+
+        if not answer_text or not results:
+            return 0.0
+
+        try:
+            bet_data = json.loads(answer_text)
+            bet_amount = bet_data.get('bet_amount', 0)
+            choice = bet_data.get('choice', '')
+
+            if choice in results:
+                place = results.index(choice)
+                if place < len(multipliers):
+                    return float(bet_amount * multipliers[place])
+            return 0.0
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return 0.0
+
     # Unknown type
     return 0.0
 
