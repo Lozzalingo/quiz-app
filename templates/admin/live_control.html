@@ -2137,16 +2137,10 @@ async function loadBettingQuestions(roundId) {
                         '</div>';
                 }
 
-                var placesHtml = '<div class="betting-results-row" style="margin-bottom: 10px;">' +
-                    '<span class="betting-place-label">Places:</span>' +
-                    '<input type="number" id="betting-' + roundId + '-' + q.id + '-numplaces" value="' + q.num_places + '" min="1" max="10" style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;" onchange="rebuildBettingPlacesLC(' + roundId + ', \'' + q.id + '\', parseInt(this.value), ' + JSON.stringify(q.choices) + ')">' +
-                    '</div>';
-
                 return '<div class="betting-question" data-question-id="' + q.id + '">' +
                     '<p class="betting-question-text">' + (q.text || 'Betting Question') + '</p>' +
-                    placesHtml +
-                    '<div id="betting-places-' + roundId + '-' + q.id + '">' + resultsHtml + '</div>' +
-                    '<button class="betting-save-btn" name="save_betting_' + q.id + '" onclick="saveBettingResultsLC(' + roundId + ', \'' + q.id + '\')">Save Results</button>' +
+                    resultsHtml +
+                    '<button class="betting-save-btn" name="save_betting_' + q.id + '" onclick="saveBettingResultsLC(' + roundId + ', \'' + q.id + '\', ' + q.num_places + ')">Save Results</button>' +
                     '<span class="betting-status" id="betting-status-' + roundId + '-' + q.id + '"></span>' +
                     '</div>';
             }).join('');
@@ -2187,9 +2181,7 @@ function rebuildBettingPlacesLC(roundId, questionId, numPlaces, choices) {
     container.innerHTML = html;
 }
 
-async function saveBettingResultsLC(roundId, questionId) {
-    var numPlacesInput = document.getElementById('betting-' + roundId + '-' + questionId + '-numplaces');
-    var numPlaces = numPlacesInput ? parseInt(numPlacesInput.value) || 1 : 1;
+async function saveBettingResultsLC(roundId, questionId, numPlaces) {
 
     var results = [];
     var multipliers = [];

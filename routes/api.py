@@ -1800,10 +1800,9 @@ def set_betting_results(round_id, question_id):
 
     betting_config = question.get('betting', {})
 
-    # Update multipliers and num_places if provided
+    # Update multipliers if provided
     if 'multipliers' in data:
         betting_config['multipliers'] = data['multipliers']
-        betting_config['num_places'] = len(data['multipliers'])
         question['betting'] = betting_config
 
     multipliers = betting_config.get('multipliers', [1])

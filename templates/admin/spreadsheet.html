@@ -1802,16 +1802,8 @@ async function loadAllBettingQuestions() {
                 html += `
                     <div class="betting-question-card">
                         <p class="betting-question-text">${q.text || 'Betting Question'}</p>
-                        <div class="betting-place-row" style="margin-bottom: 12px;">
-                            <span class="betting-place-label">Places:</span>
-                            <input type="number" id="bp-numplaces-${roundId}-${q.id}" value="${q.num_places}" min="1" max="10"
-                                   style="width: 50px; padding: 4px 6px; font-size: 12px; text-align: center; border: 1px solid #dadce0; border-radius: 4px;"
-                                   onchange="rebuildBettingPlaces(${roundId}, '${q.id}', parseInt(this.value), ${JSON.stringify(q.choices)})">
-                        </div>
-                        <div id="bp-places-${roundId}-${q.id}">
-                            ${placesHtml}
-                        </div>
-                        <button class="betting-save-btn" name="save_betting_results" onclick="saveBettingResultsFromPanel(${roundId}, '${q.id}')">
+                        ${placesHtml}
+                        <button class="betting-save-btn" name="save_betting_results" onclick="saveBettingResultsFromPanel(${roundId}, '${q.id}', ${q.num_places})">
                             Save Results
                         </button>
                         <div class="betting-status" id="bp-status-${roundId}-${q.id}"></div>
@@ -1863,9 +1855,7 @@ function rebuildBettingPlaces(roundId, questionId, numPlaces, choices) {
     container.innerHTML = html;
 }
 
-async function saveBettingResultsFromPanel(roundId, questionId) {
-    const numPlacesInput = document.getElementById(`bp-numplaces-${roundId}-${questionId}`);
-    const numPlaces = numPlacesInput ? parseInt(numPlacesInput.value) || 1 : 1;
+async function saveBettingResultsFromPanel(roundId, questionId, numPlaces) {
 
     const results = [];
     const multipliers = [];
