@@ -350,12 +350,13 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
             bet_amount = bet_data.get('bet_amount', 0)
             choice = bet_data.get('choice', '')
 
+            # (bet * multiplier) - bet
             if choice in results:
                 place = results.index(choice)
-                if place < len(multipliers):
-                    return float(bet_amount * multipliers[place])
-                return float(-bet_amount)
-            return float(-bet_amount)
+                multiplier = multipliers[place] if place < len(multipliers) else 0
+            else:
+                multiplier = 0
+            return float((bet_amount * multiplier) - bet_amount)
         except (json.JSONDecodeError, TypeError, ValueError):
             return 0.0
 

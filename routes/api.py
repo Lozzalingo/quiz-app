@@ -1821,15 +1821,14 @@ def set_betting_results(round_id, question_id):
             bet_amount = bet_data.get('bet_amount', 0)
             choice = bet_data.get('choice', '')
 
-            # Calculate points: winners get bet * multiplier, losers lose their bet
+            # Calculate points: (bet * multiplier) - bet
+            # 1st (x2): 3*2-3=3, 2nd (x1): 3*1-3=0, loser (x0): 3*0-3=-3
             if choice in results:
-                place = results.index(choice)  # 0 = 1st, 1 = 2nd, etc.
-                if place < len(multipliers):
-                    points = bet_amount * multipliers[place]
-                else:
-                    points = -bet_amount
+                place = results.index(choice)
+                multiplier = multipliers[place] if place < len(multipliers) else 0
             else:
-                points = -bet_amount
+                multiplier = 0
+            points = (bet_amount * multiplier) - bet_amount
 
             answer.points = points
             updated_count += 1
