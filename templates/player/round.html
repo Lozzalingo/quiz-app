@@ -1655,7 +1655,7 @@ body.timer-active {
                     {% if upload and upload.get('url') and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}
                     <div class="upload-preview" id="upload-preview-{{ question.id }}">
                         {% if upload.get('file_type') == 'video' %}
-                        <video src="{{ upload.url }}#t=0.5" controls playsinline preload="metadata"></video>
+                        <video muted preload="metadata" src="{{ upload.url }}#t=0.5" controls playsinline></video>
                         {% else %}
                         <img src="{{ upload.url }}" alt="Your submission">
                         {% endif %}
@@ -2378,7 +2378,9 @@ function uploadFile(questionId, file) {
         previewEl.innerHTML = '';
         if (file.type.startsWith('video/')) {
             const video = document.createElement('video');
-            video.src = URL.createObjectURL(file);
+            video.muted = true;
+            video.preload = 'metadata';
+            video.src = URL.createObjectURL(file) + '#t=0.5';
             video.controls = true;
             video.setAttribute('playsinline', '');
             previewEl.appendChild(video);
@@ -2493,7 +2495,9 @@ function showPreview(questionId, file, url) {
 
     if (file.type.startsWith('video/')) {
         const video = document.createElement('video');
-        video.src = url || URL.createObjectURL(file);
+        video.muted = true;
+        video.preload = 'metadata';
+        video.src = (url || URL.createObjectURL(file)) + '#t=0.5';
         video.controls = true;
         video.setAttribute('playsinline', '');
         previewEl.appendChild(video);
@@ -2515,10 +2519,11 @@ function showPreviewFromUrl(questionId, url) {
     const isVideo = /\.(mp4|webm|mov)$/i.test(url);
     if (isVideo) {
         const video = document.createElement('video');
+        video.muted = true;
+        video.preload = 'metadata';
         video.src = url + '#t=0.5';
         video.controls = true;
         video.setAttribute('playsinline', '');
-        video.setAttribute('preload', 'metadata');
         previewEl.appendChild(video);
     } else {
         const img = document.createElement('img');
