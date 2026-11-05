@@ -1607,19 +1607,19 @@ body.timer-active {
                         {% if upload and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}
                         <div class="upload-complete-actions" id="upload-complete-{{ question.id }}">
                             <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
-                                    onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
+                                    onclick="toggleUploadPreview('{{ question.id }}')">View Upload</button>
                             {% if not read_only %}
                             <button type="button" class="upload-reupload-btn" name="reupload_q{{ question.id }}"
-                                    onclick="deleteUpload({{ question.id }}, {{ upload.get('id', 0) }})">Delete &amp; Re-upload</button>
+                                    onclick="deleteUpload('{{ question.id }}', {{ upload.get('id', 0) }})">Delete &amp; Re-upload</button>
                             {% endif %}
                         </div>
                         {% else %}
                         <div class="upload-complete-actions" id="upload-complete-{{ question.id }}" style="display:none;">
                             <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
-                                    onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
+                                    onclick="toggleUploadPreview('{{ question.id }}')">View Upload</button>
                             {% if not read_only %}
                             <button type="button" class="upload-reupload-btn" name="reupload_q{{ question.id }}"
-                                    onclick="deleteUpload({{ question.id }})">Delete &amp; Re-upload</button>
+                                    onclick="deleteUpload('{{ question.id }}')">Delete &amp; Re-upload</button>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -2508,7 +2508,7 @@ function showUploadComplete(questionId, uploadId) {
         // Update the re-upload button with the upload ID
         const reuploadBtn = completeEl.querySelector('.upload-reupload-btn');
         if (reuploadBtn) {
-            reuploadBtn.setAttribute('onclick', 'deleteUpload(' + questionId + ', ' + uploadId + ')');
+            reuploadBtn.setAttribute('onclick', "deleteUpload('" + questionId + "', " + uploadId + ")");
         }
     }
 }
