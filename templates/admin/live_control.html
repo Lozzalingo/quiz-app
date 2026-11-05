@@ -1733,7 +1733,7 @@ body {
                 {% if teams %}
                 {% for team in teams %}
                 <div class="team-item" id="team-{{ team.id }}">
-                    <span class="team-name" id="team-name-{{ team.id }}" onclick="editTeamName({{ team.id }}, '{{ team.name | e }}')" title="Click to edit">{{ team.name }}</span>
+                    <span class="team-name" id="team-name-{{ team.id }}" onclick='editTeamName({{ team.id }}, {{ team.name | tojson }})' title="Click to edit">{{ team.name }}</span>
                     <div class="team-login-count" id="team-logins-{{ team.id }}" title="Sign-ins / Sign-outs">
                         <span class="login-icon">🔑</span>
                         <span class="login-value"><span id="login-count-{{ team.id }}">{{ team.login_count or 1 }}</span>/<span id="logout-count-{{ team.id }}">{{ team.logout_count or 0 }}</span></span>
@@ -1753,7 +1753,7 @@ body {
                         <span class="switch-count" id="switch-count-{{ team.id }}" title="Tab switches">{{ team.tab_switch_count or 0 }}x</span>
                     </div>
                     <div class="team-actions">
-                        <button type="button" class="icon-btn danger" name="delete_team_{{ team.id }}" title="Delete team" onclick="deleteTeam({{ team.id }}, '{{ team.name | e }}')">🗑</button>
+                        <button type="button" class="icon-btn danger" name="delete_team_{{ team.id }}" title="Delete team" onclick='deleteTeam({{ team.id }}, {{ team.name | tojson }})'>🗑</button>
                     </div>
                 </div>
                 {% endfor %}
@@ -2167,16 +2167,22 @@ async function loadSubmissions(roundId) {
                 } else if (sub.submitted) {
                     statusText = 'Submitted';
                     statusClass = 'submitted';
-                    actionBtn = '<button class="resubmit-btn" name="allow_edit_' + sub.team_id + '" onclick="allowResubmit(' + roundId + ', ' + sub.team_id + ', \'' + sub.team_name + '\')">Allow Edit</button>';
+                    actionBtn = '<button class="resubmit-btn" name="allow_edit_' + sub.team_id + '" data-team-id="' + sub.team_id + '" data-team-name="' + escapeHtml(sub.team_name) + '">Allow Edit</button>';
                 }
                 return '<div class="team-submission" id="team-sub-' + roundId + '-' + sub.team_id + '">' +
-                    '<span class="team-name">' + sub.team_name + '</span>' +
+                    '<span class="team-name">' + escapeHtml(sub.team_name) + '</span>' +
                     '<div class="team-status">' +
                     '<span class="status-dot ' + statusClass + '"></span>' +
                     '<span class="status-text">' + statusText + '</span>' +
                     actionBtn +
                     '</div></div>';
             }).join('');
+            // Attach handlers via data attributes so team names with quotes cannot break inline JS
+            listEl.querySelectorAll('.resubmit-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    allowResubmit(roundId, parseInt(btn.dataset.teamId, 10), btn.dataset.teamName);
+                });
+            });
         } else if (data.submissions.length === 0) {
             listEl.innerHTML = '<span class="no-teams">No teams have joined yet.</span>';
         }
@@ -2864,6 +2870,15 @@ function deleteTeam(teamId, teamName) {
     );
 }
 
+function escapeHtml(text) {
+    return (text == null ? '' : String(text))
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function addTeamToList(teamId, teamName) {
     var teamsList = document.getElementById('teams-list');
     if (!teamsList) return;
@@ -2876,15 +2891,19 @@ function addTeamToList(teamId, teamName) {
     var teamItem = document.createElement('div');
     teamItem.className = 'team-item';
     teamItem.id = 'team-' + teamId;
-    teamItem.innerHTML = '<span class="team-name" id="team-name-' + teamId + '" onclick="editTeamName(' + teamId + ', \'' + teamName.replace(/'/g, "\\'") + '\')" title="Click to edit">' + teamName + '</span>' +
+    teamItem.innerHTML = '<span class="team-name" id="team-name-' + teamId + '" title="Click to edit">' + escapeHtml(teamName) + '</span>' +
         '<div class="team-score" id="team-score-' + teamId + '">0 pts</div>' +
         '<div class="team-tab-penalty" id="team-penalty-' + teamId + '" data-team-id="' + teamId + '" data-seconds="0" onclick="editTabPenalty(' + teamId + ')" title="Click to edit">' +
         '<span class="stopwatch-icon">⏱️</span>' +
         '<span class="timer-display" id="penalty-time-' + teamId + '">0:00</span>' +
         '</div>' +
         '<div class="team-actions">' +
-        '<button type="button" class="icon-btn danger" name="delete_team_' + teamId + '" title="Delete team" onclick="deleteTeam(' + teamId + ', \'' + teamName.replace(/'/g, "\\'") + '\')">🗑</button>' +
+        '<button type="button" class="icon-btn danger" name="delete_team_' + teamId + '" title="Delete team">🗑</button>' +
         '</div>';
+
+    // Attach handlers programmatically so team names with quotes cannot break inline JS
+    teamItem.querySelector('.team-name').onclick = function() { editTeamName(teamId, teamName); };
+    teamItem.querySelector('.icon-btn.danger').onclick = function() { deleteTeam(teamId, teamName); };
 
     teamsList.appendChild(teamItem);
     updateTeamCount();

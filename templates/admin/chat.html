@@ -216,7 +216,7 @@ body {
     <div class="chat-container">
         <div class="chat-threads" id="thread-list">
             {% for team in teams %}
-            <div class="thread-item" data-team-id="{{ team.id }}" onclick="selectThread({{ team.id }}, '{{ team.name }}')">
+            <div class="thread-item" data-team-id="{{ team.id }}" onclick='selectThread({{ team.id }}, {{ team.name | tojson }})'>
                 <div class="team-name">
                     {{ team.name }}
                     {% if unread_counts.get(team.id, 0) > 0 %}
