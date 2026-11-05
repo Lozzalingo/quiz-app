@@ -2364,6 +2364,24 @@ function uploadFile(questionId, file) {
     const statusEl = document.getElementById('upload-status-' + questionId);
     const previewEl = document.getElementById('upload-preview-' + questionId);
 
+    // Show immediate local preview of the selected file
+    if (previewEl) {
+        previewEl.style.display = 'block';
+        previewEl.innerHTML = '';
+        if (file.type.startsWith('video/')) {
+            const video = document.createElement('video');
+            video.src = URL.createObjectURL(file);
+            video.controls = true;
+            video.setAttribute('playsinline', '');
+            previewEl.appendChild(video);
+        } else {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.alt = 'Your submission';
+            previewEl.appendChild(img);
+        }
+    }
+
     // Show queued status
     statusEl.className = 'upload-status show queued';
     statusEl.innerHTML = 'Queued for upload';
