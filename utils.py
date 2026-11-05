@@ -264,7 +264,18 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
             return 0.0
 
     elif q_type == 'radio':
-        # Radio question - check if answer matches correct option
+        # Radio question - check custom option points first
+        if question_config.get('custom_option_points') and question_config.get('option_points'):
+            option_points_map = question_config['option_points']
+            answer_str = str(answer_text).strip()
+            # Look up points for this option (case-insensitive)
+            for opt_text, opt_pts in option_points_map.items():
+                if opt_text.strip().lower() == answer_str.lower():
+                    return float(opt_pts)
+            # No matching option found
+            return 0.0
+
+        # Standard mode - check if answer matches correct option
         correct_answer = question_config.get('correct_answer', '')
         if str(answer_text).strip().lower() == str(correct_answer).strip().lower():
             return float(base_points)

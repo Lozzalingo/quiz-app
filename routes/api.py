@@ -280,6 +280,9 @@ def update_question(round_id, question_id):
                 q['validation'] = data['validation']
             if 'correct_answer' in data:
                 q['correct_answer'] = data['correct_answer']
+            if 'option_points' in data:
+                q['option_points'] = data['option_points']
+                q['custom_option_points'] = True
             updated_question = q
             break
 
@@ -336,13 +339,18 @@ def get_game_answers(game_id):
             'questions': []
         }
         for q in questions:
-            round_cols['questions'].append({
+            q_data = {
                 'id': q.get('id', ''),
                 'text': q.get('text', ''),
                 'type': q.get('type', 'text'),
                 'validation': q.get('validation', ''),
                 'correct_answer': q.get('correct_answer', '')
-            })
+            }
+            if q.get('custom_option_points'):
+                q_data['custom_option_points'] = True
+                q_data['option_points'] = q.get('option_points', {})
+                q_data['options'] = q.get('options', '')
+            round_cols['questions'].append(q_data)
         columns.append(round_cols)
 
     # Get custom columns for this game

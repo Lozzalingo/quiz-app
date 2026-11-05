@@ -321,6 +321,29 @@ body {
     border-color: var(--brand-primary);
 }
 
+.radio-points-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.radio-points-toggle input[type="checkbox"] {
+    accent-color: var(--brand-primary);
+}
+
+.radio-option-points {
+    width: 55px !important;
+    flex: none !important;
+    padding: 6px 4px !important;
+    font-size: 12px !important;
+    text-align: center !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 4px !important;
+}
+
 .correct-marker {
     font-size: 11px;
     color: #0d904f;
@@ -1353,18 +1376,36 @@ function renderQuestions() {
 function renderRadioOptions(q, index) {
     const options = (q.options || '').split(',').map(o => o.trim()).filter(o => o);
     const correctAnswer = q.correct_answer || '';
+    const customPoints = q.custom_option_points || false;
+    const optionPoints = q.option_points || {};
 
     let html = '<div class="radio-options">';
+
+    // Toggle for custom points per option
+    html += `
+        <div class="radio-points-toggle">
+            <input type="checkbox" id="custom-pts-${index}" ${customPoints ? 'checked' : ''}
+                   onchange="toggleCustomOptionPoints(${index}, this.checked)">
+            <label for="custom-pts-${index}">Custom points per option</label>
+        </div>`;
+
     options.forEach((opt, optIndex) => {
         const isCorrect = opt.toLowerCase() === correctAnswer.toLowerCase();
+        const pts = optionPoints[opt] !== undefined ? optionPoints[opt] : '';
         html += `
             <div class="radio-option">
                 <div class="radio-circle" style="${isCorrect ? 'border-color: #0d904f; background: #0d904f;' : ''}"></div>
                 <input type="text" value="${escapeHtml(opt)}"
                        onchange="updateRadioOption(${index}, ${optIndex}, this.value)"
                        placeholder="Option ${optIndex + 1}">
-                <span class="correct-marker" onclick="setCorrectAnswerByIndex(${index}, ${optIndex})"
-                      style="${isCorrect ? '' : 'opacity: 0.5;'}">${isCorrect ? '✓ Correct' : 'Set correct'}</span>
+                ${customPoints ? `
+                    <input type="number" class="radio-option-points" value="${pts}"
+                           onchange="updateOptionPoints(${index}, '${escapeHtml(opt)}', parseFloat(this.value) || 0)"
+                           placeholder="pts" title="Points for this option">
+                ` : `
+                    <span class="correct-marker" onclick="setCorrectAnswerByIndex(${index}, ${optIndex})"
+                          style="${isCorrect ? '' : 'opacity: 0.5;'}">${isCorrect ? '✓ Correct' : 'Set correct'}</span>
+                `}
                 <button type="button" class="option-delete-btn" onclick="removeRadioOption(${index}, ${optIndex})" title="Remove option">×</button>
             </div>
         `;
@@ -2056,6 +2097,26 @@ function setCorrectAnswerByIndex(qIndex, optIndex) {
         questions[qIndex].correct_answer = options[optIndex];
         renderQuestions();
     }
+}
+
+function toggleCustomOptionPoints(qIndex, enabled) {
+    questions[qIndex].custom_option_points = enabled;
+    if (!enabled) {
+        delete questions[qIndex].option_points;
+    } else {
+        // Initialise option_points if not set
+        if (!questions[qIndex].option_points) {
+            questions[qIndex].option_points = {};
+        }
+    }
+    renderQuestions();
+}
+
+function updateOptionPoints(qIndex, optionText, points) {
+    if (!questions[qIndex].option_points) {
+        questions[qIndex].option_points = {};
+    }
+    questions[qIndex].option_points[optionText] = points;
 }
 
 async function uploadImage(index, input) {

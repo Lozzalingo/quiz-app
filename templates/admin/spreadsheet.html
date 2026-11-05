@@ -1167,7 +1167,17 @@ function buildColumns(config, customCols = []) {
 
             // Points column
             const pointsField = `r${round.round_id}_q${q.id}_points`;
-            const validationText = q.validation || q.correct_answer || "✓";
+            let validationText;
+            let headerTooltipText;
+            if (q.custom_option_points && q.option_points) {
+                // Show option points summary
+                const entries = Object.entries(q.option_points);
+                validationText = entries.map(([opt, pts]) => `${opt}:${pts}`).join(' | ');
+                headerTooltipText = 'Custom points: ' + entries.map(([opt, pts]) => `${opt} = ${pts}pts`).join(', ');
+            } else {
+                validationText = q.validation || q.correct_answer || "✓";
+                headerTooltipText = q.type === 'radio' ? `Correct: ${q.correct_answer || 'not set'}` : `Pattern: ${q.validation || 'not set'}`;
+            }
             cols.push({
                 title: validationText,
                 field: pointsField,
@@ -1176,12 +1186,15 @@ function buildColumns(config, customCols = []) {
                 hozAlign: "center",
                 cssClass: "col-points",
                 editor: "number",
-                editorParams: { min: 0 },
-                headerTooltip: q.type === 'radio' ? `Correct: ${q.correct_answer || 'not set'}` : `Pattern: ${q.validation || 'not set'}`,
+                headerTooltip: headerTooltipText,
                 headerClick: function(e, column) {
-                    const currentVal = q.type === 'radio' ? (q.correct_answer || '') : (q.validation || '');
-                    const label = q.type === 'radio' ? 'correct answer' : 'validation pattern';
-                    makeValidationHeaderEditable(column, round.round_id, q.id, q.type, currentVal);
+                    if (q.custom_option_points) {
+                        // For custom option points, show option points editor
+                        showOptionPointsEditor(column, round.round_id, q.id, q.options, q.option_points);
+                    } else {
+                        const currentVal = q.type === 'radio' ? (q.correct_answer || '') : (q.validation || '');
+                        makeValidationHeaderEditable(column, round.round_id, q.id, q.type, currentVal);
+                    }
                 },
                 cellEdited: function(cell) {
                     const row = cell.getRow().getData();
@@ -1579,6 +1592,43 @@ async function updateQuestionText(roundId, questionId, newText) {
         loadDataPreserveScroll();
     }
     return data;
+}
+
+function showOptionPointsEditor(column, roundId, questionId, optionsStr, currentOptionPoints) {
+    const header = column.getElement();
+    const titleEl = header.querySelector('.tabulator-col-title');
+    if (!titleEl) return;
+
+    const options = (optionsStr || '').split(',').map(o => o.trim()).filter(o => o);
+    const pts = currentOptionPoints || {};
+
+    let html = '<div style="display: flex; flex-direction: column; gap: 4px; padding: 4px;">';
+    options.forEach(opt => {
+        const val = pts[opt] !== undefined ? pts[opt] : 0;
+        html += `<div style="display: flex; align-items: center; gap: 4px; font-size: 11px;">
+            <span style="flex: 1; white-space: nowrap; overflow: hidden;">${opt}</span>
+            <input type="number" data-opt="${opt}" value="${val}" style="width: 45px; padding: 2px 4px; font-size: 11px; text-align: center; border: 1px solid #dadce0; border-radius: 3px;">
+        </div>`;
+    });
+    html += `<button name="save_option_points" style="margin-top: 4px; padding: 3px 8px; font-size: 11px; background: var(--brand-primary); color: white; border: none; border-radius: 3px; cursor: pointer;">Save</button>`;
+    html += '</div>';
+
+    titleEl.innerHTML = html;
+
+    const saveBtn = titleEl.querySelector('button');
+    saveBtn.addEventListener('click', async () => {
+        const newPts = {};
+        titleEl.querySelectorAll('input[data-opt]').forEach(inp => {
+            newPts[inp.dataset.opt] = parseFloat(inp.value) || 0;
+        });
+
+        await fetch(`/api/round/${roundId}/question/${questionId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ option_points: newPts })
+        });
+        loadDataPreserveScroll();
+    });
 }
 
 async function updateQuestionValidation(roundId, questionId, qType, newVal) {
