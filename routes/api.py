@@ -1769,6 +1769,22 @@ def delete_team(team_id):
     game_id = team.game_id
     team_name = team.name
 
+    # Clean up related records that do not cascade from Team
+    ResubmitPermission.query.filter_by(team_id=team_id).delete()
+    ChatMessage.query.filter_by(team_id=team_id).delete()
+    RoundBonus.query.filter_by(team_id=team_id).delete()
+
+    # Media uploads: remove files from DO Spaces, then the DB rows
+    uploads = MediaUpload.query.filter_by(team_id=team_id).all()
+    for upload in uploads:
+        if upload.storage_key:
+            try:
+                from storage import delete_from_spaces
+                delete_from_spaces(upload.storage_key)
+            except Exception as e:
+                print(f'[API] Failed to delete Spaces file for upload {upload.id}: {e}')
+        db.session.delete(upload)
+
     db.session.delete(team)
     db.session.commit()
 

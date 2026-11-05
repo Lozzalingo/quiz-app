@@ -67,11 +67,27 @@ def _process_queue():
         eventlet.sleep(0)
 
 
+def _emit_progress(game_id, upload_id, status, progress, url=None):
+    """Emit upload progress via SocketIO for real-time updates."""
+    try:
+        from app import socketio
+        data = {
+            'upload_id': upload_id,
+            'status': status,
+            'progress': progress,
+        }
+        if url:
+            data['url'] = url
+        socketio.emit('upload_status_changed', data, room=f'game_{game_id}')
+    except Exception:
+        pass
+
+
 def _process_upload(job):
     """
     Process a single upload job:
     1. Update status to 'processing'
-    2. Determine file type and compress
+    2. Determine file type and compress (skip if small enough)
     3. Upload to DO Spaces
     4. Update status to 'complete'
     """
@@ -88,23 +104,35 @@ def _process_upload(job):
             print(f'[UploadWorker] Upload {upload_id} not found, skipping')
             return
 
-        # Update status to uploading
-        upload.upload_status = 'uploading'
+        game_id = upload.game_id
+
+        # Update status to processing
+        upload.upload_status = 'processing'
         upload.upload_progress = 10
         db.session.commit()
+        _emit_progress(game_id, upload_id, 'processing', 10)
 
         try:
+            file_size_bytes = os.path.getsize(file_path)
+
             # Determine processing needed
             if upload.file_type == 'video':
                 processed_path = _compress_video(file_path, upload)
             elif upload.file_type == 'image':
-                processed_path = _compress_image(file_path, upload)
+                # Skip compression for small images (under 1MB and already JPEG/PNG)
+                if file_size_bytes < 1_000_000 and upload.mime_type in ('image/jpeg', 'image/png', 'image/webp'):
+                    print(f'[UploadWorker] Image {upload_id} is {file_size_bytes/1024:.0f}KB, skipping compression')
+                    # Still apply EXIF transpose for correct orientation
+                    processed_path = _apply_exif_only(file_path, upload)
+                else:
+                    processed_path = _compress_image(file_path, upload)
             else:
                 processed_path = file_path
 
-            # Update progress
-            upload.upload_progress = 50
+            # Update progress - compression done
+            upload.upload_progress = 60
             db.session.commit()
+            _emit_progress(game_id, upload_id, 'processing', 60)
 
             # Build filename and storage key
             team = upload.team
@@ -123,8 +151,10 @@ def _process_upload(job):
             storage_key = build_storage_key(game.id, filename)
 
             # Upload to DO Spaces
-            upload.upload_progress = 70
+            upload.upload_status = 'uploading'
+            upload.upload_progress = 75
             db.session.commit()
+            _emit_progress(game_id, upload_id, 'uploading', 75)
 
             url = upload_file_to_spaces(
                 processed_path,
@@ -143,19 +173,8 @@ def _process_upload(job):
             upload.upload_progress = 100
             db.session.commit()
 
-            print(f'[UploadWorker] Upload {upload_id} complete: {url}')
-
-            # Emit socket event for real-time update
-            try:
-                from app import socketio
-                socketio.emit('upload_status_changed', {
-                    'upload_id': upload_id,
-                    'status': 'complete',
-                    'progress': 100,
-                    'url': url,
-                }, room=f'game_{game.id}')
-            except Exception:
-                pass
+            print(f'[UploadWorker] Upload {upload_id} complete: {url} ({file_size/1024:.0f}KB)')
+            _emit_progress(game_id, upload_id, 'complete', 100, url=url)
 
         finally:
             # Clean up temp files
@@ -186,7 +205,7 @@ def _compress_video(file_path, upload):
         '-i', file_path,
         '-t', str(max_duration),
         '-c:v', 'libx264',
-        '-preset', 'medium',
+        '-preset', 'veryfast',
         '-crf', '23',
         '-c:a', 'aac',
         '-b:a', '128k',
@@ -224,6 +243,42 @@ def _compress_video(file_path, upload):
         return file_path
 
 
+def _apply_exif_only(file_path, upload):
+    """
+    Apply EXIF orientation without full compression.
+
+    For small images that do not need resizing or quality reduction,
+    just fix the rotation and save.
+
+    Returns path to the corrected file (or original if no correction needed).
+    """
+    try:
+        from PIL import Image, ImageOps
+
+        img = Image.open(file_path)
+
+        # Check if EXIF transpose actually changes anything
+        transposed = ImageOps.exif_transpose(img)
+
+        if transposed is not img:
+            # Orientation was applied, save the corrected version
+            output_path = file_path + '_exif.jpg'
+            if transposed.mode in ('RGBA', 'P'):
+                transposed = transposed.convert('RGB')
+            # Save at high quality since we are not trying to compress
+            fmt = 'JPEG' if upload.mime_type in ('image/jpeg', None) else 'PNG'
+            transposed.save(output_path, fmt, quality=95)
+            upload.mime_type = 'image/jpeg' if fmt == 'JPEG' else 'image/png'
+            return output_path
+
+        # No rotation needed, use original
+        return file_path
+
+    except Exception as e:
+        print(f'[UploadWorker] EXIF correction error: {e}')
+        return file_path
+
+
 def _compress_image(file_path, upload):
     """
     Compress an image file using Pillow.
@@ -247,8 +302,8 @@ def _compress_image(file_path, upload):
         if img.mode in ('RGBA', 'P'):
             img = img.convert('RGB')
 
-        # Resize if image is very large (over 4000px on longest side)
-        max_dimension = 4000
+        # Resize if image is large (over 2000px on longest side)
+        max_dimension = 2000
         if max(img.size) > max_dimension:
             img.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
 

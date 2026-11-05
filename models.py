@@ -283,6 +283,10 @@ class ResubmitPermission(db.Model):
         db.UniqueConstraint('team_id', 'round_id', name='unique_resubmit_permission'),
     )
 
+    # Relationships (cascade so deleting a team or round removes permissions)
+    team = db.relationship('Team', backref=db.backref('resubmit_permissions', lazy='dynamic', cascade='all, delete-orphan'))
+    round = db.relationship('Round', backref=db.backref('resubmit_permissions', lazy='dynamic', cascade='all, delete-orphan'))
+
     def __repr__(self):
         return f'<ResubmitPermission Team {self.team_id} Round {self.round_id}>'
 
@@ -451,8 +455,8 @@ class MediaUpload(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    team = db.relationship('Team', backref=db.backref('media_uploads', lazy='dynamic'))
-    round = db.relationship('Round', backref=db.backref('media_uploads', lazy='dynamic'))
+    team = db.relationship('Team', backref=db.backref('media_uploads', lazy='dynamic', cascade='all, delete-orphan'))
+    round = db.relationship('Round', backref=db.backref('media_uploads', lazy='dynamic', cascade='all, delete-orphan'))
 
     @property
     def is_complete(self):
@@ -490,7 +494,7 @@ class ChatMessage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
-    team = db.relationship('Team', backref=db.backref('chat_messages', lazy='dynamic'))
+    team = db.relationship('Team', backref=db.backref('chat_messages', lazy='dynamic', cascade='all, delete-orphan'))
 
     def __repr__(self):
         return f'<ChatMessage {self.id} from {self.sender_type} in game {self.game_id}>'
@@ -519,8 +523,8 @@ class RoundBonus(db.Model):
     )
 
     # Relationships
-    team = db.relationship('Team', backref=db.backref('round_bonuses', lazy='dynamic'))
-    round = db.relationship('Round', backref=db.backref('round_bonuses', lazy='dynamic'))
+    team = db.relationship('Team', backref=db.backref('round_bonuses', lazy='dynamic', cascade='all, delete-orphan'))
+    round = db.relationship('Round', backref=db.backref('round_bonuses', lazy='dynamic', cascade='all, delete-orphan'))
 
     def __repr__(self):
         return f'<RoundBonus {self.bonus_points}pts for Team {self.team_id} Round {self.round_id}>'

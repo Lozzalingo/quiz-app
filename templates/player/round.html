@@ -2354,6 +2354,28 @@ fetchActiveTimers();
 // ---- Photo/Video Upload Logic ----
 const activeRecordings = {};
 const pollIntervals = {};
+let activeUploadsCount = 0;
+
+// Block navigation while files are being sent to server
+function _onBeforeUnload(e) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+}
+
+function _startUploadGuard() {
+    activeUploadsCount++;
+    if (activeUploadsCount === 1) {
+        window.addEventListener('beforeunload', _onBeforeUnload);
+    }
+}
+
+function _endUploadGuard() {
+    activeUploadsCount = Math.max(0, activeUploadsCount - 1);
+    if (activeUploadsCount === 0) {
+        window.removeEventListener('beforeunload', _onBeforeUnload);
+    }
+}
 
 // File input change handler (camera and gallery inputs)
 document.querySelectorAll('input[type="file"][data-question-id]').forEach(input => {
@@ -2392,9 +2414,12 @@ function uploadFile(questionId, file) {
         }
     }
 
-    // Show queued status
-    statusEl.className = 'upload-status show queued';
-    statusEl.innerHTML = 'Queued for upload';
+    // Block navigation during upload to server
+    _startUploadGuard();
+
+    // Show uploading status with warning
+    statusEl.className = 'upload-status show uploading';
+    statusEl.innerHTML = '⏳ Uploading - don\'t leave this page...<div class="upload-progress-bar"><div class="upload-progress-fill" style="width:0%"></div></div>';
 
     const formData = new FormData();
     formData.append('file', file);
@@ -2408,22 +2433,26 @@ function uploadFile(questionId, file) {
             const pct = Math.round((e.loaded / e.total) * 100);
             statusEl.className = 'upload-status show uploading';
             if (pct < 100) {
-                statusEl.innerHTML = 'Uploading ' + pct + '%<div class="upload-progress-bar"><div class="upload-progress-fill" style="width:' + pct + '%"></div></div>';
+                statusEl.innerHTML = '⏳ Uploading - don\'t leave this page... ' + pct + '%<div class="upload-progress-bar"><div class="upload-progress-fill" style="width:' + pct + '%"></div></div>';
             } else {
-                statusEl.innerHTML = 'Processing...<div class="upload-progress-bar"><div class="upload-progress-fill processing-pulse" style="width:100%"></div></div>';
+                statusEl.innerHTML = '⏳ Saving to server...<div class="upload-progress-bar"><div class="upload-progress-fill" style="width:100%"></div></div>';
             }
         }
     });
 
     xhr.addEventListener('load', function() {
+        // File is now on the server - safe to navigate away
+        _endUploadGuard();
+
         if (xhr.status >= 200 && xhr.status < 300) {
             const data = JSON.parse(xhr.responseText);
             if (data.upload_id) {
-                statusEl.innerHTML = 'Processing...<div class="upload-progress-bar"><div class="upload-progress-fill processing-pulse" style="width:100%"></div></div>';
+                statusEl.className = 'upload-status show success';
+                statusEl.innerHTML = '✅ File received! Processing in background - safe to leave.<div class="upload-progress-bar"><div class="upload-progress-fill" style="width:30%;transition:width 0.3s"></div></div>';
                 pollUploadStatus(questionId, data.upload_id);
             } else {
                 statusEl.className = 'upload-status show success';
-                statusEl.innerHTML = 'Uploaded successfully';
+                statusEl.innerHTML = '✅ Uploaded successfully';
                 showPreview(questionId, file, data.url);
                 showUploadComplete(questionId, data.upload_id);
             }
@@ -2439,6 +2468,7 @@ function uploadFile(questionId, file) {
     });
 
     xhr.addEventListener('error', function() {
+        _endUploadGuard();
         statusEl.className = 'upload-status show failed';
         statusEl.innerHTML = 'Failed: Network error';
     });
@@ -2446,7 +2476,13 @@ function uploadFile(questionId, file) {
     xhr.send(formData);
 }
 
+// Map upload IDs to question IDs for socket event handling
+const uploadToQuestion = {};
+
 function pollUploadStatus(questionId, uploadId) {
+    // Register in the lookup so socket events can find the right question
+    uploadToQuestion[uploadId] = questionId;
+
     // Clear any existing poll for this question
     if (pollIntervals[questionId]) {
         clearInterval(pollIntervals[questionId]);
@@ -2454,36 +2490,60 @@ function pollUploadStatus(questionId, uploadId) {
 
     const statusEl = document.getElementById('upload-status-' + questionId);
 
+    // Use slower polling as fallback (socket events handle real-time updates)
     pollIntervals[questionId] = setInterval(function() {
         fetch('/api/upload/' + uploadId + '/status', { credentials: 'same-origin' })
             .then(r => r.json())
             .then(data => {
-                if (data.status === 'queued') {
-                    statusEl.className = 'upload-status show queued';
-                    statusEl.innerHTML = 'Processing...<div class="upload-progress-bar"><div class="upload-progress-fill processing-pulse" style="width:100%"></div></div>';
-                } else if (data.status === 'uploading' || data.status === 'processing') {
-                    statusEl.className = 'upload-status show uploading';
-                    statusEl.innerHTML = 'Processing...<div class="upload-progress-bar"><div class="upload-progress-fill processing-pulse" style="width:100%"></div></div>';
-                } else if (data.status === 'complete') {
-                    statusEl.className = 'upload-status show success';
-                    statusEl.innerHTML = 'Uploaded successfully';
-                    if (data.url) {
-                        showPreviewFromUrl(questionId, data.url);
-                    }
-                    showUploadComplete(questionId, data.upload_id);
-                    clearInterval(pollIntervals[questionId]);
-                    delete pollIntervals[questionId];
-                } else if (data.status === 'failed') {
-                    statusEl.className = 'upload-status show failed';
-                    statusEl.innerHTML = 'Failed: ' + (data.error || 'Unknown error');
-                    clearInterval(pollIntervals[questionId]);
-                    delete pollIntervals[questionId];
-                }
+                _handleUploadUpdate(questionId, uploadId, data);
             })
             .catch(() => {
                 // Silently retry on network error
             });
-    }, 2000);
+    }, 5000);
+}
+
+// Real-time upload status via SocketIO (instant, no polling delay)
+socket.on('upload_status_changed', function(data) {
+    const questionId = uploadToQuestion[data.upload_id];
+    if (!questionId) return;
+    _handleUploadUpdate(questionId, data.upload_id, data);
+});
+
+function _handleUploadUpdate(questionId, uploadId, data) {
+    const statusEl = document.getElementById('upload-status-' + questionId);
+    if (!statusEl) return;
+
+    if (data.status === 'queued' || data.status === 'processing') {
+        const pct = data.progress || 0;
+        statusEl.className = 'upload-status show uploading';
+        statusEl.innerHTML = 'Processing (' + pct + '%)...<div class="upload-progress-bar"><div class="upload-progress-fill" style="width:' + pct + '%;transition:width 0.3s"></div></div>';
+    } else if (data.status === 'uploading') {
+        const pct = data.progress || 70;
+        statusEl.className = 'upload-status show uploading';
+        statusEl.innerHTML = 'Uploading to cloud (' + pct + '%)...<div class="upload-progress-bar"><div class="upload-progress-fill" style="width:' + pct + '%;transition:width 0.3s"></div></div>';
+    } else if (data.status === 'complete') {
+        statusEl.className = 'upload-status show success';
+        statusEl.innerHTML = 'Uploaded successfully';
+        if (data.url) {
+            showPreviewFromUrl(questionId, data.url);
+        }
+        showUploadComplete(questionId, data.upload_id || uploadId);
+        // Stop polling
+        if (pollIntervals[questionId]) {
+            clearInterval(pollIntervals[questionId]);
+            delete pollIntervals[questionId];
+        }
+        delete uploadToQuestion[uploadId];
+    } else if (data.status === 'failed') {
+        statusEl.className = 'upload-status show failed';
+        statusEl.innerHTML = 'Failed: ' + (data.error || 'Unknown error');
+        if (pollIntervals[questionId]) {
+            clearInterval(pollIntervals[questionId]);
+            delete pollIntervals[questionId];
+        }
+        delete uploadToQuestion[uploadId];
+    }
 }
 
 function showPreview(questionId, file, url) {
