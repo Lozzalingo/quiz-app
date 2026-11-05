@@ -968,83 +968,51 @@ body.timer-active {
     gap: 12px;
 }
 
-.upload-file-label {
+.upload-camera-btn,
+.upload-gallery-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     padding: 14px 20px;
-    background: white;
-    border: 2px dashed var(--brand-accent);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: #6a1b9a;
-    transition: all 0.2s;
-    text-align: center;
-}
-
-.upload-file-label:hover {
-    background: #ede7f6;
-    border-color: #4a148c;
-}
-
-.upload-file-label input[type="file"] {
-    display: none;
-}
-
-.upload-record-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 14px 20px;
-    background: var(--brand-accent);
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    color: white;
     transition: all 0.2s;
+    width: 100%;
 }
 
-.upload-record-btn:hover {
+.upload-camera-btn {
+    background: var(--brand-accent);
+    color: white;
+}
+
+.upload-camera-btn:hover {
     background: #6a1b9a;
 }
 
-.upload-record-btn.recording {
-    background: #d32f2f;
-    animation: recordPulse 1s infinite;
+.upload-gallery-btn {
+    background: white;
+    color: #6a1b9a;
+    border: 2px solid var(--brand-accent);
 }
 
-@keyframes recordPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.upload-record-timer {
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Roboto Mono', monospace;
-}
-
-.upload-record-warning {
-    color: #ffeb3b;
-    font-size: 12px;
-    font-weight: 600;
+.upload-gallery-btn:hover {
+    background: #ede7f6;
 }
 
 .upload-complete-actions {
     display: flex;
+    flex-direction: column;
     gap: 10px;
     margin-top: 10px;
 }
 
 .upload-view-btn {
-    flex: 1;
-    padding: 10px 16px;
+    width: 100%;
+    padding: 12px 16px;
     background: #7c4dff;
     border: none;
     border-radius: 8px;
@@ -1059,9 +1027,9 @@ body.timer-active {
     background: #651fff;
 }
 
-.upload-delete-btn {
-    flex: 1;
-    padding: 10px 16px;
+.upload-reupload-btn {
+    width: 100%;
+    padding: 12px 16px;
     background: white;
     border: 2px solid #e53935;
     border-radius: 8px;
@@ -1072,7 +1040,7 @@ body.timer-active {
     transition: all 0.2s;
 }
 
-.upload-delete-btn:hover {
+.upload-reupload-btn:hover {
     background: #ffebee;
 }
 
@@ -1552,35 +1520,38 @@ body.timer-active {
 
                         <div class="upload-actions" id="upload-actions-{{ question.id }}"
                              {% if upload and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}style="display:none;"{% endif %}>
-                            <label class="upload-file-label" for="file-input-{{ question.id }}">
-                                <input type="file"
-                                       id="file-input-{{ question.id }}"
-                                       accept="image/*,video/*"
-                                       capture="environment"
-                                       data-question-id="{{ question.id }}">
-                                Choose photo or video from device
-                            </label>
+                            {# Hidden file inputs - one for camera, one for gallery #}
+                            <input type="file" id="file-camera-{{ question.id }}"
+                                   accept="image/*,video/*" capture="environment"
+                                   data-question-id="{{ question.id }}" style="display:none;">
+                            <input type="file" id="file-gallery-{{ question.id }}"
+                                   accept="image/*,video/*"
+                                   data-question-id="{{ question.id }}" style="display:none;">
                             <button type="button"
-                                    class="upload-record-btn"
-                                    id="record-btn-{{ question.id }}"
-                                    name="submit_upload_q{{ question.id }}"
-                                    data-question-id="{{ question.id }}"
-                                    onclick="document.getElementById('file-input-{{ question.id }}').click();">
-                                Submit Upload
+                                    class="upload-camera-btn"
+                                    name="take_photo_q{{ question.id }}"
+                                    onclick="document.getElementById('file-camera-{{ question.id }}').click();">
+                                📷 Take Photo / Video
+                            </button>
+                            <button type="button"
+                                    class="upload-gallery-btn"
+                                    name="choose_gallery_q{{ question.id }}"
+                                    onclick="document.getElementById('file-gallery-{{ question.id }}').click();">
+                                🖼️ Choose from Gallery
                             </button>
                         </div>
                         {% if upload and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}
                         <div class="upload-complete-actions" id="upload-complete-{{ question.id }}">
                             <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
                                     onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
-                            <button type="button" class="upload-delete-btn" name="delete_upload_q{{ question.id }}"
+                            <button type="button" class="upload-reupload-btn" name="reupload_q{{ question.id }}"
                                     onclick="deleteUpload({{ question.id }}, {{ upload.get('id', 0) }})">Delete &amp; Re-upload</button>
                         </div>
                         {% else %}
                         <div class="upload-complete-actions" id="upload-complete-{{ question.id }}" style="display:none;">
                             <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
                                     onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
-                            <button type="button" class="upload-delete-btn" name="delete_upload_q{{ question.id }}"
+                            <button type="button" class="upload-reupload-btn" name="reupload_q{{ question.id }}"
                                     onclick="deleteUpload({{ question.id }})">Delete &amp; Re-upload</button>
                         </div>
                         {% endif %}
@@ -2288,7 +2259,7 @@ fetchActiveTimers();
 const activeRecordings = {};
 const pollIntervals = {};
 
-// File input change handler
+// File input change handler (camera and gallery inputs)
 document.querySelectorAll('input[type="file"][data-question-id]').forEach(input => {
     input.addEventListener('change', function() {
         const questionId = this.dataset.questionId;
@@ -2296,6 +2267,8 @@ document.querySelectorAll('input[type="file"][data-question-id]').forEach(input 
         if (file) {
             uploadFile(questionId, file);
         }
+        // Reset so the same file can be re-selected
+        this.value = '';
     });
 });
 
@@ -2443,11 +2416,11 @@ function showUploadComplete(questionId, uploadId) {
     const completeEl = document.getElementById('upload-complete-' + questionId);
     if (actionsEl) actionsEl.style.display = 'none';
     if (completeEl) {
-        completeEl.style.display = 'flex';
-        // Update the delete button with the upload ID
-        const deleteBtn = completeEl.querySelector('.upload-delete-btn');
-        if (deleteBtn) {
-            deleteBtn.setAttribute('onclick', 'deleteUpload(' + questionId + ', ' + uploadId + ')');
+        completeEl.style.display = '';
+        // Update the re-upload button with the upload ID
+        const reuploadBtn = completeEl.querySelector('.upload-reupload-btn');
+        if (reuploadBtn) {
+            reuploadBtn.setAttribute('onclick', 'deleteUpload(' + questionId + ', ' + uploadId + ')');
         }
     }
 }
@@ -2477,13 +2450,11 @@ function deleteUpload(questionId, uploadId) {
             const completeEl = document.getElementById('upload-complete-' + questionId);
             const statusEl = document.getElementById('upload-status-' + questionId);
             const previewEl = document.getElementById('upload-preview-' + questionId);
-            const fileInput = document.getElementById('file-input-' + questionId);
 
-            if (actionsEl) actionsEl.style.display = 'flex';
+            if (actionsEl) actionsEl.style.display = '';
             if (completeEl) completeEl.style.display = 'none';
             if (statusEl) { statusEl.className = 'upload-status'; statusEl.innerHTML = ''; }
             if (previewEl) { previewEl.style.display = 'none'; previewEl.innerHTML = ''; }
-            if (fileInput) fileInput.value = '';
         } else {
             alert(data.error || 'Failed to delete upload');
         }
