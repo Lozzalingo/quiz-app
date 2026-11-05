@@ -249,7 +249,7 @@ body {
             return `
                 <div class="gallery-item" onclick="openLightbox('${u.storage_url}', '${u.file_type}')">
                     ${isVideo
-                        ? `<video class="gallery-thumb" muted><source src="${u.storage_url}" type="video/mp4"></video>`
+                        ? `<video class="gallery-thumb" muted preload="metadata" src="${u.storage_url}#t=0.5"></video>`
                         : `<img class="gallery-thumb" src="${u.storage_url}" alt="${u.team_name}" loading="lazy">`
                     }
                     <div class="gallery-item-info">
