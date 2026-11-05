@@ -39,7 +39,10 @@ def sanitise_filename(text):
 def build_storage_filename(team_name, task_name, game_name, extension):
     """
     Build the storage filename following the naming convention:
-    {Team Name} || {Task Name} || {Game Name}.ext
+    {Team Name} || {Task Name} || {Game Name}_{unique}.ext
+
+    Includes a short unique suffix to prevent CDN cache collisions
+    when a team deletes and re-uploads to the same question.
 
     Args:
         team_name: Name of the team
@@ -50,11 +53,13 @@ def build_storage_filename(team_name, task_name, game_name, extension):
     Returns:
         Sanitised filename string
     """
+    import uuid
     safe_team = sanitise_filename(team_name)
     safe_task = sanitise_filename(task_name)
     safe_game = sanitise_filename(game_name)
+    unique = uuid.uuid4().hex[:8]
 
-    filename = f'{safe_team} || {safe_task} || {safe_game}.{extension}'
+    filename = f'{safe_team} || {safe_task} || {safe_game}_{unique}.{extension}'
     return filename
 
 
