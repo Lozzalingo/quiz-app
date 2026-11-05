@@ -117,7 +117,8 @@ def _process_upload(job):
                     task_name = q.get('text', upload.question_id)[:80]
                     break
 
-            ext = _get_extension(upload.original_filename, upload.mime_type)
+            # Use mime_type for extension (may have changed during compression, e.g. .mov -> .mp4)
+            ext = _get_extension_from_mime(upload.mime_type) or _get_extension(upload.original_filename, upload.mime_type)
             filename = build_storage_filename(team.name, task_name, game.name, ext)
             storage_key = build_storage_key(game.id, filename)
 
@@ -281,6 +282,20 @@ def _get_video_duration(file_path):
     except Exception:
         pass
     return None
+
+
+def _get_extension_from_mime(mime_type):
+    """Get the best file extension from a MIME type."""
+    mime_map = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+        'video/mp4': 'mp4',
+        'video/webm': 'webm',
+        'video/quicktime': 'mov',
+    }
+    return mime_map.get(mime_type)
 
 
 def _get_extension(filename, mime_type):

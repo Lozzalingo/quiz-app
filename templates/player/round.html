@@ -1654,8 +1654,8 @@ body.timer-active {
 
                     {% if upload and upload.get('url') and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}
                     <div class="upload-preview" id="upload-preview-{{ question.id }}">
-                        {% if upload.url.endswith('.mp4') or upload.url.endswith('.webm') or upload.url.endswith('.mov') %}
-                        <video src="{{ upload.url }}" controls playsinline></video>
+                        {% if upload.get('file_type') == 'video' %}
+                        <video src="{{ upload.url }}" controls playsinline preload="metadata"></video>
                         {% else %}
                         <img src="{{ upload.url }}" alt="Your submission">
                         {% endif %}
@@ -1674,13 +1674,12 @@ body.timer-active {
         {% endfor %}
 
         {% if not read_only %}
-        {% set has_betting = questions | selectattr('type', 'equalto', 'betting') | list | length > 0 %}
         <div class="submit-section">
             <button type="submit" class="submit-btn" id="submit-btn">
                 {% if is_resubmit %}
-                    Update {{ 'Bets' if has_betting else 'Answers' }}
+                    Update Answers
                 {% else %}
-                    {{ 'Place Bet' if has_betting else 'Submit Answers' }}
+                    Submit Answers
                 {% endif %}
             </button>
             <p class="submit-warning">

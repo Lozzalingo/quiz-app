@@ -363,6 +363,7 @@ def view_round(round_id):
             'status': upload.upload_status,
             'progress': upload.upload_progress,
             'url': upload.storage_url,
+            'file_type': upload.file_type,
             'audit_status': upload.audit_status,
             'audit_notes': upload.audit_notes,
             'error': upload.error_message,
