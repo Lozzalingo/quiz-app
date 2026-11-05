@@ -1044,6 +1044,65 @@ body.timer-active {
     background: #ffebee;
 }
 
+.upload-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.upload-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: #111;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.upload-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.upload-modal-preview {
+    display: block !important;
+}
+
+.upload-modal-preview img {
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    display: block;
+}
+
+.upload-modal-preview video {
+    max-width: 90vw;
+    max-height: 85vh;
+    display: block;
+}
+
 .upload-status {
     margin-top: 12px;
     padding: 10px 14px;
@@ -1662,6 +1721,7 @@ const roundId = {{ round.id }};
 const gameCode = '{{ game.code }}';
 const teamId = {{ team.id }};
 const isPotentialFinal = {{ 'true' if is_potential_final else 'false' }};
+const hasSubmittableQuestions = {{ 'true' if questions | rejectattr('type', 'equalto', 'photo_video') | rejectattr('type', 'equalto', 'description') | list | length > 0 else 'false' }};
 let hasSubmitted = false;
 
 const socket = io();
@@ -1691,6 +1751,13 @@ socket.on('round_ending', function(data) {
         if (!hasSubmitted) {
             hasSubmitted = true;
             stopClientTimer();
+
+            // Skip form submission for upload-only rounds
+            if (!hasSubmittableQuestions) {
+                showRoundClosedOverlay("Round closed.", true, isPotentialFinal);
+                return;
+            }
+
             const form = document.getElementById('quiz-form');
             const formData = new FormData(form);
             formData.append('auto_submit', '1');
@@ -1710,8 +1777,14 @@ socket.on('round_closed', function(data) {
     if (data.round_id === roundId) {
         // Show overlay (answers already submitted by round_ending)
         if (!hasSubmitted) {
-            // Just in case round_ending wasn't received, submit now
             hasSubmitted = true;
+
+            // Skip form submission for upload-only rounds
+            if (!hasSubmittableQuestions) {
+                showRoundClosedOverlay('{{ game.round_label }} closed.', false, isPotentialFinal);
+                return;
+            }
+
             const form = document.getElementById('quiz-form');
             const formData = new FormData(form);
             formData.append('auto_submit', '1');
@@ -1931,6 +2004,12 @@ function updateTimerDisplay() {
 function autoSubmitAnswers() {
     if (hasSubmitted) return;
     hasSubmitted = true;
+
+    // Skip form submission for upload-only rounds (photo_video + description only)
+    if (!hasSubmittableQuestions) {
+        showRoundClosedOverlay("Round closed.", true, isPotentialFinal);
+        return;
+    }
 
     // Submit via fetch (no redirect) then show popup
     const form = document.getElementById('quiz-form');
@@ -2436,12 +2515,35 @@ function showUploadComplete(questionId, uploadId) {
 
 function toggleUploadPreview(questionId) {
     const previewEl = document.getElementById('upload-preview-' + questionId);
-    if (!previewEl) return;
-    if (previewEl.style.display === 'none' || !previewEl.style.display) {
-        previewEl.style.display = 'block';
-    } else {
-        previewEl.style.display = 'none';
-    }
+    if (!previewEl || !previewEl.innerHTML.trim()) return;
+
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'upload-modal-overlay';
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'upload-modal-content';
+
+    // Clone the preview content into the modal
+    const clone = previewEl.cloneNode(true);
+    clone.style.display = 'block';
+    clone.className = 'upload-modal-preview';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'upload-modal-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.name = 'close_preview_modal';
+    closeBtn.onclick = function() { modal.remove(); };
+
+    modalContent.appendChild(closeBtn);
+    modalContent.appendChild(clone);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
 }
 
 function deleteUpload(questionId, uploadId) {
