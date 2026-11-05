@@ -101,12 +101,16 @@ def upload_file_to_spaces(file_path, storage_key, content_type=None):
     )
 
     # Build public URL (prefer CDN endpoint)
+    # URL-encode the path to handle spaces and special characters
+    from urllib.parse import quote
+    encoded_key = quote(storage_key, safe='/')
+
     cdn_endpoint = current_app.config.get('DO_SPACES_CDN_ENDPOINT', '')
     if cdn_endpoint:
-        url = f'{cdn_endpoint}/{storage_key}'
+        url = f'{cdn_endpoint}/{encoded_key}'
     else:
         endpoint = current_app.config['DO_SPACES_ENDPOINT']
-        url = f'{endpoint}/{bucket}/{storage_key}'
+        url = f'{endpoint}/{bucket}/{encoded_key}'
     return url
 
 
@@ -136,12 +140,15 @@ def upload_fileobj_to_spaces(file_obj, storage_key, content_type=None):
         ExtraArgs=extra_args,
     )
 
+    from urllib.parse import quote
+    encoded_key = quote(storage_key, safe='/')
+
     cdn_endpoint = current_app.config.get('DO_SPACES_CDN_ENDPOINT', '')
     if cdn_endpoint:
-        url = f'{cdn_endpoint}/{storage_key}'
+        url = f'{cdn_endpoint}/{encoded_key}'
     else:
         endpoint = current_app.config['DO_SPACES_ENDPOINT']
-        url = f'{endpoint}/{bucket}/{storage_key}'
+        url = f'{endpoint}/{bucket}/{encoded_key}'
     return url
 
 
@@ -150,7 +157,7 @@ def delete_from_spaces(storage_key):
     Delete a file from DO Spaces.
 
     Args:
-        storage_key: The S3 key to delete
+        storage_key: The S3 key to delete (unencoded)
     """
     client = get_s3_client()
     bucket = current_app.config['DO_SPACES_BUCKET']
@@ -167,9 +174,12 @@ def get_public_url(storage_key):
     Returns:
         Public URL string (CDN if configured)
     """
+    from urllib.parse import quote
+    encoded_key = quote(storage_key, safe='/')
+
     cdn_endpoint = current_app.config.get('DO_SPACES_CDN_ENDPOINT', '')
     if cdn_endpoint:
-        return f'{cdn_endpoint}/{storage_key}'
+        return f'{cdn_endpoint}/{encoded_key}'
     endpoint = current_app.config['DO_SPACES_ENDPOINT']
     bucket = current_app.config['DO_SPACES_BUCKET']
-    return f'{endpoint}/{bucket}/{storage_key}'
+    return f'{endpoint}/{bucket}/{encoded_key}'
