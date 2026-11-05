@@ -439,6 +439,10 @@ def submit_round(round_id):
         if q_type == 'description':
             continue
 
+        # Skip photo_video questions - uploads are handled by the /api/.../upload endpoint
+        if q_type == 'photo_video':
+            continue
+
         # Handle betting questions specially
         if q_type == 'betting':
             bet_amount = request.form.get(f'bet_amount_{q_id}', '1')

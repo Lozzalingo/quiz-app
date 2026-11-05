@@ -234,9 +234,13 @@ def _compress_image(file_path, upload):
     Returns path to the compressed file.
     """
     try:
-        from PIL import Image
+        from PIL import Image, ImageOps
 
         img = Image.open(file_path)
+
+        # Apply EXIF orientation before stripping metadata
+        # Mobile photos store rotation in EXIF; without this, images appear rotated
+        img = ImageOps.exif_transpose(img)
 
         # Convert RGBA to RGB for JPEG output
         if img.mode in ('RGBA', 'P'):

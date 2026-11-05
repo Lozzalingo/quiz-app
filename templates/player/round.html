@@ -1508,7 +1508,7 @@ body.timer-active {
                             <div class="upload-audit-notes">{{ upload.audit_notes }}</div>
                             {% endif %}
                         </div>
-                    {% elif not read_only or (audit == 'rejected_resubmit') %}
+                    {% else %}
                         {% if audit == 'rejected_resubmit' %}
                         <div class="upload-status show rejected">
                             <strong>Rejected - please re-submit.</strong>
@@ -1518,6 +1518,8 @@ body.timer-active {
                         </div>
                         {% endif %}
 
+                        {# Upload buttons only shown when round is open (not read_only) #}
+                        {% if not read_only or (audit == 'rejected_resubmit') %}
                         <div class="upload-actions" id="upload-actions-{{ question.id }}"
                              {% if upload and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}style="display:none;"{% endif %}>
                             {# Hidden file inputs - one for camera, one for gallery #}
@@ -1540,19 +1542,26 @@ body.timer-active {
                                 🖼️ Choose from Gallery
                             </button>
                         </div>
+                        {% endif %}
+
+                        {# View/Delete buttons shown whenever there is a completed upload, even after submission #}
                         {% if upload and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}
                         <div class="upload-complete-actions" id="upload-complete-{{ question.id }}">
                             <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
                                     onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
+                            {% if not read_only %}
                             <button type="button" class="upload-reupload-btn" name="reupload_q{{ question.id }}"
                                     onclick="deleteUpload({{ question.id }}, {{ upload.get('id', 0) }})">Delete &amp; Re-upload</button>
+                            {% endif %}
                         </div>
                         {% else %}
                         <div class="upload-complete-actions" id="upload-complete-{{ question.id }}" style="display:none;">
                             <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
                                     onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
+                            {% if not read_only %}
                             <button type="button" class="upload-reupload-btn" name="reupload_q{{ question.id }}"
                                     onclick="deleteUpload({{ question.id }})">Delete &amp; Re-upload</button>
+                            {% endif %}
                         </div>
                         {% endif %}
                     {% endif %}
