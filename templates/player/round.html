@@ -1644,7 +1644,7 @@ body.timer-active {
                     </div>
 
                     {% if upload and upload.get('url') and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}
-                    <div class="upload-preview" id="upload-preview-{{ question.id }}" style="display:none;">
+                    <div class="upload-preview" id="upload-preview-{{ question.id }}">
                         {% if upload.url.endswith('.mp4') or upload.url.endswith('.webm') or upload.url.endswith('.mov') %}
                         <video src="{{ upload.url }}" controls playsinline></video>
                         {% else %}
