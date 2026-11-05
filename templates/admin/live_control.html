@@ -1833,6 +1833,8 @@ const gameId = {{ game.id }};
 const roundTimers = {};
 
 // ==================== Tab Switching ====================
+let galleryLoaded = false;
+
 function switchTab(tabName) {
     console.log('[LiveControl] Switching to tab:', tabName);
     document.querySelectorAll('.tab-btn').forEach(function(btn) {
@@ -1841,7 +1843,69 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(function(panel) {
         panel.classList.toggle('active', panel.id === 'tab-' + tabName);
     });
+    // Load gallery on first visit
+    if (tabName === 'gallery' && !galleryLoaded) {
+        loadInlineGallery();
+    }
 }
+
+// ==================== Inline Gallery ====================
+function loadInlineGallery() {
+    galleryLoaded = true;
+    fetch('/api/game/' + gameId + '/gallery', { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            var grid = document.getElementById('gallery-inline-grid');
+            var empty = document.getElementById('gallery-inline-empty');
+            var uploads = data.uploads || [];
+
+            if (uploads.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+                empty.innerHTML = '<p>No submissions yet.</p>';
+                return;
+            }
+
+            empty.style.display = 'none';
+            grid.innerHTML = uploads.map(function(u) {
+                var isVideo = u.file_type === 'video';
+                var thumb = isVideo
+                    ? '<video class="gallery-inline-thumb" muted preload="metadata" src="' + u.storage_url + '#t=0.5"></video>'
+                    : '<img class="gallery-inline-thumb" src="' + u.storage_url + '" alt="' + u.team_name + '" loading="lazy">';
+                return '<div class="gallery-inline-item" onclick="openGalleryLightbox(\'' + u.storage_url + '\', \'' + u.file_type + '\')">'
+                    + thumb
+                    + '<div class="gallery-inline-info">'
+                    + '<div class="gi-team">' + u.team_name + '</div>'
+                    + '<div class="gi-round">' + u.round_name + '</div>'
+                    + '</div></div>';
+            }).join('');
+        })
+        .catch(function(err) {
+            console.log('[LiveControl] Gallery load error:', err);
+        });
+}
+
+function openGalleryLightbox(url, fileType) {
+    var overlay = document.getElementById('gallery-lightbox');
+    var content = document.getElementById('gallery-lightbox-content');
+    if (fileType === 'video') {
+        content.innerHTML = '<video controls autoplay playsinline style="max-width:90vw;max-height:85vh;"><source src="' + url + '" type="video/mp4"></video>';
+    } else {
+        content.innerHTML = '<img src="' + url + '" style="max-width:90vw;max-height:85vh;object-fit:contain;">';
+    }
+    overlay.classList.add('active');
+}
+
+function closeGalleryLightbox() {
+    var overlay = document.getElementById('gallery-lightbox');
+    overlay.classList.remove('active');
+    document.getElementById('gallery-lightbox-content').innerHTML = '';
+}
+
+document.getElementById('gallery-lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeGalleryLightbox();
+});
 
 // ==================== Socket.IO ====================
 const socket = io();
