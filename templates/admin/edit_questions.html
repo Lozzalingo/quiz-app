@@ -1306,10 +1306,11 @@ function renderQuestions() {
                 <input type="text" class="question-input"
                        value="${escapeHtml(q.text || '')}"
                        onchange="updateQuestion(${index}, 'text', this.value)"
-                       placeholder="Question ${index + 1}">
+                       placeholder="${q.type === 'description' ? 'Description text...' : 'Question ' + (index + 1)}">
             </div>
             <div class="type-row">
                 <select class="type-select" onchange="updateQuestion(${index}, 'type', this.value); renderQuestions();">
+                    <option value="description" ${q.type === 'description' ? 'selected' : ''}>Description</option>
                     <option value="text" ${q.type === 'text' ? 'selected' : ''}>Short answer</option>
                     <option value="number" ${q.type === 'number' ? 'selected' : ''}>Number</option>
                     <option value="radio" ${q.type === 'radio' ? 'selected' : ''}>Multiple choice</option>
@@ -1321,10 +1322,10 @@ function renderQuestions() {
                 </select>
             </div>
 
-            ${q.type === 'radio' ? renderRadioOptions(q, index) : q.type === 'betting' ? renderBettingOptions(q, index) : q.type === 'ordering' ? renderOrderingOptions(q, index) : q.type === 'estimate' ? renderEstimateOptions(q, index) : q.type === 'pairing' ? renderPairingOptions(q, index) : q.type === 'photo_video' ? renderPhotoVideoOptions(q, index) : renderValidation(q, index)}
+            ${q.type === 'description' ? '' : q.type === 'radio' ? renderRadioOptions(q, index) : q.type === 'betting' ? renderBettingOptions(q, index) : q.type === 'ordering' ? renderOrderingOptions(q, index) : q.type === 'estimate' ? renderEstimateOptions(q, index) : q.type === 'pairing' ? renderPairingOptions(q, index) : q.type === 'photo_video' ? renderPhotoVideoOptions(q, index) : renderValidation(q, index)}
 
             <div class="card-actions">
-                ${(q.type !== 'betting' && q.type !== 'ordering' && q.type !== 'estimate' && q.type !== 'pairing' && q.type !== 'photo_video') ? `
+                ${(q.type !== 'description' && q.type !== 'betting' && q.type !== 'ordering' && q.type !== 'estimate' && q.type !== 'pairing' && q.type !== 'photo_video') ? `
                 <div style="margin-right: auto; display: flex; align-items: center; gap: 6px;">
                     <span class="field-label" style="margin: 0;">Pts:</span>
                     <input type="number" class="points-input"

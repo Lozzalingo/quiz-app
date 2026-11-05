@@ -435,6 +435,10 @@ def submit_round(round_id):
         q_id = q.get('id', '')
         q_type = q.get('type', 'text')
 
+        # Skip description blocks - no answer to store
+        if q_type == 'description':
+            continue
+
         # Handle betting questions specially
         if q_type == 'betting':
             bet_amount = request.form.get(f'bet_amount_{q_id}', '1')

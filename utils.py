@@ -336,6 +336,10 @@ def calculate_points_for_answer(question_config, answer_text, other_answers=None
                 total += float(points_per_pair)
         return total
 
+    elif q_type == 'description':
+        # Description blocks have no answers
+        return 0.0
+
     elif q_type == 'betting':
         # Betting question - score based on saved results and multipliers
         betting_config = question_config.get('betting', {})

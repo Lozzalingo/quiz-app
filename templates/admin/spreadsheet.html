@@ -1114,6 +1114,9 @@ function buildColumns(config, customCols = []) {
 
         // Add questions for this round
         for (const q of round.questions) {
+            // Skip description blocks - no answers to show
+            if (q.type === 'description') continue;
+
             // Answer column
             const answerField = `r${round.round_id}_q${q.id}_text`;
             cols.push({

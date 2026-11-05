@@ -164,6 +164,18 @@ body.timer-active {
     transition: border-color 0.3s, background-color 0.3s;
 }
 
+.question-card.description-card {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    padding: 16px 20px;
+}
+
+.question-card.description-card .question-text {
+    font-size: 15px;
+    color: #202124;
+    line-height: 1.5;
+}
+
 .question-card.is-correct {
     border-color: #34a853;
     background: linear-gradient(135deg, #e6f4ea 0%, #fff 100%);
@@ -1168,6 +1180,19 @@ body.timer-active {
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         {% for question in questions %}
+        {% if question.type == 'description' %}
+            {# Description block - content only, no answer input #}
+            <div class="question-card description-card" data-question-id="{{ question.id }}">
+                {% if question.image %}
+                <div class="question-image">
+                    <img src="{{ question.image }}" alt="Description image">
+                </div>
+                {% endif %}
+                {% if question.text %}
+                <p class="question-text" style="margin-bottom: 0;">{{ question.text }}</p>
+                {% endif %}
+            </div>
+        {% else %}
         {% set points = answer_points.get(question.id, 0) if answer_points else 0 %}
         {% set has_answer = question.id in existing_answers %}
         {% set is_betting = question.type == 'betting' %}
@@ -1539,6 +1564,7 @@ body.timer-active {
                 <div class="question-points">{{ question.points }} points</div>
             {% endif %}
         </div>
+        {% endif %}
         {% endfor %}
 
         {% if not read_only %}
