@@ -644,6 +644,40 @@ body {
 .betting-toggle-btn:hover {
     background: linear-gradient(135deg, var(--brand-primary-hover), var(--brand-accent)) !important;
 }
+
+/* Media lightbox for spreadsheet */
+.media-lightbox {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.media-lightbox.active {
+    display: flex;
+}
+
+.media-lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    z-index: 10;
+}
+
+.media-lightbox-body img,
+.media-lightbox-body video {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+}
 </style>
 {% endblock %}
 
@@ -676,6 +710,12 @@ body {
         border-radius: 0 !important;
     }
 </style>
+<!-- Media Lightbox -->
+<div class="media-lightbox" id="media-lightbox">
+    <button class="media-lightbox-close" onclick="closeSpreadsheetMedia()" name="close_media_lightbox">&times;</button>
+    <div class="media-lightbox-body" id="media-lightbox-body"></div>
+</div>
+
 <!-- Modal -->
 <div class="modal-overlay" id="modal">
     <div class="modal-content">
@@ -736,6 +776,28 @@ let pendingModalAction = null;
 let selectedColumns = new Set(); // Track selected column fields
 
 // Modal functions
+// ==================== Media Lightbox ====================
+function openSpreadsheetMedia(url, fileType) {
+    var overlay = document.getElementById('media-lightbox');
+    var body = document.getElementById('media-lightbox-body');
+    if (fileType === 'video') {
+        body.innerHTML = '<video controls autoplay playsinline><source src="' + url + '" type="video/mp4"></video>';
+    } else {
+        body.innerHTML = '<img src="' + url + '">';
+    }
+    overlay.classList.add('active');
+}
+
+function closeSpreadsheetMedia() {
+    var overlay = document.getElementById('media-lightbox');
+    overlay.classList.remove('active');
+    document.getElementById('media-lightbox-body').innerHTML = '';
+}
+
+document.getElementById('media-lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeSpreadsheetMedia();
+});
+
 function showModal(icon, title, message, confirmText, confirmClass, onConfirm) {
     document.getElementById('modal-icon').textContent = icon;
     document.getElementById('modal-title').textContent = title;
@@ -1119,6 +1181,9 @@ function buildColumns(config, customCols = []) {
 
             // Answer column
             const answerField = `r${round.round_id}_q${q.id}_text`;
+            const isPhotoVideo = q.type === 'photo_video';
+            const mediaUrlField = `r${round.round_id}_q${q.id}_media_url`;
+            const mediaTypeField = `r${round.round_id}_q${q.id}_media_type`;
             cols.push({
                 title: q.text,
                 field: answerField,
@@ -1126,7 +1191,17 @@ function buildColumns(config, customCols = []) {
                 minWidth: 150,
                 cssClass: "col-answer",
                 headerTooltip: q.text,
-                editor: "input",
+                editor: isPhotoVideo ? false : "input",
+                formatter: isPhotoVideo ? function(cell) {
+                    var row = cell.getRow().getData();
+                    var url = row[mediaUrlField];
+                    var mtype = row[mediaTypeField];
+                    if (!url) return cell.getValue() || '';
+                    if (mtype === 'video') {
+                        return '<span class="media-thumb" onclick="openSpreadsheetMedia(\'' + url + '\', \'video\')" style="cursor:pointer;color:#7c4dff;">🎬 View Video</span>';
+                    }
+                    return '<img src="' + url + '" class="media-thumb-img" onclick="openSpreadsheetMedia(\'' + url + '\', \'image\')" style="height:40px;border-radius:4px;cursor:pointer;">';
+                } : undefined,
                 headerClick: function(e, column) {
                     makeQuestionHeaderEditable(column, round.round_id, q.id, q.text);
                 },
@@ -1297,6 +1372,10 @@ function transformData(teams, config, customCols = []) {
                 row[`r${round.round_id}_q${q.id}_text`] = a.text;
                 row[`r${round.round_id}_q${q.id}_points`] = a.points;
                 row[`r${round.round_id}_q${q.id}_answer_id`] = a.answer_id;
+                if (a.media_url) {
+                    row[`r${round.round_id}_q${q.id}_media_url`] = a.media_url;
+                    row[`r${round.round_id}_q${q.id}_media_type`] = a.media_type;
+                }
             }
             row[`round_${round.round_id}_total`] = rd.round_points;
         }

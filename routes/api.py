@@ -400,7 +400,7 @@ def get_game_answers(game_id):
                 ).first()
 
                 if answer:
-                    round_data['answers'][q_id] = {
+                    answer_data = {
                         'answer_id': answer.id,
                         'text': answer.answer_text or '',
                         'points': answer.points or 0,
@@ -408,6 +408,17 @@ def get_game_answers(game_id):
                         'penalty': answer.penalty_points or 0,
                         'notes': answer.notes or ''
                     }
+                    # Include media URL for photo_video answers
+                    if answer.answer_text and answer.answer_text.startswith('[media:'):
+                        try:
+                            media_id = int(answer.answer_text.replace('[media:', '').replace(']', ''))
+                            media = MediaUpload.query.get(media_id)
+                            if media and media.storage_url:
+                                answer_data['media_url'] = media.storage_url
+                                answer_data['media_type'] = media.file_type
+                        except (ValueError, TypeError):
+                            pass
+                    round_data['answers'][q_id] = answer_data
                     round_data['round_points'] += (answer.points or 0)
                     total_bonus += (answer.bonus_points or 0)
                     total_penalty += (answer.penalty_points or 0)
