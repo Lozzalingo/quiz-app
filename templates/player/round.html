@@ -1036,6 +1036,46 @@ body.timer-active {
     font-weight: 600;
 }
 
+.upload-complete-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.upload-view-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: #7c4dff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    transition: all 0.2s;
+}
+
+.upload-view-btn:hover {
+    background: #651fff;
+}
+
+.upload-delete-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: white;
+    border: 2px solid #e53935;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #e53935;
+    transition: all 0.2s;
+}
+
+.upload-delete-btn:hover {
+    background: #ffebee;
+}
+
 .upload-status {
     margin-top: 12px;
     padding: 10px 14px;
@@ -1179,6 +1219,7 @@ body.timer-active {
     <form method="POST" action="{{ url_for('player.submit_round', round_id=round.id) }}" id="quiz-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
+        {% set q_num = namespace(count=0) %}
         {% for question in questions %}
         {% if question.type == 'description' %}
             {# Description block - content only, no answer input #}
@@ -1229,7 +1270,8 @@ body.timer-active {
             {% if read_only and has_answer and question.type != 'ordering' %}
             <div class="answer-indicator {{ indicator_class }}" data-question-id="{{ question.id }}">{{ indicator_symbol }}</div>
             {% endif %}
-            <div class="question-number">Question {{ loop.index }}</div>
+            {% set q_num.count = q_num.count + 1 %}
+            <div class="question-number">Question {{ q_num.count }}</div>
 
             {% if question.image %}
             <div class="question-image">
@@ -1508,7 +1550,8 @@ body.timer-active {
                         </div>
                         {% endif %}
 
-                        <div class="upload-actions" id="upload-actions-{{ question.id }}">
+                        <div class="upload-actions" id="upload-actions-{{ question.id }}"
+                             {% if upload and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}style="display:none;"{% endif %}>
                             <label class="upload-file-label" for="file-input-{{ question.id }}">
                                 <input type="file"
                                        id="file-input-{{ question.id }}"
@@ -1520,12 +1563,27 @@ body.timer-active {
                             <button type="button"
                                     class="upload-record-btn"
                                     id="record-btn-{{ question.id }}"
-                                    name="record_video_q{{ question.id }}"
+                                    name="submit_upload_q{{ question.id }}"
                                     data-question-id="{{ question.id }}"
-                                    onclick="toggleRecording({{ question.id }})">
-                                Record Video
+                                    onclick="document.getElementById('file-input-{{ question.id }}').click();">
+                                Submit Upload
                             </button>
                         </div>
+                        {% if upload and upload.get('status') == 'complete' and audit not in ['rejected_resubmit', 'rejected_final'] %}
+                        <div class="upload-complete-actions" id="upload-complete-{{ question.id }}">
+                            <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
+                                    onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
+                            <button type="button" class="upload-delete-btn" name="delete_upload_q{{ question.id }}"
+                                    onclick="deleteUpload({{ question.id }}, {{ upload.get('id', 0) }})">Delete &amp; Re-upload</button>
+                        </div>
+                        {% else %}
+                        <div class="upload-complete-actions" id="upload-complete-{{ question.id }}" style="display:none;">
+                            <button type="button" class="upload-view-btn" name="view_upload_q{{ question.id }}"
+                                    onclick="toggleUploadPreview({{ question.id }})">View Upload</button>
+                            <button type="button" class="upload-delete-btn" name="delete_upload_q{{ question.id }}"
+                                    onclick="deleteUpload({{ question.id }})">Delete &amp; Re-upload</button>
+                        </div>
+                        {% endif %}
                     {% endif %}
 
                     <div class="upload-status" id="upload-status-{{ question.id }}"
@@ -2273,6 +2331,7 @@ function uploadFile(questionId, file) {
                 statusEl.className = 'upload-status show success';
                 statusEl.innerHTML = 'Uploaded successfully';
                 showPreview(questionId, file, data.url);
+                showUploadComplete(questionId, data.upload_id);
             }
         } else {
             let errMsg = 'Upload failed';
@@ -2318,6 +2377,7 @@ function pollUploadStatus(questionId, uploadId) {
                     if (data.url) {
                         showPreviewFromUrl(questionId, data.url);
                     }
+                    showUploadComplete(questionId, data.upload_id);
                     clearInterval(pollIntervals[questionId]);
                     delete pollIntervals[questionId];
                 } else if (data.status === 'failed') {
@@ -2374,6 +2434,61 @@ function showPreviewFromUrl(questionId, url) {
         img.alt = 'Your submission';
         previewEl.appendChild(img);
     }
+}
+
+// ---- Upload Management (view/delete/re-upload) ----
+function showUploadComplete(questionId, uploadId) {
+    // Hide file picker, show complete actions
+    const actionsEl = document.getElementById('upload-actions-' + questionId);
+    const completeEl = document.getElementById('upload-complete-' + questionId);
+    if (actionsEl) actionsEl.style.display = 'none';
+    if (completeEl) {
+        completeEl.style.display = 'flex';
+        // Update the delete button with the upload ID
+        const deleteBtn = completeEl.querySelector('.upload-delete-btn');
+        if (deleteBtn) {
+            deleteBtn.setAttribute('onclick', 'deleteUpload(' + questionId + ', ' + uploadId + ')');
+        }
+    }
+}
+
+function toggleUploadPreview(questionId) {
+    const previewEl = document.getElementById('upload-preview-' + questionId);
+    if (!previewEl) return;
+    if (previewEl.style.display === 'none' || !previewEl.style.display) {
+        previewEl.style.display = 'block';
+    } else {
+        previewEl.style.display = 'none';
+    }
+}
+
+function deleteUpload(questionId, uploadId) {
+    if (!confirm('Delete this upload? You can then submit a new one.')) return;
+
+    fetch('/api/upload/' + uploadId + '/delete', {
+        method: 'POST',
+        credentials: 'same-origin',
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Reset UI to upload state
+            const actionsEl = document.getElementById('upload-actions-' + questionId);
+            const completeEl = document.getElementById('upload-complete-' + questionId);
+            const statusEl = document.getElementById('upload-status-' + questionId);
+            const previewEl = document.getElementById('upload-preview-' + questionId);
+            const fileInput = document.getElementById('file-input-' + questionId);
+
+            if (actionsEl) actionsEl.style.display = 'flex';
+            if (completeEl) completeEl.style.display = 'none';
+            if (statusEl) { statusEl.className = 'upload-status'; statusEl.innerHTML = ''; }
+            if (previewEl) { previewEl.style.display = 'none'; previewEl.innerHTML = ''; }
+            if (fileInput) fileInput.value = '';
+        } else {
+            alert(data.error || 'Failed to delete upload');
+        }
+    })
+    .catch(() => alert('Network error deleting upload'));
 }
 
 // ---- Video Recording Logic ----
@@ -2472,7 +2587,7 @@ function stopRecording(questionId) {
 
     const btn = document.getElementById('record-btn-' + questionId);
     btn.classList.remove('recording');
-    btn.innerHTML = 'Record Video';
+    btn.innerHTML = 'Submit Upload';
 
     delete activeRecordings[questionId];
 }

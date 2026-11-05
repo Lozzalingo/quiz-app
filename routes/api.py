@@ -2683,7 +2683,6 @@ def upload_media(round_id, question_id):
 
     # Queue background processing
     from upload_worker import enqueue_upload
-    from flask import current_app
     enqueue_upload(upload.id, temp_path, current_app._get_current_object())
 
     print(f'[API] Media upload queued: upload={upload.id}, team={team_id}, type={file_type}')
@@ -2693,6 +2692,53 @@ def upload_media(round_id, question_id):
         'status': 'queued',
         'points_awarded': points,
     })
+
+
+@bp.route('/upload/<int:upload_id>/delete', methods=['POST'])
+def delete_upload(upload_id):
+    """Delete a media upload so the team can re-upload."""
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    upload = MediaUpload.query.get_or_404(upload_id)
+
+    # Only the owning team can delete
+    if not current_user.get_id().startswith('team_'):
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    team_id = int(current_user.get_id().split('_')[1])
+    if upload.team_id != team_id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+
+    # Cannot delete permanently rejected uploads
+    if upload.audit_status == 'rejected_final':
+        return jsonify({'success': False, 'error': 'Cannot delete permanently rejected submission'}), 400
+
+    try:
+        # Delete the DO Spaces file if it exists
+        if upload.storage_url:
+            try:
+                from storage import delete_from_spaces
+                delete_from_spaces(upload.storage_key)
+            except Exception as e:
+                db_log('warning', 'api', f'Failed to delete file from Spaces: {e}', {'upload_id': upload_id})
+
+        # Remove the answer record
+        answer = Answer.query.filter_by(
+            team_id=team_id, round_id=upload.round_id, question_id=upload.question_id
+        ).first()
+        if answer:
+            db.session.delete(answer)
+
+        # Delete the upload record
+        db.session.delete(upload)
+        db.session.commit()
+
+        print(f'[API] Media upload deleted: upload={upload_id}, team={team_id}')
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        db_log('error', 'api', f'Failed to delete upload: {e}', {'upload_id': upload_id})
+        return jsonify({'success': False, 'error': 'Failed to delete upload'}), 500
 
 
 @bp.route('/upload/<int:upload_id>/status', methods=['GET'])
