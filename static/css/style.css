@@ -108,3 +108,34 @@ article:hover {
     overflow-x: auto;
     margin: 1rem 0;
 }
+
+/* Global dropdown styling - custom caret, consistent padding */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 10px 36px 10px 12px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6368' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #202124;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: #673ab7;
+    box-shadow: 0 0 0 3px rgba(103, 58, 183, 0.15);
+}
+
+select:disabled {
+    background-color: #f5f5f5;
+    color: #9aa0a6;
+    cursor: not-allowed;
+}

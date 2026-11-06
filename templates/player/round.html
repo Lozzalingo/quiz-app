@@ -585,25 +585,13 @@ body.timer-active {
 
 .ordering-slot select {
     flex: 1;
-    padding: 10px 12px !important;
-    font-size: 14px !important;
-    border: 1px solid #dadce0 !important;
-    border-radius: 6px !important;
-    background: white !important;
-    color: #202124 !important;
-    cursor: pointer;
-    margin: 0 !important;
+    min-width: 0;
+    margin: 0;
 }
 
 .ordering-slot select:focus {
-    outline: none !important;
-    border-color: #4caf50 !important;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
-}
-
-.ordering-slot select:disabled {
-    background: #f5f5f5 !important;
-    cursor: not-allowed;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 .ordering-hint {
@@ -820,26 +808,6 @@ body.timer-active {
     opacity: 0.7;
 }
 
-.pairing-connector-col {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
-}
-
-.pairing-pair-line {
-    height: 44px;
-    display: flex;
-    align-items: center;
-    color: #b2dfdb;
-    font-size: 20px;
-    font-weight: 200;
-}
-
-.pairing-pair-line.active {
-    color: #00897b;
-}
-
 .pairing-result-row {
     padding: 8px 12px;
     border-radius: 8px;
@@ -880,64 +848,6 @@ body.timer-active {
     border-radius: 6px;
     font-size: 12px;
     color: #00695c;
-}
-
-.pairing-dropdown-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.pairing-dropdown-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border: 2px solid #b2dfdb;
-    border-radius: 8px;
-    background: white;
-    transition: border-color 0.2s, background 0.2s;
-}
-
-.pairing-dropdown-row.has-value {
-    border-width: 2px;
-    border-style: solid;
-    font-weight: 500;
-}
-
-.pairing-dropdown-row.pair-colour-0 { background: #FFF9C4; border-color: #F9A825; }
-.pairing-dropdown-row.pair-colour-1 { background: #BBDEFB; border-color: #1565C0; }
-.pairing-dropdown-row.pair-colour-2 { background: #C8E6C9; border-color: #2E7D32; }
-.pairing-dropdown-row.pair-colour-3 { background: #F8BBD0; border-color: #C2185B; }
-.pairing-dropdown-row.pair-colour-4 { background: #D1C4E9; border-color: #6A1B9A; }
-.pairing-dropdown-row.pair-colour-5 { background: #FFE0B2; border-color: #E65100; }
-.pairing-dropdown-row.pair-colour-6 { background: #B2EBF2; border-color: #00838F; }
-.pairing-dropdown-row.pair-colour-7 { background: #FFCCBC; border-color: #D84315; }
-.pairing-dropdown-row.pair-colour-8 { background: #DCEDC8; border-color: #558B2F; }
-.pairing-dropdown-row.pair-colour-9 { background: #F0F4C3; border-color: #9E9D24; }
-
-.pairing-dropdown-label {
-    flex: 1;
-    font-size: 14px;
-    color: #202124;
-    font-weight: 500;
-}
-
-.pairing-dropdown-arrow {
-    color: #5f6368;
-    font-size: 16px;
-    flex-shrink: 0;
-}
-
-.pairing-dropdown-select {
-    flex: 1;
-    padding: 8px 10px;
-    font-size: 14px;
-    border: 1px solid #b2dfdb;
-    border-radius: 6px;
-    background: white;
-    color: #202124;
-    appearance: auto;
 }
 
 /* Photo/Video upload styles */
@@ -1539,25 +1449,26 @@ body.timer-active {
                             </div>
                         {% endfor %}
                     {% else %}
-                        {# Interactive pairing UI with dropdowns #}
-                        <div class="pairing-dropdown-list" id="pairing-dropdown-{{ question.id }}"
-                             data-right-items='{{ right_items | tojson }}'>
-                            {% for item in left_items %}
-                            <div class="pairing-dropdown-row" data-left-item="{{ item }}">
-                                <span class="pairing-dropdown-label">{{ item }}</span>
-                                <span class="pairing-dropdown-arrow">&#8594;</span>
-                                <select class="pairing-dropdown-select"
-                                        data-question-id="{{ question.id }}"
-                                        data-left-item="{{ item }}"
-                                        onchange="handlePairingDropdown('{{ question.id }}')">
-                                    <option value="">Select...</option>
-                                    {% for right in right_items %}
-                                    <option value="{{ right }}">{{ right }}</option>
-                                    {% endfor %}
-                                </select>
+                        {# Interactive tap-to-pair UI - controlled by JS #}
+                        <div class="pairing-grid" id="pairing-grid-{{ question.id }}">
+                            <div class="pairing-left-col" id="pairing-left-{{ question.id }}">
+                                {% for item in left_items %}
+                                <div class="pairing-item pairing-left-item"
+                                     data-side="left"
+                                     data-item="{{ item }}"
+                                     data-question-id="{{ question.id }}">{{ item }}</div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
+                            <div class="pairing-right-col" id="pairing-right-{{ question.id }}">
+                                {% for item in right_items %}
+                                <div class="pairing-item pairing-right-item"
+                                     data-side="right"
+                                     data-item="{{ item }}"
+                                     data-question-id="{{ question.id }}">{{ item }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
+                        <div class="pairing-hint">Tap a left item then a right item to connect them. Matched pairs share a colour. Tap a paired item to unpair it.</div>
                     {% endif %}
                 </div>
 
@@ -2156,15 +2067,15 @@ document.getElementById('quiz-form').addEventListener('submit', function(e) {
 });
 
 // Shuffle ordering question options so players don't see correct order
+const orderingOptionsByQuestion = {};
+
 function shuffleOrderingOptions() {
     const selects = document.querySelectorAll('.ordering-select');
-    const questionOptions = {};
 
-    // Group selects by question ID
+    // Group selects by question ID and build a shuffled master list per question
     selects.forEach(select => {
         const qId = select.dataset.questionId;
-        if (!questionOptions[qId]) {
-            questionOptions[qId] = [];
+        if (!orderingOptionsByQuestion[qId]) {
             // Get all options except the placeholder
             const options = Array.from(select.options).slice(1);
             // Shuffle using Fisher-Yates
@@ -2172,30 +2083,49 @@ function shuffleOrderingOptions() {
                 const j = Math.floor(Math.random() * (i + 1));
                 [options[i], options[j]] = [options[j], options[i]];
             }
-            questionOptions[qId] = options.map(opt => ({ value: opt.value, text: opt.text }));
+            orderingOptionsByQuestion[qId] = options.map(opt => ({ value: opt.value, text: opt.text }));
         }
     });
 
-    // Apply shuffled options to all selects for each question
+    // Attach change listeners so selected items disappear from the other slots
     selects.forEach(select => {
-        const qId = select.dataset.questionId;
-        const selectedValue = select.value;
-        const shuffled = questionOptions[qId];
+        select.addEventListener('change', function() {
+            updateOrderingSelects(select.dataset.questionId);
+        });
+    });
 
-        // Clear existing options except placeholder
-        while (select.options.length > 1) {
-            select.remove(1);
+    // Initial render (also hides options already selected in existing answers)
+    Object.keys(orderingOptionsByQuestion).forEach(updateOrderingSelects);
+}
+
+function updateOrderingSelects(qId) {
+    const master = orderingOptionsByQuestion[qId];
+    if (!master) return;
+
+    const selects = document.querySelectorAll('.ordering-select[data-question-id="' + qId + '"]');
+
+    // Collect all currently selected values across this question's slots
+    const selectedValues = new Set();
+    selects.forEach(sel => {
+        if (sel.value) selectedValues.add(sel.value);
+    });
+
+    // Rebuild each dropdown: shuffled order, hiding values selected in OTHER slots
+    selects.forEach(sel => {
+        const currentValue = sel.value;
+
+        while (sel.options.length > 1) {
+            sel.remove(1);
         }
 
-        // Add shuffled options
-        shuffled.forEach(opt => {
-            const option = document.createElement('option');
-            option.value = opt.value;
-            option.textContent = opt.text;
-            if (opt.value === selectedValue) {
-                option.selected = true;
+        master.forEach(opt => {
+            if (opt.value === currentValue || !selectedValues.has(opt.value)) {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.text;
+                if (opt.value === currentValue) option.selected = true;
+                sel.appendChild(option);
             }
-            select.appendChild(option);
         });
     });
 }
@@ -2220,82 +2150,95 @@ function initPairingQuestions() {
             try { currentPairs = JSON.parse(hidden.value); } catch(e) {}
         }
 
-        pairingState[qId] = { currentPairs: currentPairs };
+        pairingState[qId] = { currentPairs: currentPairs, selectedLeft: null };
 
-        // Set existing values in dropdowns
-        const container = document.getElementById('pairing-dropdown-' + qId);
-        if (container) {
-            container.querySelectorAll('.pairing-dropdown-select').forEach(sel => {
-                const leftItem = sel.dataset.leftItem;
-                if (currentPairs[leftItem]) {
-                    sel.value = currentPairs[leftItem];
-                }
-            });
-            // Update dropdown options and colours
-            updatePairingDropdowns(qId);
+        // Shuffle the right column items
+        const rightCol = document.getElementById('pairing-right-' + qId);
+        if (rightCol) {
+            const items = Array.from(rightCol.querySelectorAll('.pairing-right-item'));
+            for (let i = items.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                rightCol.insertBefore(items[j], items[i]);
+                [items[i], items[j]] = [items[j], items[i]];
+            }
         }
+
+        // Attach tap handlers
+        section.querySelectorAll('.pairing-left-item').forEach(el => {
+            el.addEventListener('click', () => handlePairingTap(qId, 'left', el.dataset.item));
+        });
+        section.querySelectorAll('.pairing-right-item').forEach(el => {
+            el.addEventListener('click', () => handlePairingTap(qId, 'right', el.dataset.item));
+        });
+
+        // Render initial paired state (for existing answers)
+        renderPairingState(qId);
     });
 }
 
-function handlePairingDropdown(qId) {
-    const container = document.getElementById('pairing-dropdown-' + qId);
-    if (!container) return;
-
-    // Collect current selections
+function handlePairingTap(qId, side, item) {
     const state = pairingState[qId];
-    state.currentPairs = {};
-    container.querySelectorAll('.pairing-dropdown-select').forEach(sel => {
-        const leftItem = sel.dataset.leftItem;
-        if (sel.value) {
-            state.currentPairs[leftItem] = sel.value;
-        }
-    });
+    if (!state) return;
 
-    updatePairingDropdowns(qId);
+    if (side === 'left') {
+        if (state.currentPairs[item] && state.selectedLeft === null) {
+            // Tapping an already-paired left item unpairs it
+            delete state.currentPairs[item];
+        } else {
+            // Toggle left selection
+            state.selectedLeft = (state.selectedLeft === item) ? null : item;
+        }
+    } else {
+        if (state.selectedLeft !== null) {
+            // Remove any existing pair that used this right item
+            const existingLeft = Object.keys(state.currentPairs).find(
+                l => state.currentPairs[l] === item
+            );
+            if (existingLeft) delete state.currentPairs[existingLeft];
+
+            // Set the new pair
+            state.currentPairs[state.selectedLeft] = item;
+            state.selectedLeft = null;
+        } else {
+            // Tapping right with no left selected - clear its pair
+            const existingLeft = Object.keys(state.currentPairs).find(
+                l => state.currentPairs[l] === item
+            );
+            if (existingLeft) delete state.currentPairs[existingLeft];
+        }
+    }
+
+    renderPairingState(qId);
     savePairingAnswer(qId);
 }
 
-function updatePairingDropdowns(qId) {
-    const container = document.getElementById('pairing-dropdown-' + qId);
-    if (!container) return;
+function renderPairingState(qId) {
+    const state = pairingState[qId];
+    if (!state) return;
 
-    const allRightItems = JSON.parse(container.dataset.rightItems);
-    const selects = container.querySelectorAll('.pairing-dropdown-select');
+    const section = document.querySelector(`.pairing-section[data-question-id="${qId}"]`);
+    if (!section) return;
 
-    // Collect all currently selected values
-    const selectedValues = new Set();
-    selects.forEach(sel => {
-        if (sel.value) selectedValues.add(sel.value);
+    // Clear all state classes first
+    section.querySelectorAll('.pairing-item').forEach(el => {
+        el.classList.remove('selected', 'paired');
+        for (let c = 0; c < 10; c++) el.classList.remove('pair-colour-' + c);
     });
 
-    // For each dropdown, show only: unselected options + the option this dropdown has selected
-    selects.forEach(sel => {
-        const currentValue = sel.value;
-        // Remember current value before rebuilding options
-        sel.innerHTML = '<option value="">Select...</option>';
-        allRightItems.forEach(item => {
-            // Show if: this is the currently selected value for THIS dropdown, OR it's not selected anywhere
-            if (item === currentValue || !selectedValues.has(item)) {
-                const opt = document.createElement('option');
-                opt.value = item;
-                opt.textContent = item;
-                if (item === currentValue) opt.selected = true;
-                sel.appendChild(opt);
-            }
-        });
-    });
-
-    // Apply colour coding to rows
+    // Assign a shared colour to each pair (in left-column order)
     let colourIdx = 0;
-    container.querySelectorAll('.pairing-dropdown-row').forEach(row => {
-        const sel = row.querySelector('.pairing-dropdown-select');
-        // Remove old colour classes
-        row.classList.remove('has-value');
-        for (let c = 0; c < 10; c++) row.classList.remove('pair-colour-' + c);
-
-        if (sel && sel.value) {
-            row.classList.add('has-value', 'pair-colour-' + (colourIdx % 10));
+    section.querySelectorAll('.pairing-left-item').forEach(leftEl => {
+        const leftItem = leftEl.dataset.item;
+        if (leftItem === state.selectedLeft) {
+            leftEl.classList.add('selected');
+        } else if (state.currentPairs[leftItem]) {
+            const colour = 'pair-colour-' + (colourIdx % 10);
             colourIdx++;
+            leftEl.classList.add('paired', colour);
+            const rightEl = section.querySelector(
+                '.pairing-right-item[data-item="' + CSS.escape(state.currentPairs[leftItem]) + '"]'
+            );
+            if (rightEl) rightEl.classList.add('paired', colour);
         }
     });
 }
