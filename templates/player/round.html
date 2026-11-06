@@ -800,7 +800,7 @@ body.timer-active {
 .pairing-item.pair-colour-5 { background: #FFE0B2; border-color: #E65100; color: #BF360C; }
 .pairing-item.pair-colour-6 { background: #B2EBF2; border-color: #00838F; color: #006064; }
 .pairing-item.pair-colour-7 { background: #FFCCBC; border-color: #D84315; color: #BF360C; }
-.pairing-item.pair-colour-8 { background: #DCEDC8; border-color: #558B2F; color: #33691E; }
+.pairing-item.pair-colour-8 { background: #CFD8DC; border-color: #455A64; color: #263238; }
 .pairing-item.pair-colour-9 { background: #F0F4C3; border-color: #9E9D24; color: #827717; }
 
 .pairing-item.disabled {
@@ -2225,15 +2225,14 @@ function renderPairingState(qId) {
         for (let c = 0; c < 10; c++) el.classList.remove('pair-colour-' + c);
     });
 
-    // Assign a shared colour to each pair (in left-column order)
-    let colourIdx = 0;
-    section.querySelectorAll('.pairing-left-item').forEach(leftEl => {
+    // Assign a shared colour to each pair. The colour is fixed by the left
+    // item's position, so unpairing one pair never shifts the others' colours.
+    section.querySelectorAll('.pairing-left-item').forEach((leftEl, idx) => {
         const leftItem = leftEl.dataset.item;
         if (leftItem === state.selectedLeft) {
             leftEl.classList.add('selected');
         } else if (state.currentPairs[leftItem]) {
-            const colour = 'pair-colour-' + (colourIdx % 10);
-            colourIdx++;
+            const colour = 'pair-colour-' + (idx % 10);
             leftEl.classList.add('paired', colour);
             const rightEl = section.querySelector(
                 '.pairing-right-item[data-item="' + CSS.escape(state.currentPairs[leftItem]) + '"]'
